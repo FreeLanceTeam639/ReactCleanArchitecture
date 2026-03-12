@@ -42,7 +42,7 @@ export function useLoginForm(navigate) {
       });
 
       window.setTimeout(() => {
-        navigate(ROUTES.home);
+        navigate(ROUTES.profile);
       }, 800);
     } catch (error) {
       setFeedback({

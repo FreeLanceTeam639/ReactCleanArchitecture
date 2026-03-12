@@ -116,7 +116,7 @@ export default function LoginPage({ navigate }) {
 
           <div className="authHintBox">
             <p>
-              <span>Username:</span> freelancer or employer
+              <span>Email:</span> demo@workreap.com
             </p>
             <p>
               <span>Password:</span> google

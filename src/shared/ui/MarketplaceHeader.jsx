@@ -1,7 +1,8 @@
-import { Search, ChevronDown, Menu, X } from 'lucide-react';
+import { Search, ChevronDown, Menu, X, LogOut } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { ROUTES } from '../constants/routes.js';
 import { navigateWithScroll } from '../lib/navigation/navigateWithScroll.js';
+import { clearAuthenticatedUser, getAuthenticatedUser } from '../lib/storage/authStorage.js';
 import BrandLogo from './BrandLogo.jsx';
 
 function resolveLinkNavigation(event, link, navigate, closeMenu) {
@@ -22,6 +23,7 @@ export default function MarketplaceHeader({
   brandLabel = 'Workreap'
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const authenticatedUser = getAuthenticatedUser();
 
   const mappedLinks = useMemo(
     () =>
@@ -33,6 +35,12 @@ export default function MarketplaceHeader({
   );
 
   const closeMenu = () => setIsOpen(false);
+
+  const handleSignOut = () => {
+    clearAuthenticatedUser();
+    closeMenu();
+    navigate(ROUTES.home);
+  };
 
   return (
     <>
@@ -89,20 +97,50 @@ export default function MarketplaceHeader({
               </button>
             </div>
 
-            <a
-              href={ROUTES.login}
-              className="detailHeaderLink interactive"
-              onClick={(event) => resolveLinkNavigation(event, { route: ROUTES.login }, navigate, closeMenu)}
-            >
-              Sign In
-            </a>
-            <a
-              href={ROUTES.register}
-              className="btn primary interactive detailHeaderRegister"
-              onClick={(event) => resolveLinkNavigation(event, { route: ROUTES.register }, navigate, closeMenu)}
-            >
-              Register
-            </a>
+            {authenticatedUser ? (
+              <>
+                <button
+                  type="button"
+                  className="detailHeaderLink interactive"
+                  onClick={() => {
+                    closeMenu();
+                    navigate(ROUTES.profile);
+                  }}
+                >
+                  {authenticatedUser.firstName || authenticatedUser.fullName}
+                </button>
+                <button
+                  type="button"
+                  className="detailHeaderUser interactive"
+                  onClick={() => {
+                    closeMenu();
+                    navigate(ROUTES.profile);
+                  }}
+                >
+                  <span>{authenticatedUser.avatarInitials || authenticatedUser.fullName?.slice(0, 2)?.toUpperCase()}</span>
+                </button>
+                <button type="button" className="detailHeaderLogout interactive" onClick={handleSignOut}>
+                  <LogOut size={16} />
+                </button>
+              </>
+            ) : (
+              <>
+                <a
+                  href={ROUTES.login}
+                  className="detailHeaderLink interactive"
+                  onClick={(event) => resolveLinkNavigation(event, { route: ROUTES.login }, navigate, closeMenu)}
+                >
+                  Sign In
+                </a>
+                <a
+                  href={ROUTES.register}
+                  className="btn primary interactive detailHeaderRegister"
+                  onClick={(event) => resolveLinkNavigation(event, { route: ROUTES.register }, navigate, closeMenu)}
+                >
+                  Register
+                </a>
+              </>
+            )}
           </div>
         </div>
       </header>

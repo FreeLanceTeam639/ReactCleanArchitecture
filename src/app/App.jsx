@@ -4,6 +4,7 @@ import TaskDetailPage from '../pages/task-detail/TaskDetailPage.jsx';
 import { isTaskDetailRoute, ROUTES } from '../shared/constants/routes.js';
 import { usePathname } from '../shared/hooks/usePathname.js';
 import RegisterPage from '../pages/register/RegisterPage.jsx';
+import ProfilePage from '../pages/profile/ProfilePage.jsx';
 
 function App() {
   const [pathname, navigate] = usePathname();
@@ -14,6 +15,10 @@ function App() {
 
   if (pathname === ROUTES.register) {
     return <RegisterPage navigate={navigate} />;
+  }
+
+  if (pathname === ROUTES.profile) {
+    return <ProfilePage navigate={navigate} />;
   }
 
   if (isTaskDetailRoute(pathname)) {
