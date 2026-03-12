@@ -21,6 +21,7 @@ import { navigateWithScroll } from '../../shared/lib/navigation/navigateWithScro
 import HomeFooter from '../../widgets/home/HomeFooter.jsx';
 import TaskDetailHeader from '../../widgets/task-detail/TaskDetailHeader.jsx';
 
+
 const transitionUp = {
   initial: { opacity: 0, y: 24 },
   animate: { opacity: 1, y: 0 },
