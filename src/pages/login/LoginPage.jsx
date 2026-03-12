@@ -32,11 +32,21 @@ export default function LoginPage({ navigate }) {
             <span />
             <span />
           </div>
-          <a href={ROUTES.home} className="authBrand" onClick={(event) => navigateWithScroll(event, ROUTES.home, navigate)}>
+
+          <a
+            href={ROUTES.home}
+            className="authBrand"
+            onClick={(event) => navigateWithScroll(event, ROUTES.home, navigate)}
+          >
             Workreap
           </a>
-          <p className="authSubtitle">Please enter your email &amp; password to access your account</p>
+
+          <p className="authSubtitle">
+            Please enter your email &amp; password to access your account
+          </p>
+
           <LoginAlert message={feedback.message} type={feedback.type} />
+
           <form className="authForm" onSubmit={submitLogin}>
             <label className="authField">
               <span>Email</span>
@@ -49,6 +59,7 @@ export default function LoginPage({ navigate }) {
                 required
               />
             </label>
+
             <label className="authField">
               <span>Password</span>
               <div className="passwordWrap">
@@ -70,6 +81,7 @@ export default function LoginPage({ navigate }) {
                 </button>
               </div>
             </label>
+
             <div className="authMetaRow">
               <label className="rememberRow">
                 <input
@@ -80,20 +92,28 @@ export default function LoginPage({ navigate }) {
                 />
                 <span>Remember me</span>
               </label>
+
               <button type="button" className="textButton interactive">
                 Forgot password?
               </button>
             </div>
+
             <button type="submit" className="authSubmit interactive" disabled={isSubmitting}>
               {isSubmitting ? 'Signing In...' : 'Sign In'}
             </button>
           </form>
+
           <p className="authSwitch">
             Don't have an account?{' '}
-            <button type="button" className="inlineLink interactive">
+            <button
+              type="button"
+              className="inlineLink interactive"
+              onClick={() => navigate(ROUTES.register)}
+            >
               Sign up
             </button>
           </p>
+
           <div className="authHintBox">
             <p>
               <span>Username:</span> freelancer or employer
@@ -103,6 +123,7 @@ export default function LoginPage({ navigate }) {
             </p>
           </div>
         </section>
+
         <section className="authPreview fadeUp delayOne" aria-hidden="true">
           <div className="previewLaptop displayFloat">
             <div className="previewBezel">

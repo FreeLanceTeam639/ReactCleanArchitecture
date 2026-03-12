@@ -48,3 +48,21 @@ export const httpClient = {
     return request(path, { ...options, method: 'POST', body });
   }
 };
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
+export async function post(endpoint, body, options = {}) {
+  const response = await fetch(`${BASE_URL}${endpoint}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options.headers || {})
+    },
+    body: JSON.stringify(body)
+  });
+
+  if (!response.ok) {
+    throw new Error('Request failed.');
+  }
+
+  return response.json();
+}

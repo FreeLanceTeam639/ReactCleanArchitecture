@@ -7,7 +7,12 @@ export const authEndpoints = {
   // TODO: API inteqrasiyası tamamlanmalıdır
   login: import.meta.env.VITE_LOGIN_ENDPOINT || '/auth/login'
 };
-
+export const API_ENDPOINTS = {
+  auth: {
+    login: import.meta.env.VITE_LOGIN_ENDPOINT,
+    register: import.meta.env.VITE_REGISTER_ENDPOINT
+  }
+};
 export const homeEndpoints = {
   // NOTE: bu fetch hissəsi backend endpoint tələb edir
   // TODO: API inteqrasiyası tamamlanmalıdır

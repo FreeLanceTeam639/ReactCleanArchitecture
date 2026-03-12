@@ -12,7 +12,6 @@ import TalentSection from '../../widgets/home/TalentSection.jsx';
 import TestimonialSection from '../../widgets/home/TestimonialSection.jsx';
 
 export default function HomePage({ navigate }) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [billingPeriod, setBillingPeriod] = useState('monthly');
   const {
     homeData,
@@ -23,12 +22,8 @@ export default function HomePage({ navigate }) {
 
   return (
     <div>
-      <HomeHeader
-        isMenuOpen={isMenuOpen}
-        onToggleMenu={() => setIsMenuOpen((currentState) => !currentState)}
-        navigate={navigate}
-      />
-      <HeroSection popularCategories={homeData.popular} />
+      <HomeHeader navigate={navigate} />
+      <HeroSection popularCategories={homeData.popular} navigate={navigate} />
       <NoticeBanner message={notice} />
       <ServicesSection services={homeData.services} />
       <TestimonialSection testimonial={homeData.testimonials[0]} />
@@ -37,6 +32,7 @@ export default function HomePage({ navigate }) {
         activeTab={activeTalentCategory}
         onTabChange={setActiveTalentCategory}
         talents={homeData.talents}
+        navigate={navigate}
       />
       <PricingSection
         billingPeriod={billingPeriod}

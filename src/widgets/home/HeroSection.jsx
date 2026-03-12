@@ -1,4 +1,6 @@
-export default function HeroSection({ popularCategories }) {
+import { ROUTES } from '../../shared/constants/routes.js';
+
+export default function HeroSection({ popularCategories, navigate }) {
   return (
     <section className="hero wrap" id="home">
       <div className="heroText fadeUp">
@@ -36,7 +38,9 @@ export default function HeroSection({ popularCategories }) {
               <span className="line" />
               <span className="line" />
               <span className="line short" />
-              <button className="interactive">Login</button>
+              <button type="button" className="interactive" onClick={() => navigate(ROUTES.login)}>
+                Login
+              </button>
             </div>
           </div>
           <div className="touch">●</div>
