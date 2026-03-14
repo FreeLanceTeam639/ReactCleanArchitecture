@@ -1231,9 +1231,14 @@ h2 {
 .detailHeaderRow {
   min-height: 86px;
   display: grid;
-  grid-template-columns: auto auto 1fr;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 18px;
+  position: relative;
+}
+
+.detailHeaderRow.searchOpen {
+  z-index: 2;
 }
 
 .detailHeaderNav {
@@ -1242,6 +1247,22 @@ h2 {
   gap: 18px;
   color: #475467;
   font-weight: 600;
+  min-width: 0;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.detailHeaderNav a {
+  white-space: nowrap;
+}
+
+.detailHeaderNav.searchHidden {
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+  gap: 0;
 }
 
 .detailHeaderNav a:hover,
@@ -1253,51 +1274,132 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 14px;
+  gap: 12px;
+  min-width: 0;
 }
 
 .detailSearchShell {
-  min-width: min(100%, 410px);
+  width: 52px;
+  max-width: 100%;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 10px 8px 14px;
+  gap: 0;
+  padding: 8px;
   border-radius: 16px;
   border: 1px solid rgba(22, 34, 57, 0.08);
   background: #f8fafc;
   color: #98a2b3;
+  position: relative;
+  overflow: hidden;
+  transition:
+    width 0.32s ease,
+    transform 0.28s ease,
+    box-shadow 0.28s ease,
+    border-color 0.28s ease,
+    background 0.28s ease,
+    gap 0.28s ease,
+    padding 0.28s ease;
+  z-index: 3;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.detailSearchShell:hover {
+  border-color: rgba(255, 90, 20, 0.16);
+  box-shadow: 0 10px 24px rgba(18, 38, 63, 0.06);
+}
+
+.detailSearchShell.open {
+  width: min(860px, calc(100vw - 260px));
+  gap: 10px;
+  padding: 8px 10px 8px 10px;
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(255, 90, 20, 0.22);
+  box-shadow: 0 20px 44px rgba(18, 38, 63, 0.14);
+  cursor: text;
 }
 
 .detailSearchShell input {
-  min-width: 80px;
+  min-width: 0;
   flex: 1;
+  width: 0;
   border: 0;
   background: transparent;
   outline: none;
   color: #101828;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(6px);
+  transition: opacity 0.2s ease, transform 0.2s ease, width 0.2s ease;
 }
 
-.detailSearchType {
+.detailSearchShell:not(.open) input::placeholder {
+  color: transparent;
+}
+
+.detailSearchShell.open input {
+  width: auto;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
+}
+
+.detailSearchActivator {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  border: 0;
+  background: transparent;
+  color: #667085;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 9px 12px;
-  border: 0;
-  background: #ffffff;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.detailSearchShell.open .detailSearchActivator {
+  background: rgba(255, 90, 20, 0.1);
+  color: var(--accent);
+}
+
+.detailSearchClose {
+  width: 34px;
+  height: 34px;
   border-radius: 12px;
+  border: 0;
+  background: rgba(22, 34, 57, 0.04);
   color: #667085;
-  font-weight: 600;
+  align-items: center;
+  justify-content: center;
+  display: none;
+  flex: 0 0 auto;
+}
+
+.detailSearchClose.visible {
+  display: inline-flex;
 }
 
 .detailHeaderLink {
   font-weight: 700;
   color: #344054;
+  white-space: nowrap;
 }
 
 .detailHeaderRegister {
-  padding-inline: 20px;
+  padding-inline: 18px;
+  min-height: 48px;
 }
 
+.detailHeaderActionButton {
+  box-shadow: 0 14px 28px rgba(255, 90, 20, 0.18);
+}
+
+.detailHeaderProfileButton {
+  width: 48px;
+  min-width: 48px;
+  padding: 0;
+}
 .detailMenuButton {
   display: none;
   width: 46px;
@@ -1873,9 +1975,10 @@ h2 {
     display: none;
   }
 
-  .detailSearchShell {
+  .detailSearchShell,
+  .detailSearchShell.open {
     min-width: 0;
-    width: 100%;
+    width: min(100%, 360px);
   }
 
   .detailGrid {
@@ -1937,8 +2040,18 @@ h2 {
     transform: translateY(0);
   }
 
-  .detailSearchShell {
-    min-width: 100%;
+  .detailSearchShell,
+  .detailSearchShell.open {
+    width: 100%;
+  }
+
+
+  .detailHeaderActionButton,
+  .detailHeaderLink,
+  .detailHeaderProfileButton,
+  .detailHeaderLogout {
+    width: 100%;
+    justify-content: center;
   }
 
   .detailMetaRow {
@@ -2026,18 +2139,14 @@ h2 {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.detailHeaderUser span {
-  width: 34px;
-  height: 34px;
-  border-radius: 12px;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(135deg, var(--accent), #ff8a4d);
-  color: #fff;
-  font-weight: 800;
-  letter-spacing: 0.06em;
+.detailHeaderUser:hover,
+.detailHeaderLogout:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 90, 20, 0.28);
+  box-shadow: 0 14px 28px rgba(18, 38, 63, 0.08);
 }
 
 .profileShell {
@@ -3497,5 +3606,31 @@ h2 {
 
   .workspaceBubble {
     max-width: 100%;
+  }
+}
+
+
+/* UI polish refinements */
+.workspaceEntityTop strong,
+.profileTaskRow strong,
+.profileSimpleRow strong,
+.profileIdentityCopy h1 {
+  overflow-wrap: anywhere;
+}
+
+.workspaceMutedText,
+.profileBioText,
+.profileSimpleRow p,
+.profileTaskRow p {
+  text-wrap: pretty;
+}
+
+.brand {
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .detailSearchShell.open {
+    width: min(100%, calc(100vw - 120px));
   }
 }

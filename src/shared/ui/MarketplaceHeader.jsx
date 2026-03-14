@@ -1,5 +1,5 @@
-import { Search, ChevronDown, Menu, X, LogOut } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { Search, Menu, X, LogOut, UserRound } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { logoutUser } from '../../features/auth/services/authService.js';
 import { fetchCurrentUserProfile } from '../../features/profile/services/profileService.js';
 import { ROUTES } from '../constants/routes.js';
@@ -27,6 +27,10 @@ export default function MarketplaceHeader({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [authenticatedUser, setAuthenticatedUser] = useState(null);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
+  const searchWrapRef = useRef(null);
+  const searchInputRef = useRef(null);
 
   const mappedLinks = useMemo(
     () =>
@@ -66,7 +70,66 @@ export default function MarketplaceHeader({
     };
   }, []);
 
+  useEffect(() => {
+    if (!isSearchOpen) {
+      return undefined;
+    }
+
+    const nextFrame = window.requestAnimationFrame(() => {
+      searchInputRef.current?.focus();
+    });
+
+    function handlePointerDown(event) {
+      if (!searchWrapRef.current?.contains(event.target)) {
+        setIsSearchOpen(false);
+      }
+    }
+
+    function handleEscape(event) {
+      if (event.key === 'Escape') {
+        setIsSearchOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      window.cancelAnimationFrame(nextFrame);
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isSearchOpen]);
+
   const closeMenu = () => setIsOpen(false);
+
+  const handleOpenSearch = () => {
+    setIsSearchOpen(true);
+    closeMenu();
+  };
+
+  const handleCloseSearch = () => {
+    setIsSearchOpen(false);
+  };
+
+  const handleSearchSubmit = (event) => {
+    event.preventDefault();
+
+    if (!searchValue.trim()) {
+      return;
+    }
+
+    if (window.location.pathname !== ROUTES.home) {
+      navigate(ROUTES.home);
+      window.setTimeout(() => {
+        window.location.hash = 'talents';
+      }, 0);
+    } else {
+      window.location.hash = 'talents';
+    }
+
+    setIsSearchOpen(false);
+  };
 
   const handleSignOut = async () => {
     try {
@@ -98,7 +161,7 @@ export default function MarketplaceHeader({
       ) : null}
 
       <header className="detailHeader detailHeaderShared">
-        <div className="wrap detailHeaderRow">
+        <div className={isSearchOpen ? 'wrap detailHeaderRow searchOpen' : 'wrap detailHeaderRow'}>
           <BrandLogo
             href={brandHref}
             label={brandLabel}
@@ -114,7 +177,7 @@ export default function MarketplaceHeader({
             {isOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
 
-          <nav className={isOpen ? 'detailHeaderNav open' : 'detailHeaderNav'}>
+          <nav className={`${isOpen ? 'detailHeaderNav open' : 'detailHeaderNav'}${isSearchOpen ? ' searchHidden' : ''}`}>
             {mappedLinks.map((link) => (
               <a
                 key={`${link.label}-${link.href}`}
@@ -127,21 +190,46 @@ export default function MarketplaceHeader({
           </nav>
 
           <div className={isOpen ? 'detailHeaderActions open' : 'detailHeaderActions'}>
-            <div className="detailSearchShell">
-              <Search size={16} />
-              <input type="text" placeholder="Search" aria-label="Search" />
-              <button type="button" className="detailSearchType interactive">
-                Freelancers
-                <ChevronDown size={15} />
+            <form
+              ref={searchWrapRef}
+              className={isSearchOpen ? 'detailSearchShell open' : 'detailSearchShell'}
+              onSubmit={handleSearchSubmit}
+            >
+              <button
+                type="button"
+                className="detailSearchActivator interactive"
+                onClick={handleOpenSearch}
+                aria-label="Open search"
+              >
+                <Search size={16} />
               </button>
-            </div>
+
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search talent, services, jobs"
+                aria-label="Search"
+                value={searchValue}
+                onFocus={handleOpenSearch}
+                onChange={(event) => setSearchValue(event.target.value)}
+              />
+
+              <button
+                type="button"
+                className={isSearchOpen ? 'detailSearchClose interactive visible' : 'detailSearchClose interactive'}
+                onClick={handleCloseSearch}
+                aria-label="Close search"
+              >
+                <X size={16} />
+              </button>
+            </form>
 
             {authenticatedUser ? (
               <>
                 {actionButton ? (
                   <a
                     href={actionButton.href || actionButton.route || ROUTES.home}
-                    className="btn primary interactive detailHeaderRegister"
+                    className="btn primary interactive detailHeaderRegister detailHeaderActionButton"
                     onClick={(event) => resolveLinkNavigation(event, actionButton, navigate, closeMenu)}
                   >
                     {actionButton.label}
@@ -149,25 +237,17 @@ export default function MarketplaceHeader({
                 ) : null}
                 <button
                   type="button"
-                  className="detailHeaderLink interactive"
+                  className="detailHeaderUser interactive detailHeaderProfileButton"
                   onClick={() => {
                     closeMenu();
                     navigate(ROUTES.profile);
                   }}
+                  aria-label="Open profile"
+                  title={authenticatedUser.firstName || authenticatedUser.fullName || 'Profile'}
                 >
-                  {authenticatedUser.firstName || authenticatedUser.fullName || 'Account'}
+                  <UserRound size={18} />
                 </button>
-                <button
-                  type="button"
-                  className="detailHeaderUser interactive"
-                  onClick={() => {
-                    closeMenu();
-                    navigate(ROUTES.profile);
-                  }}
-                >
-                  <span>{authenticatedUser.avatarInitials || authenticatedUser.fullName?.slice(0, 2)?.toUpperCase() || 'AC'}</span>
-                </button>
-                <button type="button" className="detailHeaderLogout interactive" onClick={handleSignOut}>
+                <button type="button" className="detailHeaderLogout interactive" onClick={handleSignOut} aria-label="Sign out">
                   <LogOut size={16} />
                 </button>
               </>

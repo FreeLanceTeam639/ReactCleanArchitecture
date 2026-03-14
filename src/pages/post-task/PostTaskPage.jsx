@@ -12,14 +12,14 @@ export default function PostTaskPage({ navigate }) {
       <MarketplaceHeader
         navigate={navigate}
         links={AUTHENTICATED_NAVIGATION_LINKS}
-        actionButton={{ label: 'Post a Job', route: ROUTES.postTask }}
+        actionButton={{ label: 'Post Job', route: ROUTES.postTask }}
       />
 
       <main className="wrap workspacePage fadeUp">
         <section className="workspaceHero cardLift">
           <div>
             <span className="profileEyebrow">Client Workflow</span>
-            <h1>Create Task / Post a Job</h1>
+            <h1>Create Task / Post Job</h1>
             <p>Task creation axını endpoint-ready form submit ilə işləyir, hələlik mock fallback ilə test olunur.</p>
           </div>
           <div className="workspaceHighlightCard cardLift">

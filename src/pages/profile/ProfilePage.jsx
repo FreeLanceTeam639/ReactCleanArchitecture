@@ -543,7 +543,7 @@ export default function ProfilePage({ navigate }) {
       <MarketplaceHeader
         navigate={navigate}
         links={PROFILE_NAVIGATION_LINKS}
-        actionButton={{ label: 'Post a Job', route: ROUTES.postTask }}
+        actionButton={{ label: 'Post Job', route: ROUTES.postTask }}
       />
 
       <main className="wrap profilePage fadeUp">
@@ -598,7 +598,7 @@ export default function ProfilePage({ navigate }) {
               My Orders
             </button>
             <button type="button" className="btn ghost interactive" onClick={() => navigate(ROUTES.postTask)}>
-              Post a Job
+              Post Job
             </button>
             <button type="button" className="btn ghost interactive" onClick={handleLogout}>
               <LogOut size={16} /> Sign Out

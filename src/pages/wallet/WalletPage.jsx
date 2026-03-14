@@ -24,7 +24,7 @@ export default function WalletPage({ navigate }) {
       <MarketplaceHeader
         navigate={navigate}
         links={AUTHENTICATED_NAVIGATION_LINKS}
-        actionButton={{ label: 'Post a Job', route: ROUTES.postTask }}
+        actionButton={{ label: 'Post Job', route: ROUTES.postTask }}
       />
 
       <main className="wrap workspacePage fadeUp">

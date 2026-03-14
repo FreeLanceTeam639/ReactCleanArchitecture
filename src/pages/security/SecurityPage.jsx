@@ -36,7 +36,7 @@ export default function SecurityPage({ navigate }) {
       <MarketplaceHeader
         navigate={navigate}
         links={PROFILE_NAVIGATION_LINKS}
-        actionButton={{ label: 'Post a Job', route: ROUTES.postTask }}
+        actionButton={{ label: 'Post Job', route: ROUTES.postTask }}
       />
 
       <main className="wrap workspacePage fadeUp">
