@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowRight,
@@ -15,7 +15,7 @@ import {
   ShoppingBag,
   Star
 } from 'lucide-react';
-import { getFallbackTaskDetailBySlug } from '../../features/task-detail/data/fallbackTaskDetails.js';
+import { fetchTaskDetailBySlug } from '../../features/task-detail/services/taskDetailService.js';
 import { getTaskSlugFromPathname, ROUTES } from '../../shared/constants/routes.js';
 import { navigateWithScroll } from '../../shared/lib/navigation/navigateWithScroll.js';
 import HomeFooter from '../../widgets/home/HomeFooter.jsx';
@@ -43,10 +43,42 @@ function renderStars(score) {
 
 export default function TaskDetailPage({ navigate, pathname }) {
   const slug = getTaskSlugFromPathname(pathname);
-  const detail = useMemo(() => getFallbackTaskDetailBySlug(slug), [slug]);
-  const [selectedPackage, setSelectedPackage] = useState(detail.packages[1]?.key || detail.packages[0]?.key);
+  const [detail, setDetail] = useState(null);
+  const [selectedPackage, setSelectedPackage] = useState('');
   const [openFaq, setOpenFaq] = useState(0);
-  const [activeImage, setActiveImage] = useState(detail.gallery[0]);
+  const [activeImage, setActiveImage] = useState('');
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function loadDetail() {
+      const payload = await fetchTaskDetailBySlug(slug);
+
+      if (!isCancelled) {
+        setDetail(payload);
+        setSelectedPackage(payload.packages[1]?.key || payload.packages[0]?.key || '');
+        setActiveImage(payload.gallery?.[0] || '');
+        setOpenFaq(0);
+      }
+    }
+
+    loadDetail();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [slug]);
+
+  if (!detail) {
+    return (
+      <div className="detailPageShell">
+        <TaskDetailHeader navigate={navigate} />
+        <main className="wrap detailPage fadeUp">
+          <section className="detailTitleCard">Loading task detail...</section>
+        </main>
+      </div>
+    );
+  }
 
   const selectedPackageData = detail.packages.find((item) => item.key === selectedPackage) || detail.packages[0];
 

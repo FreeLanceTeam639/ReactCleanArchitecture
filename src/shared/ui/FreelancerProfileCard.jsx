@@ -1,3 +1,4 @@
+import { Bookmark } from 'lucide-react';
 import { buildTaskDetailRoute } from '../constants/routes.js';
 import { createSlug } from '../lib/slug/createSlug.js';
 
@@ -12,8 +13,9 @@ function renderStars(rating) {
   ));
 }
 
-export default function FreelancerProfileCard({ talent, navigate }) {
+export default function FreelancerProfileCard({ talent, navigate, isSaved = false, onSaveToggle }) {
   const {
+    id,
     name,
     title,
     avatar,
@@ -25,7 +27,9 @@ export default function FreelancerProfileCard({ talent, navigate }) {
     location,
     tools = [],
     featured,
-    badge
+    badge,
+    availability,
+    completedProjects
   } = talent;
 
   const initials = name
@@ -34,6 +38,7 @@ export default function FreelancerProfileCard({ talent, navigate }) {
     ?.join('')
     ?.slice(0, 2);
 
+  const cardId = id || name;
   const detailRoute = buildTaskDetailRoute(createSlug(`${name}-${title}`));
   const handleNavigate = () => navigate(detailRoute);
 
@@ -59,11 +64,14 @@ export default function FreelancerProfileCard({ talent, navigate }) {
 
         <button
           type="button"
-          className="freelancerBookmark interactive"
+          className={isSaved ? 'freelancerBookmark saved interactive' : 'freelancerBookmark interactive'}
           aria-label="Save profile"
-          onClick={(event) => event.stopPropagation()}
+          onClick={(event) => {
+            event.stopPropagation();
+            onSaveToggle?.(cardId);
+          }}
         >
-          ☆
+          <Bookmark size={16} fill={isSaved ? 'currentColor' : 'none'} />
         </button>
 
         <div className="freelancerAvatarWrap">
@@ -125,6 +133,11 @@ export default function FreelancerProfileCard({ talent, navigate }) {
         <div className="freelancerMetaRow">
           <span>{location || 'Remote'}</span>
           <span>{reviews ? `${reviews} reviews` : 'Top rated'}</span>
+        </div>
+
+        <div className="freelancerAvailabilityRow">
+          <span>{availability || 'Available soon'}</span>
+          <span>{completedProjects ? `${completedProjects} completed` : 'Featured profile'}</span>
         </div>
 
         {(badge || featured) && (

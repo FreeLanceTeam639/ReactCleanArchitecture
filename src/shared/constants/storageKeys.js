@@ -1,3 +1,3 @@
 export const STORAGE_KEYS = {
-  authenticatedUser: 'worklance_user'
+  authSession: 'worklance_auth_session'
 };

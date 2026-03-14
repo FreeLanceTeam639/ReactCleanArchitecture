@@ -3,6 +3,13 @@ export const ROUTES = {
   login: '/login',
   register: '/register',
   profile: '/profile',
+  orders: '/orders',
+  messages: '/messages',
+  notifications: '/notifications',
+  postTask: '/post-task',
+  wallet: '/wallet',
+  reviews: '/reviews',
+  security: '/security',
   taskDetail: '/tasks'
 };
 

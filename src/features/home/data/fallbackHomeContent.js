@@ -1,26 +1,97 @@
 export const fallbackHomeContent = {
   popular: ['Digital Marketing', 'Graphics & Design', 'Programming & Tech'],
   services: [
-    { title: 'Digital Marketing', emoji: '📣', items: ['Ads Strategy', 'SEO', 'Growth', 'Social Media'] },
-    { title: 'Smart AI Services', emoji: '🤖', items: ['AI Models', 'Chatbots', 'Vision', 'Automation'] },
-    { title: 'Graphics & Design', emoji: '🎨', items: ['Logo', 'Brand', 'Web Design', 'UI Kits'] },
-    { title: 'Writing & Translation', emoji: '✍️', items: ['Blog', 'Copy', 'Scripts', 'Docs'] },
-    { title: 'Programming & Tech', emoji: '💻', items: ['Web Apps', 'Cloud', 'Data', 'Security'] },
-    { title: 'Music & Audio', emoji: '🎵', items: ['Voice Over', 'Editing', 'Mixing', 'Sound Design'] }
+    {
+      id: 'service-digital-marketing',
+      title: 'Digital Marketing',
+      emoji: '📣',
+      description: 'Campaign setup, SEO, paid acquisition and reporting support for growth-minded teams.',
+      projectCount: 124,
+      averageRate: '$62/hr',
+      items: ['Ads Strategy', 'SEO', 'Growth', 'Social Media']
+    },
+    {
+      id: 'service-smart-ai',
+      title: 'Smart AI Services',
+      emoji: '🤖',
+      description: 'AI workflow design, automation architecture and content systems for modern products.',
+      projectCount: 98,
+      averageRate: '$74/hr',
+      items: ['AI Models', 'Chatbots', 'Vision', 'Automation']
+    },
+    {
+      id: 'service-graphics-design',
+      title: 'Graphics & Design',
+      emoji: '🎨',
+      description: 'Brand identity, landing page design and polished visual systems for launches.',
+      projectCount: 156,
+      averageRate: '$48/hr',
+      items: ['Logo', 'Brand', 'Web Design', 'UI Kits']
+    },
+    {
+      id: 'service-writing',
+      title: 'Writing & Translation',
+      emoji: '✍️',
+      description: 'Copywriting, scripts, documentation and content systems tailored to product voice.',
+      projectCount: 76,
+      averageRate: '$39/hr',
+      items: ['Blog', 'Copy', 'Scripts', 'Docs']
+    },
+    {
+      id: 'service-tech',
+      title: 'Programming & Tech',
+      emoji: '💻',
+      description: 'Frontend, backend and product engineering talent ready for real client briefs.',
+      projectCount: 211,
+      averageRate: '$68/hr',
+      items: ['Web Apps', 'Cloud', 'Data', 'Security']
+    },
+    {
+      id: 'service-audio',
+      title: 'Music & Audio',
+      emoji: '🎵',
+      description: 'Voice, edit and sound production support for media and product experiences.',
+      projectCount: 54,
+      averageRate: '$41/hr',
+      items: ['Voice Over', 'Editing', 'Mixing', 'Sound Design']
+    }
   ],
   testimonials: [
     {
+      id: 'testimonial-1',
       name: 'Samantha Reed',
       role: 'Growth Lead at Youtube',
+      metric: '4.9/5 client satisfaction',
       quote:
         'I am truly impressed by the outstanding service I experienced. The team ensured seamless execution by tailoring every detail to perfection.',
       quote2:
         'Their work exceeded all expectations in terms of quality, attention and speed.'
+    },
+    {
+      id: 'testimonial-2',
+      name: 'Noah Kim',
+      role: 'Product Manager at Frameflow',
+      metric: '28% faster delivery cycle',
+      quote:
+        'We moved from scattered hiring to a clear shortlist in under one day. The quality of candidates felt much more curated.',
+      quote2:
+        'The dashboard flow made evaluation and communication significantly easier for our product team.'
+    },
+    {
+      id: 'testimonial-3',
+      name: 'Layla Hassan',
+      role: 'Founder at Nomad Studio',
+      metric: '92% repeat client rate',
+      quote:
+        'From landing page design to frontend execution, the freelance workflow felt more premium and predictable than most marketplaces.',
+      quote2:
+        'It helped us scale creative output without increasing our internal hiring overhead.'
     }
   ],
-  tabs: ['AI', 'Programming & Tech', 'Smart AI Services', 'Digital Marketing', 'Graphics & Design'],
+  tabs: ['All', 'AI', 'Programming & Tech', 'Smart AI Services', 'Digital Marketing', 'Graphics & Design'],
   talents: [
     {
+      id: 'talent-1',
       name: 'Henrie Ekemezie',
       title: 'Web & UI/UX Designer',
       location: 'United States',
@@ -38,9 +109,12 @@ export const fallbackHomeContent = {
       duration: '8 Days',
       tools: ['Figma', 'UI', 'Web'],
       badge: 'Top Designer',
-      featured: true
+      featured: true,
+      availability: 'Available this week',
+      completedProjects: 32
     },
     {
+      id: 'talent-2',
       name: 'Michael Carter',
       title: 'Frontend React Developer',
       location: 'Canada',
@@ -58,9 +132,12 @@ export const fallbackHomeContent = {
       duration: '6 Days',
       tools: ['React', 'JS', 'UX'],
       badge: 'Featured Talent',
-      featured: true
+      featured: true,
+      availability: 'Available now',
+      completedProjects: 48
     },
     {
+      id: 'talent-3',
       name: 'Anna Muller',
       title: 'AI Video Creator',
       location: 'Germany',
@@ -78,9 +155,12 @@ export const fallbackHomeContent = {
       duration: '10 Days',
       tools: ['Video', 'AI', 'Edit'],
       badge: 'AI Creator',
-      featured: true
+      featured: true,
+      availability: 'Booked until Friday',
+      completedProjects: 57
     },
     {
+      id: 'talent-4',
       name: 'Lisa Johnson',
       title: 'Google Ads Specialist',
       location: 'United Kingdom',
@@ -98,9 +178,12 @@ export const fallbackHomeContent = {
       duration: '7 Days',
       tools: ['Ads', 'SEO', 'Meta'],
       badge: 'Ads Expert',
-      featured: false
+      featured: false,
+      availability: 'Available next week',
+      completedProjects: 19
     },
     {
+      id: 'talent-5',
       name: 'Jane Nguyen',
       title: 'Logo Designer',
       location: 'Vietnam',
@@ -118,9 +201,12 @@ export const fallbackHomeContent = {
       duration: '5 Days',
       tools: ['Logo', 'Brand', 'Figma'],
       badge: 'Brand Identity',
-      featured: true
+      featured: true,
+      availability: 'Available now',
+      completedProjects: 73
     },
     {
+      id: 'talent-6',
       name: 'Ana Anderson',
       title: 'Content Writer',
       location: 'Spain',
@@ -138,7 +224,55 @@ export const fallbackHomeContent = {
       duration: '9 Days',
       tools: ['Content', 'Copy', 'SEO'],
       badge: 'Content Planning',
-      featured: false
+      featured: false,
+      availability: 'Available this week',
+      completedProjects: 36
+    },
+    {
+      id: 'talent-7',
+      name: 'Nadia Aksoy',
+      title: 'AI Automation Consultant',
+      location: 'Turkey',
+      rating: 4.9,
+      reviews: 31,
+      price: 92,
+      hourlyRate: 92,
+      icon: '⚙️',
+      label: 'Automation Pro',
+      category: 'Smart AI Services',
+      avatar:
+        'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=300&q=80',
+      banner:
+        'https://images.unsplash.com/photo-1516321165247-4aa89a48be28?auto=format&fit=crop&w=1200&q=80',
+      duration: '12 Days',
+      tools: ['AI', 'Automation', 'Zapier'],
+      badge: 'Automation Pro',
+      featured: true,
+      availability: 'Available for discovery call',
+      completedProjects: 22
+    },
+    {
+      id: 'talent-8',
+      name: 'Daniel Perez',
+      title: 'Full Stack SaaS Engineer',
+      location: 'Portugal',
+      rating: 4.7,
+      reviews: 28,
+      price: 88,
+      hourlyRate: 88,
+      icon: '🧩',
+      label: 'SaaS Builder',
+      category: 'Programming & Tech',
+      avatar:
+        'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=300&q=80',
+      banner:
+        'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=1200&q=80',
+      duration: '14 Days',
+      tools: ['Node', 'React', 'SaaS'],
+      badge: 'SaaS Builder',
+      featured: false,
+      availability: 'Booked until Monday',
+      completedProjects: 41
     }
   ],
   plans: [
@@ -166,25 +300,31 @@ export const fallbackHomeContent = {
   ],
   blogs: [
     {
+      id: 'blog-1',
       category: 'Creative',
       date: 'Mar 18, 2025',
       title: 'Will remote work drive the next wave of creative talent?',
       summary: 'A fresh look at how digital-first teams discover better specialists faster.',
-      icon: '🧑‍🎨'
+      icon: '🧑‍🎨',
+      readTime: '5 min read'
     },
     {
+      id: 'blog-2',
       category: 'Inspiration',
       date: 'Apr 09, 2025',
       title: 'How to send project briefs that experts actually love',
       summary: 'Five practical rules to help clients get cleaner proposals and faster delivery.',
-      icon: '🧾'
+      icon: '🧾',
+      readTime: '4 min read'
     },
     {
+      id: 'blog-3',
       category: 'Growth',
       date: 'Jun 04, 2025',
       title: 'Why flexible hiring unlocks better momentum for modern teams',
       summary: 'Short-term specialists can accelerate launches without compromising quality.',
-      icon: '🚀'
+      icon: '🚀',
+      readTime: '4 min read'
     }
   ]
 };

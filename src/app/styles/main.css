@@ -2393,3 +2393,1109 @@ h2 {
     width: 100%;
   }
 }
+
+.heroSearchShell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(232, 225, 217, 0.9);
+  margin: 28px 0 18px;
+}
+
+.heroSearchField {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 0 18px;
+  border-radius: 16px;
+  background: #fff7f2;
+  color: var(--muted);
+}
+
+.heroSearchField input,
+.talentSearchInput input,
+.talentSelect {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  outline: none;
+  color: var(--text);
+}
+
+.heroSearchButton {
+  min-width: 168px;
+}
+
+.heroCategoryRow,
+.heroTrustRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.heroCategoryRow {
+  margin-bottom: 22px;
+}
+
+.heroCategoryChip {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.84);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-weight: 600;
+}
+
+.heroCategoryChip.active {
+  background: var(--text);
+  border-color: var(--text);
+  color: #fff;
+}
+
+.heroActionRow {
+  margin-bottom: 22px;
+}
+
+.heroTrustItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.heroDashboard {
+  width: 100%;
+  max-width: 540px;
+  padding: 24px;
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at top right, rgba(255, 90, 20, 0.16), transparent 34%),
+    linear-gradient(180deg, #fffaf7 0%, #ffffff 100%);
+  border: 1px solid rgba(232, 225, 217, 0.9);
+  box-shadow: 0 32px 60px rgba(41, 24, 10, 0.12);
+}
+
+.heroDashboardTop,
+.planHeaderRow,
+.testimonialTopBar,
+.serviceBottomRow,
+.serviceInsightMeta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.heroDashboardTop {
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.heroDashboardTop h3 {
+  margin: 6px 0 0;
+  font-size: 28px;
+}
+
+.heroKicker,
+.serviceInsightLabel,
+.profileEyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.heroSignal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #fff;
+  border-radius: 999px;
+  color: #1f8b4c;
+  font-size: 13px;
+  border: 1px solid rgba(31, 139, 76, 0.14);
+}
+
+.heroDashboardGrid,
+.profileStatsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.heroMetricCard {
+  padding: 16px;
+  border-radius: 20px;
+  background: #fff;
+  border: 1px solid rgba(232, 225, 217, 0.9);
+}
+
+.heroMetricCard span,
+.serviceBottomRow small,
+.talentCounterCard span,
+.planBadge,
+.freelancerAvailabilityRow,
+.blogFeature .metaLine,
+.blog .metaLine,
+.serviceInsightMeta,
+.heroSpotlightLabel,
+.heroMiniCard span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.heroMetricCard strong,
+.heroSpotlight strong,
+.heroMiniCard strong,
+.talentCounterCard strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 22px;
+}
+
+.heroSpotlight {
+  margin-top: 14px;
+  padding: 18px;
+  border-radius: 22px;
+  background: #1f1d1b;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+}
+
+.heroSpotlight span {
+  display: block;
+  margin-top: 8px;
+  color: rgba(255, 255, 255, 0.74);
+  line-height: 1.6;
+}
+
+.heroSpotlightBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: fit-content;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.heroMiniCards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.heroMiniCard {
+  padding: 16px;
+  border-radius: 20px;
+  background: #fff;
+  border: 1px solid rgba(232, 225, 217, 0.9);
+}
+
+.heroMiniCard.accent {
+  background: linear-gradient(135deg, var(--accent-soft), #fff4ee);
+}
+
+.splitHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-start;
+  margin-bottom: 22px;
+}
+
+.serviceInsightCard {
+  max-width: 360px;
+  min-width: 300px;
+  padding: 20px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, #fff7f2 0%, #ffffff 100%);
+  border: 1px solid rgba(255, 90, 20, 0.14);
+}
+
+.serviceInsightCard strong {
+  display: block;
+  margin: 10px 0 8px;
+  font-size: 22px;
+}
+
+.serviceInsightCard p,
+.serviceDescription,
+.blogFeature p {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.activeServiceCard {
+  border-color: rgba(255, 90, 20, 0.4);
+  box-shadow: 0 22px 44px rgba(255, 90, 20, 0.14);
+}
+
+.serviceBottomRow {
+  align-items: center;
+}
+
+.serviceDescription {
+  margin: 0 0 14px;
+}
+
+.testimonialTopBar {
+  align-items: center;
+}
+
+.testimonialControls,
+.testimonialDots {
+  display: flex;
+  gap: 10px;
+}
+
+.testimonialArrow,
+.testimonialDot {
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
+.testimonialArrow {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+}
+
+.testimonialDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  padding: 0;
+}
+
+.testimonialDot.active {
+  width: 32px;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.talentCounterCard,
+.talentToolbar,
+.blogFeature {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+}
+
+.talentCounterCard {
+  min-width: 230px;
+  padding: 18px 20px;
+}
+
+.talentToolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 0.7fr)) auto;
+  gap: 12px;
+  padding: 14px;
+  margin-bottom: 22px;
+}
+
+.talentSearchInput {
+  min-height: 52px;
+  padding: 0 16px;
+  border-radius: 16px;
+  background: #fff7f2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.talentSelect {
+  min-height: 52px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  padding: 0 14px;
+  appearance: none;
+  background: #fff;
+}
+
+.talentResetButton {
+  min-width: 110px;
+}
+
+.talentEmptyState {
+  text-align: center;
+  padding: 42px 20px;
+}
+
+.talentEmptyState strong {
+  display: block;
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.centerLead {
+  text-align: center;
+  margin-inline: auto;
+}
+
+.planBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.blogFeature {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 22px;
+  padding: 22px;
+  margin-bottom: 18px;
+}
+
+.blogFeatureIcon {
+  border-radius: 24px;
+  display: grid;
+  place-items: center;
+  font-size: 72px;
+  background: linear-gradient(135deg, #f0e5dc, #fff7f2);
+}
+
+.freelancerBookmark.saved {
+  background: rgba(255, 90, 20, 0.12);
+  color: var(--accent);
+}
+
+.freelancerAvailabilityRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 0.9rem;
+}
+
+@media (max-width: 1100px) {
+  .heroDashboardGrid,
+  .heroMiniCards,
+  .talentToolbar,
+  .blogFeature {
+    grid-template-columns: 1fr;
+  }
+
+  .splitHead {
+    flex-direction: column;
+  }
+
+  .serviceInsightCard,
+  .talentCounterCard {
+    min-width: 100%;
+    max-width: none;
+  }
+}
+
+@media (max-width: 780px) {
+  .heroSearchShell,
+  .heroDashboardGrid,
+  .heroMiniCards,
+  .blogFeature,
+  .talentToolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .heroSpotlight,
+  .testimonialTopBar,
+  .serviceInsightMeta,
+  .serviceBottomRow,
+  .freelancerAvailabilityRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .heroSearchButton,
+  .talentResetButton {
+    width: 100%;
+  }
+}
+
+/* Advanced profile states */
+
+.profileLoadingState,
+.profileErrorState,
+.profileEmptyState {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+}
+
+.profileLoadingState {
+  min-height: 220px;
+  place-items: center;
+  text-align: center;
+}
+
+.spinLoader {
+  animation: spinProfileLoader 0.9s linear infinite;
+}
+
+@keyframes spinProfileLoader {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.profileFeedbackBanner {
+  margin-top: 18px;
+  border-radius: 18px;
+  padding: 14px 18px;
+  background: rgba(255, 90, 20, 0.1);
+  color: var(--accent-dark);
+  font-weight: 700;
+}
+
+.profileBioText {
+  position: relative;
+  z-index: 1;
+  margin: 18px 0 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.profileSkillRow {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.profileSkillChip,
+.mutedBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(36, 35, 34, 0.06);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.profileSimpleRow.unread {
+  border-color: rgba(255, 90, 20, 0.2);
+  background: linear-gradient(180deg, rgba(255, 243, 237, 0.95), #fffaf7);
+}
+
+.profileActionButton {
+  border: 1px solid rgba(255, 90, 20, 0.14);
+  background: #fff;
+  color: var(--accent-dark);
+  border-radius: 14px;
+  padding: 10px 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.profileActionButton:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.profileInteractiveRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.profileInlineActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.profileStatusBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.profileStatusBadge.active,
+.profileStatusBadge.accepted {
+  background: rgba(28, 180, 95, 0.12);
+  color: #157347;
+}
+
+.profileStatusBadge.paused,
+.profileStatusBadge.pending {
+  background: rgba(255, 193, 7, 0.16);
+  color: #8a6700;
+}
+
+.profileStatusBadge.shortlisted {
+  background: rgba(47, 128, 237, 0.13);
+  color: #1d4ed8;
+}
+
+.profileStatusBadge.draft,
+.profileStatusBadge.rejected {
+  background: rgba(36, 35, 34, 0.08);
+  color: #55504a;
+}
+
+.profileSettingsForm {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.profileField {
+  display: grid;
+  gap: 8px;
+}
+
+.profileField span {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.profileField input,
+.profileField textarea {
+  border: 1px solid rgba(255, 90, 20, 0.1);
+  background: #fffaf7;
+  border-radius: 16px;
+  padding: 14px 16px;
+  font: inherit;
+  color: var(--text);
+}
+
+.profileField textarea {
+  resize: vertical;
+}
+
+.profileField.fullWidth,
+.profileSettingsActions.fullWidth {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 720px) {
+  .profileInteractiveRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .profileSettingsForm {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Click safety for profile interactive layers */
+.profileHero::before,
+.profileHero::after {
+  pointer-events: none;
+}
+
+.profileHeroActions .btn,
+.profileTab,
+.profileActionButton,
+.profileControlButton,
+.profileInlineAction,
+.profileSettingsForm input,
+.profileSettingsForm textarea,
+.profileSettingsForm button {
+  position: relative;
+  z-index: 2;
+}
+
+/* Workspace pages */
+.workspacePage {
+  padding: 34px 0 72px;
+}
+
+.workspaceHero,
+.workspacePanel {
+  background: #fff;
+  border: 1px solid rgba(255, 90, 20, 0.08);
+  box-shadow: var(--shadow-soft);
+}
+
+.workspaceHero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  gap: 22px;
+  align-items: center;
+  border-radius: 28px;
+  padding: 32px;
+  background:
+    radial-gradient(circle at top right, rgba(255, 90, 20, 0.14), transparent 32%),
+    linear-gradient(180deg, rgba(255, 248, 243, 0.98) 0%, #fff 100%);
+}
+
+.workspaceHero h1 {
+  margin: 8px 0 10px;
+  font-size: clamp(32px, 4vw, 44px);
+}
+
+.workspaceHero p,
+.workspaceMutedText,
+.workspaceListCard p,
+.workspaceConversationCard p,
+.workspaceBubble p,
+.workspacePreviewCard p,
+.workspaceToggleCard p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.workspaceMetricsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.workspaceMetricCard,
+.workspaceHighlightCard {
+  border-radius: 22px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(255, 90, 20, 0.08);
+}
+
+.workspaceMetricCard span {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+.workspaceMetricCard strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 28px;
+}
+
+.workspaceMetricIcon,
+.workspaceListCardIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 90, 20, 0.1);
+  color: var(--accent-dark);
+}
+
+.workspaceHighlightCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.workspaceHighlightCard strong,
+.workspacePanelHeader h2,
+.workspaceThreadHeader strong,
+.workspaceConversationCard strong,
+.workspaceEntityCard strong,
+.workspaceListCard strong,
+.workspacePreviewCard strong,
+.workspaceToggleCard strong {
+  display: block;
+}
+
+.workspacePanel {
+  border-radius: 26px;
+  padding: 24px;
+  margin-top: 18px;
+}
+
+.workspaceToolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) repeat(3, minmax(0, 0.75fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.workspaceToolbar.compact {
+  grid-template-columns: minmax(0, 1.2fr) repeat(2, minmax(0, 0.7fr));
+}
+
+.workspaceToolbar.compactActions {
+  grid-template-columns: minmax(0, 1.1fr) repeat(2, minmax(0, 0.6fr)) auto;
+}
+
+.workspaceCardGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.workspaceCardGrid.reviews {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.workspaceEntityCard,
+.workspaceListCard,
+.workspaceConversationCard,
+.workspaceThreadPanel,
+.workspacePreviewCard,
+.workspaceToggleCard {
+  border: 1px solid rgba(255, 90, 20, 0.08);
+  background: #fffaf7;
+  border-radius: 22px;
+}
+
+.workspaceEntityCard {
+  padding: 20px;
+}
+
+.workspaceEntityTop,
+.workspaceEntityMeta,
+.workspaceInlineActions,
+.workspaceConversationTop,
+.workspaceConversationMeta,
+.workspaceThreadHeader,
+.workspacePanelHeader,
+.workspaceListCard,
+.workspaceListCardMain,
+.workspaceListCardSide,
+.workspaceFormActions,
+.workspacePreviewGrid,
+.workspaceStarsRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.workspaceEntityTop,
+.workspaceThreadHeader,
+.workspacePanelHeader,
+.workspaceListCard,
+.workspaceListCardMain,
+.workspaceListCardSide,
+.workspaceConversationTop,
+.workspaceConversationMeta,
+.workspaceFormActions,
+.workspaceInlineActions {
+  align-items: center;
+}
+
+.workspaceEntityMeta,
+.workspaceConversationMeta {
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 14px;
+}
+
+.workspaceProgressTrack {
+  margin-top: 16px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 90, 20, 0.08);
+  overflow: hidden;
+}
+
+.workspaceProgressTrack span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent) 0%, #ff8a4d 100%);
+}
+
+.workspaceBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: capitalize;
+  background: rgba(36, 35, 34, 0.08);
+  color: #55504a;
+}
+
+.workspaceBadge.active,
+.workspaceBadge.completed,
+.workspaceBadge.visible,
+.workspaceBadge.payment {
+  background: rgba(28, 180, 95, 0.12);
+  color: #157347;
+}
+
+.workspaceBadge.review,
+.workspaceBadge.processing,
+.workspaceBadge.pending,
+.workspaceBadge.order,
+.workspaceBadge.unread {
+  background: rgba(255, 193, 7, 0.16);
+  color: #8a6700;
+}
+
+.workspaceBadge.featured,
+.workspaceBadge.security {
+  background: rgba(47, 128, 237, 0.13);
+  color: #1d4ed8;
+}
+
+.workspaceSplitLayout {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.78fr) minmax(0, 1.22fr);
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.workspaceSplitLayout.singleTop {
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+}
+
+.workspaceConversationList,
+.workspaceListStack,
+.workspaceToggleList {
+  display: grid;
+  gap: 14px;
+}
+
+.workspaceConversationCard {
+  width: 100%;
+  padding: 18px;
+  text-align: left;
+  border: 1px solid rgba(255, 90, 20, 0.08);
+  background: #fffaf7;
+}
+
+.workspaceConversationCard.active {
+  border-color: rgba(255, 90, 20, 0.34);
+  box-shadow: 0 18px 36px rgba(255, 90, 20, 0.12);
+}
+
+.workspaceConversationCard p {
+  margin-top: 10px;
+}
+
+.workspaceThreadPanel {
+  background: linear-gradient(180deg, #fffdfc 0%, #fff7f2 100%);
+  padding: 20px;
+}
+
+.workspaceThreadHeader p {
+  margin-top: 4px;
+}
+
+.workspaceThreadBody {
+  display: grid;
+  gap: 12px;
+  min-height: 420px;
+  margin-top: 18px;
+  padding-right: 6px;
+}
+
+.workspaceBubble {
+  max-width: 78%;
+  padding: 14px 16px;
+  border-radius: 18px;
+  display: grid;
+  gap: 8px;
+}
+
+.workspaceBubble.inbound {
+  background: #fff;
+  border: 1px solid rgba(255, 90, 20, 0.08);
+}
+
+.workspaceBubble.outbound {
+  margin-left: auto;
+  background: linear-gradient(135deg, rgba(255, 90, 20, 0.15), rgba(255, 138, 77, 0.12));
+  border: 1px solid rgba(255, 90, 20, 0.12);
+}
+
+.workspaceBubble span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.workspaceComposer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.workspaceComposer textarea,
+.workspaceForm textarea,
+.workspaceForm input,
+.workspaceWithdrawForm input {
+  font: inherit;
+  color: var(--text);
+  border: 1px solid rgba(255, 90, 20, 0.1);
+  border-radius: 18px;
+  background: #fff;
+  padding: 16px;
+  resize: vertical;
+}
+
+.workspaceComposer textarea {
+  min-height: 110px;
+}
+
+.workspaceListCard {
+  padding: 16px 18px;
+}
+
+.workspaceListCard.unread {
+  background: linear-gradient(180deg, rgba(255, 243, 237, 0.95), #fffaf7);
+  border-color: rgba(255, 90, 20, 0.16);
+}
+
+.workspaceListCardSide {
+  min-width: fit-content;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.workspaceEmptyState {
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  gap: 10px;
+  color: var(--muted);
+}
+
+.workspaceForm,
+.workspaceWithdrawForm {
+  display: grid;
+  gap: 16px;
+}
+
+.workspaceForm {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.workspaceWithdrawForm {
+  margin-top: 12px;
+}
+
+.workspacePreviewCard {
+  padding: 20px;
+  display: grid;
+  gap: 16px;
+}
+
+.workspacePreviewGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.workspacePreviewGrid div {
+  border-radius: 16px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(255, 90, 20, 0.08);
+}
+
+.workspacePreviewGrid span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.workspaceStarsRow {
+  margin-top: 14px;
+  color: var(--accent);
+}
+
+.workspaceToggleCard {
+  width: 100%;
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  text-align: left;
+  background: #fffaf7;
+}
+
+.workspacePanelHeader.smallGap {
+  margin: 4px 0 8px;
+}
+
+.workspaceMiniMetrics {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 1120px) {
+  .workspaceHero,
+  .workspaceSplitLayout,
+  .workspaceSplitLayout.singleTop,
+  .workspaceCardGrid.reviews {
+    grid-template-columns: 1fr;
+  }
+
+  .workspaceMetricsGrid,
+  .workspaceCardGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 780px) {
+  .workspaceHero,
+  .workspaceMetricsGrid,
+  .workspaceToolbar,
+  .workspaceToolbar.compact,
+  .workspaceToolbar.compactActions,
+  .workspaceCardGrid,
+  .workspaceCardGrid.reviews,
+  .workspaceComposer,
+  .workspaceForm,
+  .workspacePreviewGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .workspaceListCard,
+  .workspaceListCardMain,
+  .workspaceListCardSide,
+  .workspaceThreadHeader,
+  .workspaceEntityTop,
+  .workspaceEntityMeta,
+  .workspaceInlineActions,
+  .workspaceFormActions,
+  .workspaceConversationTop,
+  .workspaceConversationMeta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .workspaceBubble {
+    max-width: 100%;
+  }
+}

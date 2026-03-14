@@ -1,44 +1,106 @@
-// NOTE: bu fetch hissəsi backend endpoint tələb edir
-// TODO: real endpoint əlavə olunmalıdır
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
-export const authEndpoints = {
-  // NOTE: bu fetch hissəsi backend endpoint tələb edir
-  // TODO: API inteqrasiyası tamamlanmalıdır
-  login: import.meta.env.VITE_LOGIN_ENDPOINT || '/auth/login'
-};
+const withDefault = (envValue, fallback) => envValue || fallback;
+
 export const API_ENDPOINTS = {
   auth: {
-    login: import.meta.env.VITE_LOGIN_ENDPOINT,
-    register: import.meta.env.VITE_REGISTER_ENDPOINT
+    login: withDefault(import.meta.env.VITE_LOGIN_ENDPOINT, '/auth/login'),
+    register: withDefault(import.meta.env.VITE_REGISTER_ENDPOINT, '/auth/register'),
+    logout: withDefault(import.meta.env.VITE_LOGOUT_ENDPOINT, '/auth/logout'),
+    me: withDefault(import.meta.env.VITE_AUTH_ME_ENDPOINT, '/auth/me'),
+    refresh: withDefault(import.meta.env.VITE_REFRESH_ENDPOINT, '/auth/refresh')
+  },
+  home: {
+    popularCategories: withDefault(import.meta.env.VITE_HOME_POPULAR_CATEGORIES_ENDPOINT, '/categories/popular'),
+    categoryOverview: withDefault(import.meta.env.VITE_HOME_CATEGORY_OVERVIEW_ENDPOINT, '/categories/overview'),
+    featuredTestimonials: withDefault(import.meta.env.VITE_HOME_TESTIMONIALS_ENDPOINT, '/testimonials/featured'),
+    featuredFreelancerCategories: withDefault(
+      import.meta.env.VITE_HOME_FREELANCER_CATEGORIES_ENDPOINT,
+      '/freelancers/featured/categories'
+    ),
+    featuredFreelancers: withDefault(import.meta.env.VITE_HOME_FREELANCERS_ENDPOINT, '/freelancers/featured'),
+    featuredFreelancerSave: withDefault(import.meta.env.VITE_HOME_FREELANCER_SAVE_ENDPOINT, '/freelancers/featured/saved'),
+    pricingPlans: withDefault(import.meta.env.VITE_HOME_PRICING_ENDPOINT, '/plans'),
+    latestBlogs: withDefault(import.meta.env.VITE_HOME_BLOGS_ENDPOINT, '/blogs/latest')
+  },
+  profile: {
+    me: withDefault(import.meta.env.VITE_PROFILE_ME_ENDPOINT, '/profile/me'),
+    update: withDefault(import.meta.env.VITE_PROFILE_UPDATE_ENDPOINT, '/profile/me'),
+    summary: withDefault(import.meta.env.VITE_PROFILE_SUMMARY_ENDPOINT, '/profile/dashboard-summary'),
+    tasks: withDefault(import.meta.env.VITE_PROFILE_TASKS_ENDPOINT, '/profile/tasks'),
+    listings: withDefault(import.meta.env.VITE_PROFILE_LISTINGS_ENDPOINT, '/profile/listings'),
+    proposals: withDefault(import.meta.env.VITE_PROFILE_PROPOSALS_ENDPOINT, '/profile/proposals'),
+    reviews: withDefault(import.meta.env.VITE_PROFILE_REVIEWS_ENDPOINT, '/profile/reviews'),
+    saved: withDefault(import.meta.env.VITE_PROFILE_SAVED_ENDPOINT, '/profile/saved'),
+    notifications: withDefault(import.meta.env.VITE_PROFILE_NOTIFICATIONS_ENDPOINT, '/profile/notifications'),
+    messages: withDefault(import.meta.env.VITE_PROFILE_MESSAGES_ENDPOINT, '/profile/messages')
+  },
+  workspace: {
+    orders: withDefault(import.meta.env.VITE_WORKSPACE_ORDERS_ENDPOINT, '/workspace/orders'),
+    messages: withDefault(import.meta.env.VITE_WORKSPACE_MESSAGES_ENDPOINT, '/workspace/messages'),
+    notifications: withDefault(import.meta.env.VITE_WORKSPACE_NOTIFICATIONS_ENDPOINT, '/workspace/notifications'),
+    postTaskMeta: withDefault(import.meta.env.VITE_WORKSPACE_TASK_META_ENDPOINT, '/workspace/tasks/meta'),
+    postTask: withDefault(import.meta.env.VITE_WORKSPACE_TASK_CREATE_ENDPOINT, '/workspace/tasks'),
+    walletSummary: withDefault(import.meta.env.VITE_WORKSPACE_WALLET_SUMMARY_ENDPOINT, '/workspace/wallet/summary'),
+    transactions: withDefault(import.meta.env.VITE_WORKSPACE_TRANSACTIONS_ENDPOINT, '/workspace/wallet/transactions'),
+    withdrawals: withDefault(import.meta.env.VITE_WORKSPACE_WITHDRAWALS_ENDPOINT, '/workspace/wallet/withdrawals'),
+    reviews: withDefault(import.meta.env.VITE_WORKSPACE_REVIEWS_ENDPOINT, '/workspace/reviews'),
+    security: withDefault(import.meta.env.VITE_WORKSPACE_SECURITY_ENDPOINT, '/workspace/security/settings'),
+    sessions: withDefault(import.meta.env.VITE_WORKSPACE_SESSIONS_ENDPOINT, '/workspace/security/sessions')
+  },
+  taskDetail: {
+    detail: withDefault(import.meta.env.VITE_TASK_DETAIL_ENDPOINT, '/tasks')
   }
 };
-export const homeEndpoints = {
-  // NOTE: bu fetch hissəsi backend endpoint tələb edir
-  // TODO: API inteqrasiyası tamamlanmalıdır
-  popularCategories: '/categories/popular',
 
-  // NOTE: bu fetch hissəsi backend endpoint tələb edir
-  // TODO: API inteqrasiyası tamamlanmalıdır
-  categoryOverview: '/categories/overview',
+export const authEndpoints = API_ENDPOINTS.auth;
+export const homeEndpoints = API_ENDPOINTS.home;
+export const taskDetailEndpoints = API_ENDPOINTS.taskDetail;
 
-  // NOTE: bu fetch hissəsi backend endpoint tələb edir
-  // TODO: API inteqrasiyası tamamlanmalıdır
-  featuredTestimonials: '/testimonials/featured',
+export function buildProfileListingStatusEndpoint(listingId) {
+  return `${API_ENDPOINTS.profile.listings}/${listingId}/status`;
+}
 
-  // NOTE: bu fetch hissəsi backend endpoint tələb edir
-  // TODO: API inteqrasiyası tamamlanmalıdır
-  featuredFreelancerCategories: '/freelancers/featured/categories',
+export function buildProfileProposalStatusEndpoint(proposalId) {
+  return `${API_ENDPOINTS.profile.proposals}/${proposalId}/status`;
+}
 
-  // NOTE: bu fetch hissəsi backend endpoint tələb edir
-  // TODO: API inteqrasiyası tamamlanmalıdır
-  featuredFreelancers: '/freelancers/featured',
+export function buildProfileSavedItemEndpoint(savedItemId) {
+  return `${API_ENDPOINTS.profile.saved}/${savedItemId}`;
+}
 
-  // NOTE: bu fetch hissəsi backend endpoint tələb edir
-  // TODO: API inteqrasiyası tamamlanmalıdır
-  pricingPlans: '/plans',
+export function buildProfileNotificationReadEndpoint(notificationId) {
+  return `${API_ENDPOINTS.profile.notifications}/${notificationId}/read`;
+}
 
-  // NOTE: bu fetch hissəsi backend endpoint tələb edir
-  // TODO: API inteqrasiyası tamamlanmalıdır
-  latestBlogs: '/blogs/latest?limit=3'
-};
+export function buildProfileMessageReadEndpoint(messageId) {
+  return `${API_ENDPOINTS.profile.messages}/${messageId}/read`;
+}
+
+export function buildFeaturedTalentSaveEndpoint(talentId) {
+  return `${API_ENDPOINTS.home.featuredFreelancerSave}/${talentId}`;
+}
+
+export function buildTaskDetailEndpoint(slug) {
+  return `${API_ENDPOINTS.taskDetail.detail}/${slug}`;
+}
+
+export function buildWorkspaceConversationEndpoint(conversationId) {
+  return `${API_ENDPOINTS.workspace.messages}/${conversationId}`;
+}
+
+export function buildWorkspaceConversationReadEndpoint(conversationId) {
+  return `${API_ENDPOINTS.workspace.messages}/${conversationId}/read`;
+}
+
+export function buildWorkspaceNotificationEndpoint(notificationId) {
+  return `${API_ENDPOINTS.workspace.notifications}/${notificationId}/read`;
+}
+
+export function buildWorkspaceReviewFeatureEndpoint(reviewId) {
+  return `${API_ENDPOINTS.workspace.reviews}/${reviewId}/feature`;
+}
+
+export function buildWorkspaceSessionEndpoint(sessionId) {
+  return `${API_ENDPOINTS.workspace.sessions}/${sessionId}`;
+}

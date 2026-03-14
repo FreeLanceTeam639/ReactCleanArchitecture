@@ -35,18 +35,18 @@ export function useLoginForm(navigate) {
         rememberMe
       });
 
-      saveAuthenticatedUser(payload, rememberMe);
+      saveAuthenticatedUser(payload.session || payload, rememberMe);
       setFeedback({
-        message: 'Giris ugurludur. Ana sehifeye yonlendirilirsiz...',
+        message: 'Giriş uğurludur. Profilə yönləndirilirsiniz...',
         type: 'success'
       });
 
       window.setTimeout(() => {
         navigate(ROUTES.profile);
-      }, 800);
+      }, 500);
     } catch (error) {
       setFeedback({
-        message: error.message || 'Login sorgusu ugursuz oldu.',
+        message: error.message || 'Login sorgusu uğursuz oldu.',
         type: 'error'
       });
     } finally {

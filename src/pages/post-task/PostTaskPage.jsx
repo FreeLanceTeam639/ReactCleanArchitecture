@@ -1,0 +1,126 @@
+import { LoaderCircle, Sparkles, WandSparkles } from 'lucide-react';
+import { AUTHENTICATED_NAVIGATION_LINKS } from '../../shared/constants/navigationLinks.js';
+import { ROUTES } from '../../shared/constants/routes.js';
+import MarketplaceHeader from '../../shared/ui/MarketplaceHeader.jsx';
+import { usePostTaskPage } from '../../features/workspace/hooks/usePostTaskPage.js';
+
+export default function PostTaskPage({ navigate }) {
+  const { meta, form, feedback, busyKey, isLoading, error, setFieldValue, submit } = usePostTaskPage(navigate);
+
+  return (
+    <div className="profileShell">
+      <MarketplaceHeader
+        navigate={navigate}
+        links={AUTHENTICATED_NAVIGATION_LINKS}
+        actionButton={{ label: 'Post a Job', route: ROUTES.postTask }}
+      />
+
+      <main className="wrap workspacePage fadeUp">
+        <section className="workspaceHero cardLift">
+          <div>
+            <span className="profileEyebrow">Client Workflow</span>
+            <h1>Create Task / Post a Job</h1>
+            <p>Task creation axını endpoint-ready form submit ilə işləyir, hələlik mock fallback ilə test olunur.</p>
+          </div>
+          <div className="workspaceHighlightCard cardLift">
+            <WandSparkles size={18} />
+            <div>
+              <strong>Structured brief</strong>
+              <p>Category, budget, timeline və skills birbaşa create-task service qatına düşür.</p>
+            </div>
+          </div>
+        </section>
+
+        <section className="workspaceSplitLayout singleTop">
+          <article className="workspacePanel cardLift">
+            {isLoading ? (
+              <div className="workspaceEmptyState"><LoaderCircle className="spinLoader" size={24} /> Loading task metadata...</div>
+            ) : error ? (
+              <div className="workspaceEmptyState">{error}</div>
+            ) : (
+              <form className="workspaceForm" onSubmit={(event) => submit(event, 'publish')}>
+                <label className="profileField fullWidth">
+                  <span>Task title</span>
+                  <input value={form.title} onChange={(event) => setFieldValue('title', event.target.value)} placeholder="Need a polished marketplace dashboard UI" />
+                </label>
+
+                <label className="profileField">
+                  <span>Category</span>
+                  <select className="talentSelect" value={form.category} onChange={(event) => setFieldValue('category', event.target.value)}>
+                    {meta.categories.map((item) => <option key={item}>{item}</option>)}
+                  </select>
+                </label>
+
+                <label className="profileField">
+                  <span>Budget type</span>
+                  <select className="talentSelect" value={form.budgetType} onChange={(event) => setFieldValue('budgetType', event.target.value)}>
+                    {meta.budgetTypes.map((item) => <option key={item}>{item}</option>)}
+                  </select>
+                </label>
+
+                <label className="profileField">
+                  <span>Budget</span>
+                  <input value={form.budget} onChange={(event) => setFieldValue('budget', event.target.value)} placeholder="1200" />
+                </label>
+
+                <label className="profileField">
+                  <span>Timeline</span>
+                  <select className="talentSelect" value={form.duration} onChange={(event) => setFieldValue('duration', event.target.value)}>
+                    {meta.durations.map((item) => <option key={item}>{item}</option>)}
+                  </select>
+                </label>
+
+                <label className="profileField fullWidth">
+                  <span>Required skills</span>
+                  <input value={form.skills} onChange={(event) => setFieldValue('skills', event.target.value)} placeholder="React, Tailwind, REST API" />
+                </label>
+
+                <label className="profileField fullWidth">
+                  <span>Description</span>
+                  <textarea rows="7" value={form.description} onChange={(event) => setFieldValue('description', event.target.value)} placeholder="Describe deliverables, deadlines and communication expectations." />
+                </label>
+
+                <div className="workspaceFormActions fullWidth">
+                  <button type="button" className="btn ghost interactive" onClick={(event) => submit(event, 'draft')} disabled={busyKey === 'draft'}>
+                    {busyKey === 'draft' ? 'Saving...' : 'Save draft'}
+                  </button>
+                  <button type="submit" className="btn primary interactive" disabled={busyKey === 'publish'}>
+                    {busyKey === 'publish' ? 'Publishing...' : 'Publish task'}
+                  </button>
+                </div>
+              </form>
+            )}
+            {feedback ? <div className="profileFeedbackBanner">{feedback}</div> : null}
+          </article>
+
+          <aside className="workspacePanel cardLift">
+            <div className="workspacePanelHeader">
+              <div>
+                <span className="profileEyebrow">Preview</span>
+                <h2>Client brief snapshot</h2>
+              </div>
+              <Sparkles size={18} />
+            </div>
+            <div className="workspacePreviewCard">
+              <strong>{form.title || 'Task title preview'}</strong>
+              <p>{form.description || 'Your task description will appear here. Clear structure increases conversion.'}</p>
+              <div className="workspacePreviewGrid">
+                <div><span>Category</span><strong>{form.category}</strong></div>
+                <div><span>Budget</span><strong>{form.budgetType} • ${form.budget || 0}</strong></div>
+                <div><span>Timeline</span><strong>{form.duration}</strong></div>
+                <div><span>Skills</span><strong>{form.skills || '—'}</strong></div>
+              </div>
+              <div className="profileSkillRow">
+                {meta.suggestedSkills.map((item) => (
+                  <button key={item} type="button" className="profileSkillChip interactive" onClick={() => setFieldValue('skills', form.skills ? `${form.skills}, ${item}` : item)}>
+                    + {item}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </aside>
+        </section>
+      </main>
+    </div>
+  );
+}
