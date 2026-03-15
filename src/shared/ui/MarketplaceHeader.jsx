@@ -189,7 +189,7 @@ export default function MarketplaceHeader({
             ))}
           </nav>
 
-          <div className={isOpen ? 'detailHeaderActions open' : 'detailHeaderActions'}>
+          <div className={`${isOpen ? 'detailHeaderActions open' : 'detailHeaderActions'}${isSearchOpen ? ' searchMode' : ''}`}>
             <form
               ref={searchWrapRef}
               className={isSearchOpen ? 'detailSearchShell open' : 'detailSearchShell'}
@@ -200,8 +200,10 @@ export default function MarketplaceHeader({
                 className="detailSearchActivator interactive"
                 onClick={handleOpenSearch}
                 aria-label="Open search"
+                aria-expanded={isSearchOpen}
               >
                 <Search size={16} />
+                <span className="detailSearchActivatorLabel">Search</span>
               </button>
 
               <input
