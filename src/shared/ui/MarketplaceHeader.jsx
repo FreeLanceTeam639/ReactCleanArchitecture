@@ -7,6 +7,9 @@ import { navigateWithScroll } from '../lib/navigation/navigateWithScroll.js';
 import { clearAuthenticatedUser, hasAuthenticatedSession } from '../lib/storage/authStorage.js';
 import BrandLogo from './BrandLogo.jsx';
 
+const MENU_BREAKPOINT = 980;
+const COMPACT_BREAKPOINT = 760;
+
 function resolveLinkNavigation(event, link, navigate, closeMenu) {
   if (link.route) {
     navigateWithScroll(event, link.route, navigate);
@@ -29,6 +32,8 @@ export default function MarketplaceHeader({
   const [authenticatedUser, setAuthenticatedUser] = useState(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isCompactLayout, setIsCompactLayout] = useState(false);
   const searchWrapRef = useRef(null);
   const searchInputRef = useRef(null);
 
@@ -71,6 +76,45 @@ export default function MarketplaceHeader({
   }, []);
 
   useEffect(() => {
+    function syncScrolledState() {
+      setIsScrolled(window.scrollY > 10);
+    }
+
+    syncScrolledState();
+    window.addEventListener('scroll', syncScrolledState, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', syncScrolledState);
+    };
+  }, []);
+
+  useEffect(() => {
+    function syncResponsiveState() {
+      const compact = window.innerWidth <= COMPACT_BREAKPOINT;
+      const canUseMenu = window.innerWidth <= MENU_BREAKPOINT;
+
+      setIsCompactLayout(compact);
+
+      if (!canUseMenu) {
+        setIsOpen(false);
+      }
+
+      if (!compact) {
+        setIsSearchOpen(false);
+      }
+    }
+
+    syncResponsiveState();
+    window.addEventListener('resize', syncResponsiveState);
+
+    return () => {
+      window.removeEventListener('resize', syncResponsiveState);
+    };
+  }, []);
+
+  const isSearchExpanded = isSearchOpen;
+
+  useEffect(() => {
     if (!isSearchOpen) {
       return undefined;
     }
@@ -110,6 +154,8 @@ export default function MarketplaceHeader({
 
   const handleCloseSearch = () => {
     setIsSearchOpen(false);
+    setSearchValue('');
+    searchInputRef.current?.blur();
   };
 
   const handleSearchSubmit = (event) => {
@@ -144,6 +190,61 @@ export default function MarketplaceHeader({
     navigate(ROUTES.home);
   };
 
+  const headerClassName = isScrolled ? 'detailHeader detailHeaderShared scrolled' : 'detailHeader detailHeaderShared';
+  const rowClassName = `wrap detailHeaderRow${isSearchOpen ? ' searchOpen' : ''}${isCompactLayout ? ' compact' : ''}`;
+  const panelClassName = `${isOpen ? 'detailHeaderPanel open' : 'detailHeaderPanel'}${isSearchOpen ? ' searchHidden' : ''}`;
+  const navClassName = `${isSearchOpen ? 'detailHeaderNav searchHidden' : 'detailHeaderNav'}${isOpen ? ' open' : ''}`;
+  const actionsClassName = `${isSearchOpen ? 'detailHeaderActions searchMode' : 'detailHeaderActions'}${isCompactLayout ? ' compact' : ''}`;
+  const searchShellClassName = `${isSearchExpanded ? 'detailSearchShell open' : 'detailSearchShell'}${
+    isCompactLayout ? ' compact' : ''
+  }`;
+
+  const authControls = authenticatedUser ? (
+    <>
+      {actionButton ? (
+        <a
+          href={actionButton.href || actionButton.route || ROUTES.home}
+          className="btn primary interactive detailHeaderRegister detailHeaderActionButton"
+          onClick={(event) => resolveLinkNavigation(event, actionButton, navigate, closeMenu)}
+        >
+          {actionButton.label}
+        </a>
+      ) : null}
+      <button
+        type="button"
+        className="detailHeaderUser interactive detailHeaderProfileButton"
+        onClick={() => {
+          closeMenu();
+          navigate(ROUTES.profile);
+        }}
+        aria-label="Open profile"
+        title={authenticatedUser.firstName || authenticatedUser.fullName || 'Profile'}
+      >
+        <UserRound size={18} />
+      </button>
+      <button type="button" className="detailHeaderLogout interactive" onClick={handleSignOut} aria-label="Sign out">
+        <LogOut size={16} />
+      </button>
+    </>
+  ) : (
+    <>
+      <a
+        href={ROUTES.login}
+        className="detailHeaderLink interactive"
+        onClick={(event) => resolveLinkNavigation(event, { route: ROUTES.login }, navigate, closeMenu)}
+      >
+        Sign In
+      </a>
+      <a
+        href={ROUTES.register}
+        className="btn primary interactive detailHeaderRegister"
+        onClick={(event) => resolveLinkNavigation(event, { route: ROUTES.register }, navigate, closeMenu)}
+      >
+        Register
+      </a>
+    </>
+  );
+
   return (
     <>
       {showPromo ? (
@@ -160,47 +261,36 @@ export default function MarketplaceHeader({
         </div>
       ) : null}
 
-      <header className="detailHeader detailHeaderShared">
-        <div className={isSearchOpen ? 'wrap detailHeaderRow searchOpen' : 'wrap detailHeaderRow'}>
+      <header className={headerClassName}>
+        <div className={rowClassName}>
           <BrandLogo
             href={brandHref}
             label={brandLabel}
             onClick={(event) => navigateWithScroll(event, ROUTES.home, navigate)}
           />
 
-          <button
-            type="button"
-            className="detailMenuButton interactive"
-            onClick={() => setIsOpen((currentState) => !currentState)}
-            aria-label="Toggle navigation"
-          >
-            {isOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
+          <div className={panelClassName}>
+            <nav className={navClassName}>
+              {mappedLinks.map((link) => (
+                <a
+                  key={`${link.label}-${link.href}`}
+                  href={link.href}
+                  onClick={(event) => resolveLinkNavigation(event, link, navigate, closeMenu)}
+                >
+                  {link.label}
+                </a>
+              ))}
+            </nav>
+          </div>
 
-          <nav className={`${isOpen ? 'detailHeaderNav open' : 'detailHeaderNav'}${isSearchOpen ? ' searchHidden' : ''}`}>
-            {mappedLinks.map((link) => (
-              <a
-                key={`${link.label}-${link.href}`}
-                href={link.href}
-                onClick={(event) => resolveLinkNavigation(event, link, navigate, closeMenu)}
-              >
-                {link.label}
-              </a>
-            ))}
-          </nav>
-
-          <div className={`${isOpen ? 'detailHeaderActions open' : 'detailHeaderActions'}${isSearchOpen ? ' searchMode' : ''}`}>
-            <form
-              ref={searchWrapRef}
-              className={isSearchOpen ? 'detailSearchShell open' : 'detailSearchShell'}
-              onSubmit={handleSearchSubmit}
-            >
+          <div className={actionsClassName}>
+            <form ref={searchWrapRef} className={searchShellClassName} onSubmit={handleSearchSubmit}>
               <button
                 type="button"
                 className="detailSearchActivator interactive"
                 onClick={handleOpenSearch}
                 aria-label="Open search"
-                aria-expanded={isSearchOpen}
+                aria-expanded={isSearchExpanded}
               >
                 <Search size={16} />
                 <span className="detailSearchActivatorLabel">Search</span>
@@ -218,7 +308,7 @@ export default function MarketplaceHeader({
 
               <button
                 type="button"
-                className={isSearchOpen ? 'detailSearchClose interactive visible' : 'detailSearchClose interactive'}
+                className={isSearchExpanded ? 'detailSearchClose interactive visible' : 'detailSearchClose interactive'}
                 onClick={handleCloseSearch}
                 aria-label="Close search"
               >
@@ -226,52 +316,20 @@ export default function MarketplaceHeader({
               </button>
             </form>
 
-            {authenticatedUser ? (
-              <>
-                {actionButton ? (
-                  <a
-                    href={actionButton.href || actionButton.route || ROUTES.home}
-                    className="btn primary interactive detailHeaderRegister detailHeaderActionButton"
-                    onClick={(event) => resolveLinkNavigation(event, actionButton, navigate, closeMenu)}
-                  >
-                    {actionButton.label}
-                  </a>
-                ) : null}
-                <button
-                  type="button"
-                  className="detailHeaderUser interactive detailHeaderProfileButton"
-                  onClick={() => {
-                    closeMenu();
-                    navigate(ROUTES.profile);
-                  }}
-                  aria-label="Open profile"
-                  title={authenticatedUser.firstName || authenticatedUser.fullName || 'Profile'}
-                >
-                  <UserRound size={18} />
-                </button>
-                <button type="button" className="detailHeaderLogout interactive" onClick={handleSignOut} aria-label="Sign out">
-                  <LogOut size={16} />
-                </button>
-              </>
-            ) : (
-              <>
-                <a
-                  href={ROUTES.login}
-                  className="detailHeaderLink interactive"
-                  onClick={(event) => resolveLinkNavigation(event, { route: ROUTES.login }, navigate, closeMenu)}
-                >
-                  Sign In
-                </a>
-                <a
-                  href={ROUTES.register}
-                  className="btn primary interactive detailHeaderRegister"
-                  onClick={(event) => resolveLinkNavigation(event, { route: ROUTES.register }, navigate, closeMenu)}
-                >
-                  Register
-                </a>
-              </>
-            )}
+            {isSearchOpen ? null : authControls}
           </div>
+
+          {isSearchOpen ? null : (
+            <button
+              type="button"
+              className="detailMenuButton interactive"
+              onClick={() => setIsOpen((currentState) => !currentState)}
+              aria-label="Toggle navigation"
+              aria-expanded={isOpen}
+            >
+              {isOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          )}
         </div>
       </header>
     </>
