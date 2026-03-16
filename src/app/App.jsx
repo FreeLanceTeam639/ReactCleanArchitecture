@@ -12,6 +12,12 @@ import PostTaskPage from '../pages/post-task/PostTaskPage.jsx';
 import WalletPage from '../pages/wallet/WalletPage.jsx';
 import ReviewsPage from '../pages/reviews/ReviewsPage.jsx';
 import SecurityPage from '../pages/security/SecurityPage.jsx';
+import AdminDashboardPage from '../pages/admin/AdminDashboardPage.jsx';
+import AdminUsersPage from '../pages/admin/AdminUsersPage.jsx';
+import AdminJobsPage from '../pages/admin/AdminJobsPage.jsx';
+import AdminCategoriesPage from '../pages/admin/AdminCategoriesPage.jsx';
+import AdminTalentPage from '../pages/admin/AdminTalentPage.jsx';
+import AdminPricingPage from '../pages/admin/AdminPricingPage.jsx';
 
 function App() {
   const [pathname, navigate] = usePathname();
@@ -54,6 +60,30 @@ function App() {
 
   if (pathname === ROUTES.security) {
     return <SecurityPage navigate={navigate} />;
+  }
+
+  if (pathname === ROUTES.admin) {
+    return <AdminDashboardPage navigate={navigate} pathname={pathname} />;
+  }
+
+  if (pathname === ROUTES.adminUsers) {
+    return <AdminUsersPage navigate={navigate} pathname={pathname} />;
+  }
+
+  if (pathname === ROUTES.adminJobs) {
+    return <AdminJobsPage navigate={navigate} pathname={pathname} />;
+  }
+
+  if (pathname === ROUTES.adminCategories) {
+    return <AdminCategoriesPage navigate={navigate} pathname={pathname} />;
+  }
+
+  if (pathname === ROUTES.adminTalent) {
+    return <AdminTalentPage navigate={navigate} pathname={pathname} />;
+  }
+
+  if (pathname === ROUTES.adminPricing) {
+    return <AdminPricingPage navigate={navigate} pathname={pathname} />;
   }
 
   if (isTaskDetailRoute(pathname)) {

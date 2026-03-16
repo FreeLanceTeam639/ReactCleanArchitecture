@@ -3982,3 +3982,743 @@ h2 {
     margin: 0;
   }
 }
+
+/* ==========================
+   Admin panel
+========================== */
+.adminShell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 286px minmax(0, 1fr);
+  background: linear-gradient(180deg, #f8f7f5 0%, #f4f2ee 100%);
+}
+
+.adminSidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: 24px 20px;
+  border-right: 1px solid rgba(232, 225, 217, 0.92);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  z-index: 55;
+}
+
+
+.adminSidebarTop,
+.adminSidebarFooter,
+.adminTopbar,
+.adminPanelCardHeader,
+.adminPricingCardHeader,
+.adminModalHeader,
+.adminModalFooter,
+.adminToolbar,
+.adminPagination,
+.adminRowActions,
+.adminTopbarIntro,
+.adminTopbarActions,
+.adminIdentityCell,
+.adminDetailHeader,
+.adminDetailBlock,
+.adminSidebarLink,
+.adminToolbarFilters,
+.adminSearchField,
+.adminActionTextButton,
+.adminPricingGrid,
+.adminRowActions.split {
+  display: flex;
+  align-items: center;
+}
+
+.adminSidebarTop,
+.adminSidebarFooter,
+.adminTopbar,
+.adminPanelCardHeader,
+.adminPricingCardHeader,
+.adminModalHeader,
+.adminModalFooter,
+.adminToolbar,
+.adminPagination,
+.adminRowActions.split {
+  justify-content: space-between;
+}
+
+.adminBrand {
+  width: 100%;
+}
+
+.adminSidebarClose,
+.adminMenuButton {
+  display: none;
+}
+
+.adminSidebarMeta {
+  padding: 18px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(255, 232, 222, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
+  border: 1px solid rgba(255, 90, 20, 0.12);
+}
+
+.adminSidebarEyebrow,
+.adminPageEyebrow {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.73rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.adminSidebarMeta p,
+.adminTopbarIntro p,
+.adminModalCopy,
+.adminDetailBlock p,
+.adminEmptyState p,
+.adminStatCard p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.adminSidebarNav {
+  display: grid;
+  gap: 10px;
+}
+
+.adminSidebarLink {
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: transparent;
+  color: #4a5568;
+  justify-content: flex-start;
+  font-weight: 600;
+}
+
+.adminSidebarLink.active {
+  color: var(--text);
+  background: #ffffff;
+  border-color: rgba(255, 90, 20, 0.14);
+  box-shadow: 0 16px 26px rgba(33, 21, 14, 0.06);
+}
+
+.adminSidebarFooter {
+  margin-top: auto;
+  padding: 16px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid rgba(232, 225, 217, 0.9);
+  gap: 14px;
+}
+
+.adminSidebarFooter strong,
+.adminTopbarIntro h1,
+.adminPanelCardHeader h2,
+.adminModalHeader h3,
+.adminPricingCard h3,
+.adminStatCard strong,
+.adminDetailGrid strong,
+.adminEmptyState strong,
+.adminTable strong {
+  color: var(--text);
+}
+
+.adminSidebarFooter strong,
+.adminSidebarFooter span,
+.adminTopbarIntro h1,
+.adminTopbarIntro p,
+.adminPanelCardHeader h2,
+.adminPanelCount,
+.adminTable th,
+.adminTable td,
+.adminEmptyState,
+.adminStatCard span,
+.adminStatCard strong,
+.adminStatCard p,
+.adminModalHeader h3,
+.adminModalCopy,
+.adminFormGrid label span,
+.adminFilterField span,
+.adminPricingCard li,
+.adminNotice,
+.adminPagination,
+.adminActionTextButton,
+.adminDetailGrid span,
+.adminDetailBlock span {
+  font-size: 0.95rem;
+}
+
+.adminSidebarFooter span {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+}
+
+.adminMain {
+  min-width: 0;
+  padding: 22px 0 36px;
+}
+
+.adminTopbar {
+  gap: 20px;
+  padding: 0 0 24px;
+}
+
+.adminTopbarIntro {
+  gap: 16px;
+}
+
+.adminTopbarIntro h1,
+.adminPanelCardHeader h2,
+.adminModalHeader h3 {
+  margin: 6px 0 0;
+  font-size: clamp(1.6rem, 2vw, 2rem);
+  letter-spacing: -0.03em;
+}
+
+.adminTopbarActions {
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.adminContent {
+  display: grid;
+  gap: 20px;
+}
+
+.adminStatsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.adminStatCard,
+.adminPanelCard,
+.adminToolbar,
+.adminPricingCard {
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(232, 225, 217, 0.92);
+  box-shadow: 0 20px 36px rgba(33, 21, 14, 0.05);
+}
+
+.adminStatCard,
+.adminPanelCard,
+.adminPricingCard {
+  border-radius: 24px;
+}
+
+.adminStatCard {
+  padding: 20px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+}
+
+.adminStatIcon,
+.adminAvatarPlaceholder {
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(180deg, var(--accent-soft) 0%, #fff 100%);
+  color: var(--accent);
+}
+
+.adminStatCard span {
+  display: block;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.adminStatCard strong {
+  display: block;
+  font-size: 1.7rem;
+  margin-bottom: 6px;
+}
+
+.adminTwoColumnGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.adminPanelCard {
+  padding: 22px;
+}
+
+.adminPanelCount {
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255, 90, 20, 0.08);
+  color: var(--accent-dark);
+  font-weight: 700;
+}
+
+.adminToolbar {
+  gap: 16px;
+  padding: 16px 18px;
+  border-radius: 22px;
+  flex-wrap: wrap;
+}
+
+.adminSearchField {
+  flex: 1 1 320px;
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(232, 225, 217, 0.95);
+  background: #fff;
+}
+
+.adminSearchField input,
+.adminFormGrid input,
+.adminFormGrid select,
+.adminFormGrid textarea,
+.adminFilterField select {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  outline: none;
+}
+
+.adminToolbarFilters {
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.adminFilterField {
+  display: grid;
+  gap: 6px;
+  min-width: 150px;
+  color: var(--muted);
+}
+
+.adminFilterField select,
+.adminFormGrid input,
+.adminFormGrid select,
+.adminFormGrid textarea {
+  min-height: 48px;
+  border-radius: 14px;
+  border: 1px solid rgba(232, 225, 217, 0.95);
+  background: #fff;
+  padding: 0 14px;
+}
+
+.adminFormGrid textarea {
+  padding-top: 14px;
+  resize: vertical;
+}
+
+.adminToolbarButton,
+.btn.danger {
+  min-height: 48px;
+}
+
+.btn.danger {
+  background: #241915;
+  color: #fff;
+}
+
+.btn.danger:hover {
+  background: #140d0b;
+}
+
+.adminTableWrap {
+  overflow-x: auto;
+}
+
+.adminTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.adminTable th,
+.adminTable td {
+  text-align: left;
+  padding: 14px 10px;
+  vertical-align: middle;
+  border-bottom: 1px solid rgba(232, 225, 217, 0.92);
+}
+
+.adminTable th {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.adminTable td span {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.adminRowActions,
+.adminTopbarActions,
+.adminSearchField,
+.adminToolbarFilters,
+.adminIdentityCell,
+.adminActionTextButton,
+.adminRowActions.split {
+  gap: 10px;
+}
+
+.adminIconButton,
+.adminPaginationButton,
+.adminActionTextButton {
+  border: 1px solid rgba(232, 225, 217, 0.95);
+  background: #fff;
+  color: #4a5568;
+  border-radius: 14px;
+}
+
+.adminIconButton,
+.adminMenuButton,
+.adminSidebarClose {
+  width: 40px;
+  height: 40px;
+  display: inline-grid;
+  place-items: center;
+}
+
+.adminIconButton.danger,
+.adminActionTextButton.danger {
+  color: #a33d12;
+}
+
+.adminStatusBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: capitalize;
+  background: rgba(46, 204, 113, 0.12);
+  color: #16864b;
+}
+
+.adminStatusBadge.blocked,
+.adminStatusBadge.inactive,
+.adminStatusBadge.hidden,
+.adminStatusBadge.closed,
+.adminStatusBadge.danger {
+  background: rgba(150, 47, 26, 0.12);
+  color: #9a4019;
+}
+
+.adminStatusBadge.pending,
+.adminStatusBadge.regular,
+.adminStatusBadge.muted {
+  background: rgba(71, 85, 105, 0.1);
+  color: #516071;
+}
+
+.adminStatusBadge.visible,
+.adminStatusBadge.featured,
+.adminStatusBadge.primary {
+  background: rgba(255, 90, 20, 0.12);
+  color: var(--accent-dark);
+}
+
+.adminEmptyState {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  gap: 6px;
+  padding: 42px 20px;
+  border-radius: 18px;
+  border: 1px dashed rgba(232, 225, 217, 0.95);
+  background: rgba(248, 247, 245, 0.9);
+}
+
+.adminEmptyState.compact {
+  padding: 30px 16px;
+}
+
+.adminNotice {
+  padding: 14px 16px;
+  border-radius: 16px;
+  font-weight: 600;
+}
+
+.adminNotice.success {
+  background: rgba(46, 204, 113, 0.12);
+  color: #167c47;
+  border: 1px solid rgba(46, 204, 113, 0.16);
+}
+
+.adminNotice.error {
+  background: rgba(150, 47, 26, 0.12);
+  color: #8f3b16;
+  border: 1px solid rgba(150, 47, 26, 0.14);
+}
+
+.adminPagination {
+  gap: 16px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+
+.adminPaginationButton {
+  min-height: 42px;
+  padding: 0 14px;
+}
+
+.adminPaginationButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.adminModalOverlay,
+.adminSidebarBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 40, 0.42);
+  backdrop-filter: blur(6px);
+}
+
+.adminSidebarBackdrop {
+  z-index: 40;
+}
+
+.adminModalOverlay {
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.adminModalCard {
+  width: min(640px, calc(100vw - 24px));
+  background: #fff;
+  border-radius: 26px;
+  border: 1px solid rgba(232, 225, 217, 0.95);
+  box-shadow: 0 28px 54px rgba(16, 24, 40, 0.14);
+}
+
+.adminModalCard.wide {
+  width: min(860px, calc(100vw - 24px));
+}
+
+.adminModalHeader,
+.adminModalFooter {
+  padding: 20px 22px;
+}
+
+.adminModalBody {
+  padding: 0 22px 22px;
+}
+
+.adminModalFooter {
+  gap: 12px;
+  border-top: 1px solid rgba(232, 225, 217, 0.95);
+  flex-wrap: wrap;
+}
+
+.adminFormGrid,
+.adminDetailGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.adminFormGrid.wide,
+.adminDetailGrid.wide {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.adminFormGrid label,
+.adminDetailGrid > div,
+.adminDetailBlock {
+  display: grid;
+  gap: 7px;
+}
+
+.adminFormGrid label span,
+.adminDetailGrid span,
+.adminDetailBlock span {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.adminFormGrid .fullSpan,
+.adminCheckboxField.fullSpan {
+  grid-column: 1 / -1;
+}
+
+.adminCheckboxField {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  min-height: 50px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(232, 225, 217, 0.95);
+  background: #fff;
+}
+
+.adminCheckboxField input {
+  width: 16px;
+  height: 16px;
+}
+
+.adminDetailBlock {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(248, 247, 245, 0.9);
+}
+
+.adminIdentityCell {
+  align-items: center;
+}
+
+.adminAvatarPlaceholder {
+  flex: 0 0 auto;
+  font-weight: 800;
+}
+
+.adminPricingGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.adminPricingCard {
+  padding: 20px;
+  display: grid;
+  gap: 18px;
+}
+
+.adminPricingCardHeader {
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.adminPricingCardHeader h3,
+.adminPricingCardHeader strong {
+  margin: 0;
+}
+
+.adminPricingCardHeader strong {
+  display: block;
+  font-size: 1.9rem;
+  margin-top: 8px;
+}
+
+.adminPricingCard ul {
+  display: grid;
+  gap: 10px;
+  padding-left: 18px;
+  margin: 0;
+  color: var(--muted);
+}
+
+.adminActionTextButton {
+  min-height: 40px;
+  padding: 0 12px;
+  justify-content: center;
+}
+
+.textCap {
+  text-transform: capitalize;
+}
+
+@media (max-width: 1180px) {
+  .adminStatsGrid,
+  .adminPricingGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1080px) {
+  .adminShell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .adminSidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    transform: translateX(-105%);
+    transition: transform 0.26s ease;
+    width: min(320px, calc(100vw - 28px));
+    box-shadow: 0 24px 60px rgba(16, 24, 40, 0.18);
+  }
+
+  .adminSidebar.open {
+    transform: translateX(0);
+  }
+
+  .adminSidebarClose,
+  .adminMenuButton {
+    display: inline-grid;
+    border: 1px solid rgba(232, 225, 217, 0.95);
+    background: #fff;
+    border-radius: 14px;
+  }
+
+  .adminTopbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 900px) {
+  .adminTwoColumnGrid,
+  .adminStatsGrid,
+  .adminPricingGrid,
+  .adminFormGrid,
+  .adminDetailGrid,
+  .adminFormGrid.wide,
+  .adminDetailGrid.wide {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 680px) {
+  .adminTopbarIntro {
+    align-items: flex-start;
+  }
+
+  .adminToolbar,
+  .adminModalHeader,
+  .adminModalFooter {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .adminToolbarFilters,
+  .adminTopbarActions,
+  .adminRowActions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .adminPanelCard,
+  .adminStatCard,
+  .adminPricingCard,
+  .adminSidebarMeta,
+  .adminSidebarFooter {
+    border-radius: 20px;
+  }
+
+  .adminContent,
+  .adminMain {
+    padding-bottom: 20px;
+  }
+}

@@ -10,7 +10,13 @@ export const ROUTES = {
   wallet: '/wallet',
   reviews: '/reviews',
   security: '/security',
-  taskDetail: '/tasks'
+  taskDetail: '/tasks',
+  admin: '/admin',
+  adminUsers: '/admin/users',
+  adminJobs: '/admin/jobs',
+  adminCategories: '/admin/categories',
+  adminTalent: '/admin/talent',
+  adminPricing: '/admin/pricing'
 };
 
 export function buildTaskDetailRoute(slug = '') {
@@ -27,4 +33,8 @@ export function getTaskSlugFromPathname(pathname = '') {
   }
 
   return pathname.replace(`${ROUTES.taskDetail}/`, '').split('/')[0];
+}
+
+export function isAdminRoute(pathname = '') {
+  return pathname === ROUTES.admin || pathname.startsWith(`${ROUTES.admin}/`);
 }

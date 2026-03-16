@@ -50,12 +50,21 @@ export const API_ENDPOINTS = {
   },
   taskDetail: {
     detail: withDefault(import.meta.env.VITE_TASK_DETAIL_ENDPOINT, '/tasks')
+  },
+  admin: {
+    dashboardOverview: withDefault(import.meta.env.VITE_ADMIN_DASHBOARD_ENDPOINT, '/admin/dashboard/overview'),
+    users: withDefault(import.meta.env.VITE_ADMIN_USERS_ENDPOINT, '/admin/users'),
+    jobs: withDefault(import.meta.env.VITE_ADMIN_JOBS_ENDPOINT, '/admin/jobs'),
+    categories: withDefault(import.meta.env.VITE_ADMIN_CATEGORIES_ENDPOINT, '/admin/categories'),
+    talent: withDefault(import.meta.env.VITE_ADMIN_TALENT_ENDPOINT, '/admin/talent'),
+    pricing: withDefault(import.meta.env.VITE_ADMIN_PRICING_ENDPOINT, '/admin/pricing')
   }
 };
 
 export const authEndpoints = API_ENDPOINTS.auth;
 export const homeEndpoints = API_ENDPOINTS.home;
 export const taskDetailEndpoints = API_ENDPOINTS.taskDetail;
+export const adminEndpoints = API_ENDPOINTS.admin;
 
 export function buildProfileListingStatusEndpoint(listingId) {
   return `${API_ENDPOINTS.profile.listings}/${listingId}/status`;
@@ -103,4 +112,28 @@ export function buildWorkspaceReviewFeatureEndpoint(reviewId) {
 
 export function buildWorkspaceSessionEndpoint(sessionId) {
   return `${API_ENDPOINTS.workspace.sessions}/${sessionId}`;
+}
+
+export function buildAdminResourceEndpoint(resourcePath, resourceId) {
+  return `${resourcePath}/${resourceId}`;
+}
+
+export function buildAdminUserStatusEndpoint(userId) {
+  return `${API_ENDPOINTS.admin.users}/${userId}/status`;
+}
+
+export function buildAdminJobStatusEndpoint(jobId) {
+  return `${API_ENDPOINTS.admin.jobs}/${jobId}/status`;
+}
+
+export function buildAdminJobVisibilityEndpoint(jobId) {
+  return `${API_ENDPOINTS.admin.jobs}/${jobId}/visibility`;
+}
+
+export function buildAdminCategoryStatusEndpoint(categoryId) {
+  return `${API_ENDPOINTS.admin.categories}/${categoryId}/status`;
+}
+
+export function buildAdminFeaturedEndpoint(talentId) {
+  return `${API_ENDPOINTS.admin.talent}/${talentId}/featured`;
 }
