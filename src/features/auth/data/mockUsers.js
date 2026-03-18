@@ -29,6 +29,7 @@ export function buildMockProfile(overrides = {}) {
     availability: 'Available now',
     hourlyRate: '$25',
     avatarInitials: 'OM',
+    avatarUrl: '',
     completionRate: 98,
     responseTime: '1 saat',
     skills: ['React', 'Vite', 'JavaScript', 'UI Design', 'REST API'],

@@ -1,4 +1,4 @@
-import { Pencil, Power, Sparkles, Trash2 } from 'lucide-react';
+import { Pencil, Sparkles, Trash2, UserRoundCheck } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useAdminTalentPage } from '../../features/admin/hooks/useAdminTalentPage.js';
 import { ROUTES } from '../../shared/constants/routes.js';
@@ -7,16 +7,21 @@ import { AdminConfirmDialog, AdminModal } from '../../shared/ui/admin/AdminModal
 import AdminPagination from '../../shared/ui/admin/AdminPagination.jsx';
 import AdminStatusBadge from '../../shared/ui/admin/AdminStatusBadge.jsx';
 import AdminToolbar from '../../shared/ui/admin/AdminToolbar.jsx';
+import AdminImageField from '../../shared/ui/admin/AdminImageField.jsx';
+import AdminActionIconButton from '../../shared/ui/admin/AdminActionIconButton.jsx';
+import { getAdminCategoryOptions } from '../../features/admin/services/adminService.js';
 
 function buildTalentFormState(item) {
   return {
     name: item?.name || '',
     title: item?.title || '',
     skill: item?.skill || '',
+    categoryId: item?.categoryId || '',
     rating: item?.rating || 4.8,
     imageUrl: item?.imageUrl || '',
     status: item?.status || 'active',
-    featured: Boolean(item?.featured)
+    featured: Boolean(item?.featured),
+    bio: item?.bio || ''
   };
 }
 
@@ -42,11 +47,12 @@ export default function AdminTalentPage({ navigate, pathname = ROUTES.adminTalen
     deleteTalent
   } = useAdminTalentPage();
 
+  const categories = getAdminCategoryOptions();
   const [editingTalent, setEditingTalent] = useState(null);
   const [formState, setFormState] = useState(buildTalentFormState(null));
-  const [deleteTarget, setDeleteTarget] = useState(null);
   const [featureTarget, setFeatureTarget] = useState(null);
   const [statusTarget, setStatusTarget] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const toolbarFilters = useMemo(
     () => [
@@ -67,9 +73,9 @@ export default function AdminTalentPage({ navigate, pathname = ROUTES.adminTalen
         value: featured,
         onChange: setFeatured,
         options: [
-          { value: 'all', label: 'All talent' },
-          { value: 'featured', label: 'Featured' },
-          { value: 'regular', label: 'Regular' }
+          { value: 'all', label: 'All' },
+          { value: 'featured', label: 'Featured only' },
+          { value: 'regular', label: 'Regular only' }
         ]
       }
     ],
@@ -87,7 +93,12 @@ export default function AdminTalentPage({ navigate, pathname = ROUTES.adminTalen
   };
 
   const handleSave = async () => {
-    const payload = { ...formState, rating: Number(formState.rating) };
+    const selectedCategory = categories.find((item) => item.id === formState.categoryId);
+    const payload = {
+      ...formState,
+      rating: Number(formState.rating),
+      categoryName: selectedCategory?.name || ''
+    };
 
     if (editingTalent?.mode === 'create') {
       await createTalent(payload);
@@ -103,7 +114,7 @@ export default function AdminTalentPage({ navigate, pathname = ROUTES.adminTalen
       navigate={navigate}
       pathname={pathname}
       title="Talent"
-      description="Freelancer kartları və featured siyahısını yenilə."
+      description="Freelancer kartlarını daha zəngin görünüş, şəkil və featured status ilə idarə et."
     >
       {feedback ? <div className="adminNotice success">{feedback}</div> : null}
       {error ? <div className="adminNotice error">{error}</div> : null}
@@ -111,7 +122,7 @@ export default function AdminTalentPage({ navigate, pathname = ROUTES.adminTalen
       <AdminToolbar
         searchValue={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Search talent by name, title, skill"
+        searchPlaceholder="Search by talent, title, skill or category"
         filters={toolbarFilters}
         actionLabel="Add Talent"
         onAction={handleOpenCreate}
@@ -120,68 +131,56 @@ export default function AdminTalentPage({ navigate, pathname = ROUTES.adminTalen
       <section className="adminPanelCard cardLift">
         <div className="adminPanelCardHeader">
           <div>
-            <span className="adminPageEyebrow">Freelancers</span>
-            <h2>Talent List</h2>
+            <span className="adminPageEyebrow">Freelancer profiles</span>
+            <h2>Talent Directory</h2>
           </div>
-          <span className="adminPanelCount">{meta.total} talent</span>
+          <span className="adminPanelCount">{meta.total} profiles</span>
         </div>
 
         {isLoading ? (
           <div className="adminEmptyState compact">
             <strong>Talent loading...</strong>
-            <p>Kart məlumatları admin görünüşünə hazırlanır.</p>
+            <p>Freelancer profilləri gətirilir.</p>
           </div>
         ) : items.length ? (
           <>
-            <div className="adminTableWrap">
-              <table className="adminTable">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Title</th>
-                    <th>Skill</th>
-                    <th>Rating</th>
-                    <th>Status</th>
-                    <th>Featured</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((item) => (
-                    <tr key={item.id}>
-                      <td>
-                        <div className="adminIdentityCell">
-                          <span className="adminAvatarPlaceholder">{item.name.slice(0, 1)}</span>
-                          <div>
-                            <strong>{item.name}</strong>
-                            <span>{item.imageUrl || 'Image placeholder'}</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td>{item.title}</td>
-                      <td>{item.skill}</td>
-                      <td>{item.rating.toFixed(1)}</td>
-                      <td><AdminStatusBadge value={item.status} /></td>
-                      <td><AdminStatusBadge value={item.featured ? 'featured' : 'regular'} tone={item.featured ? 'featured' : 'muted'} /></td>
-                      <td>
-                        <div className="adminRowActions">
-                          <button type="button" className="adminIconButton interactive" onClick={() => handleOpenEdit(item)} aria-label="Edit talent"><Pencil size={16} /></button>
-                          <button type="button" className="adminIconButton interactive" onClick={() => setFeatureTarget(item)} aria-label="Toggle featured"><Sparkles size={16} /></button>
-                          <button type="button" className="adminIconButton interactive" onClick={() => setStatusTarget(item)} aria-label="Toggle talent status"><Power size={16} /></button>
-                          <button type="button" className="adminIconButton interactive danger" onClick={() => setDeleteTarget(item)} aria-label="Delete talent"><Trash2 size={16} /></button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="adminTalentGrid">
+              {items.map((item) => (
+                <article key={item.id} className="adminTalentCard cardLift">
+                  <div className="adminTalentCardHeader">
+                    {item.imageUrl ? <img src={item.imageUrl} alt={item.name} className="adminTalentAvatar" /> : <div className="adminAvatarPlaceholder">{item.name?.slice(0, 2)?.toUpperCase() || 'TL'}</div>}
+                    <div>
+                      <h3>{item.name}</h3>
+                      <p>{item.title}</p>
+                    </div>
+                  </div>
+                  <div className="adminInlineBadges wrap">
+                    <AdminStatusBadge value={item.status} />
+                    {item.featured ? <AdminStatusBadge value="featured" tone="primary" /> : null}
+                  </div>
+                  <div className="adminTalentMeta">
+                    <span>{item.categoryName || 'General'}</span>
+                    <strong>{item.skill}</strong>
+                    <span>{item.rating.toFixed(1)} rating</span>
+                  </div>
+                  <p className="adminTalentCopy">{item.bio || 'No short bio added for this profile yet.'}</p>
+                  <div className="adminRowActions split wrap">
+                    <button type="button" className="adminActionTextButton interactive" onClick={() => handleOpenEdit(item)}><Pencil size={15} /> Edit</button>
+                    <div className="adminRowActions">
+                      <AdminActionIconButton icon={Sparkles} label="Toggle featured" onClick={() => setFeatureTarget(item)} tone={item.featured ? 'primary' : 'default'} active={item.featured} />
+                      <AdminActionIconButton icon={UserRoundCheck} label="Toggle status" onClick={() => setStatusTarget(item)} tone={item.status === 'active' ? 'warning' : 'primary'} />
+                      <AdminActionIconButton icon={Trash2} label="Delete talent" onClick={() => setDeleteTarget(item)} tone="danger" />
+                    </div>
+                  </div>
+                </article>
+              ))}
             </div>
             <AdminPagination meta={meta} onPageChange={setPage} />
           </>
         ) : (
           <div className="adminEmptyState compact">
             <strong>No talent found</strong>
-            <p>Yeni freelancer kartı əlavə et və burada idarə et.</p>
+            <p>Yeni freelancer kartı əlavə edərək burada idarə edə bilərsən.</p>
           </div>
         )}
       </section>
@@ -193,43 +192,54 @@ export default function AdminTalentPage({ navigate, pathname = ROUTES.adminTalen
           wide
           footer={(
             <>
-              <button type="button" className="btn soft interactive" onClick={() => setEditingTalent(null)}>Cancel</button>
+              <button type="button" className="adminSecondaryButton interactive" onClick={() => setEditingTalent(null)}>Cancel</button>
               <button type="button" className="btn primary interactive" onClick={handleSave}>{editingTalent.mode === 'create' ? 'Create' : 'Save changes'}</button>
             </>
           )}
         >
-          <div className="adminFormGrid wide">
-            <label>
-              <span>Name</span>
-              <input value={formState.name} onChange={(event) => setFormState((current) => ({ ...current, name: event.target.value }))} />
-            </label>
-            <label>
-              <span>Title</span>
-              <input value={formState.title} onChange={(event) => setFormState((current) => ({ ...current, title: event.target.value }))} />
-            </label>
-            <label>
-              <span>Skill</span>
-              <input value={formState.skill} onChange={(event) => setFormState((current) => ({ ...current, skill: event.target.value }))} />
-            </label>
-            <label>
-              <span>Rating</span>
-              <input type="number" step="0.1" min="0" max="5" value={formState.rating} onChange={(event) => setFormState((current) => ({ ...current, rating: event.target.value }))} />
-            </label>
-            <label>
-              <span>Image URL</span>
-              <input value={formState.imageUrl} onChange={(event) => setFormState((current) => ({ ...current, imageUrl: event.target.value }))} placeholder="/images/talent-1.png" />
-            </label>
-            <label>
-              <span>Status</span>
-              <select value={formState.status} onChange={(event) => setFormState((current) => ({ ...current, status: event.target.value }))}>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-            </label>
-            <label className="adminCheckboxField fullSpan">
-              <input type="checkbox" checked={formState.featured} onChange={(event) => setFormState((current) => ({ ...current, featured: event.target.checked }))} />
-              <span>Mark as featured talent</span>
-            </label>
+          <div className="adminFormStack">
+            <AdminImageField label="Talent avatar" value={formState.imageUrl} onChange={(value) => setFormState((current) => ({ ...current, imageUrl: value }))} shape="circle" />
+
+            <div className="adminFormGrid wide">
+              <label>
+                <span>Name</span>
+                <input value={formState.name} onChange={(event) => setFormState((current) => ({ ...current, name: event.target.value }))} />
+              </label>
+              <label>
+                <span>Professional title</span>
+                <input value={formState.title} onChange={(event) => setFormState((current) => ({ ...current, title: event.target.value }))} />
+              </label>
+              <label>
+                <span>Main skill</span>
+                <input value={formState.skill} onChange={(event) => setFormState((current) => ({ ...current, skill: event.target.value }))} />
+              </label>
+              <label>
+                <span>Category</span>
+                <select value={formState.categoryId} onChange={(event) => setFormState((current) => ({ ...current, categoryId: event.target.value }))}>
+                  <option value="">Select category</option>
+                  {categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                </select>
+              </label>
+              <label>
+                <span>Rating</span>
+                <input type="number" min="0" max="5" step="0.1" value={formState.rating} onChange={(event) => setFormState((current) => ({ ...current, rating: event.target.value }))} />
+              </label>
+              <label>
+                <span>Status</span>
+                <select value={formState.status} onChange={(event) => setFormState((current) => ({ ...current, status: event.target.value }))}>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </label>
+              <label className="adminCheckboxField fullSpan">
+                <input type="checkbox" checked={formState.featured} onChange={(event) => setFormState((current) => ({ ...current, featured: event.target.checked }))} />
+                <span>Mark as featured talent</span>
+              </label>
+              <label className="fullSpan">
+                <span>Short bio</span>
+                <textarea rows="4" value={formState.bio} onChange={(event) => setFormState((current) => ({ ...current, bio: event.target.value }))} />
+              </label>
+            </div>
           </div>
         </AdminModal>
       ) : null}

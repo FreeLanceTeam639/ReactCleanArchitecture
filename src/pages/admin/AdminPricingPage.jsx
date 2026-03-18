@@ -12,6 +12,7 @@ function buildPricingFormState(item) {
   return {
     name: item?.name || '',
     price: item?.price || 0,
+    badge: item?.badge || '',
     featuresText: Array.isArray(item?.features) ? item.features.join('\n') : '',
     status: item?.status || 'active'
   };
@@ -70,6 +71,7 @@ export default function AdminPricingPage({ navigate, pathname = ROUTES.adminPric
     const payload = {
       name: formState.name,
       price: Number(formState.price),
+      badge: formState.badge,
       features: formState.featuresText.split('\n').map((line) => line.trim()).filter(Boolean),
       status: formState.status
     };
@@ -88,7 +90,7 @@ export default function AdminPricingPage({ navigate, pathname = ROUTES.adminPric
       navigate={navigate}
       pathname={pathname}
       title="Pricing"
-      description="Public pricing paketlərini mövcud dizayna uyğun saxla."
+      description="Public pricing paketlərini yumşaq card görünüşü və badge idarəsi ilə saxla."
     >
       {feedback ? <div className="adminNotice success">{feedback}</div> : null}
       {error ? <div className="adminNotice error">{error}</div> : null}
@@ -118,22 +120,25 @@ export default function AdminPricingPage({ navigate, pathname = ROUTES.adminPric
           </div>
         ) : items.length ? (
           <>
-            <div className="adminPricingGrid">
-              {items.map((item) => (
-                <article key={item.id} className="adminPricingCard cardLift">
+            <div className="adminPricingGrid soft">
+              {items.map((item, index) => (
+                <article key={item.id} className={index === 1 ? 'adminPricingCard cardLift featured' : 'adminPricingCard cardLift'}>
                   <div className="adminPricingCardHeader">
                     <div>
+                      <div className="adminInlineBadges wrap">
+                        {item.badge ? <AdminStatusBadge value={item.badge} tone="primary" /> : null}
+                        <AdminStatusBadge value={item.status} />
+                      </div>
                       <h3>{item.name}</h3>
                       <strong>{item.formattedPrice}</strong>
                     </div>
-                    <AdminStatusBadge value={item.status} />
                   </div>
                   <ul>
                     {item.features.map((feature) => (
                       <li key={feature}>{feature}</li>
                     ))}
                   </ul>
-                  <div className="adminRowActions split">
+                  <div className="adminRowActions split wrap">
                     <button type="button" className="adminActionTextButton interactive" onClick={() => handleOpenEdit(item)}><Pencil size={15} /> Edit</button>
                     <button type="button" className="adminActionTextButton interactive danger" onClick={() => setDeleteTarget(item)}><Trash2 size={15} /> Delete</button>
                   </div>
@@ -157,7 +162,7 @@ export default function AdminPricingPage({ navigate, pathname = ROUTES.adminPric
           wide
           footer={(
             <>
-              <button type="button" className="btn soft interactive" onClick={() => setEditingPackage(null)}>Cancel</button>
+              <button type="button" className="adminSecondaryButton interactive" onClick={() => setEditingPackage(null)}>Cancel</button>
               <button type="button" className="btn primary interactive" onClick={handleSave}>{editingPackage.mode === 'create' ? 'Create' : 'Save changes'}</button>
             </>
           )}
@@ -170,6 +175,10 @@ export default function AdminPricingPage({ navigate, pathname = ROUTES.adminPric
             <label>
               <span>Price</span>
               <input type="number" value={formState.price} onChange={(event) => setFormState((current) => ({ ...current, price: event.target.value }))} />
+            </label>
+            <label>
+              <span>Badge</span>
+              <input value={formState.badge} onChange={(event) => setFormState((current) => ({ ...current, badge: event.target.value }))} placeholder="Popular / Recommended" />
             </label>
             <label>
               <span>Status</span>

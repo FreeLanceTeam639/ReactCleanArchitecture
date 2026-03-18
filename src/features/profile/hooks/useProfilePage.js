@@ -59,7 +59,8 @@ export function useProfilePage(navigate) {
     hourlyRate: '',
     availability: '',
     bio: '',
-    skills: ''
+    skills: '',
+    avatarUrl: ''
   });
   const [isLoading, setIsLoading] = useState(true);
   const [pageError, setPageError] = useState('');
@@ -75,7 +76,8 @@ export function useProfilePage(navigate) {
       hourlyRate: profile.hourlyRate || '',
       availability: profile.availability || '',
       bio: profile.bio || '',
-      skills: Array.isArray(profile.skills) ? profile.skills.join(', ') : ''
+      skills: Array.isArray(profile.skills) ? profile.skills.join(', ') : '',
+      avatarUrl: profile.avatarUrl || ''
     });
   }, []);
 
@@ -175,7 +177,8 @@ export function useProfilePage(navigate) {
         skills: settingsForm.skills
           .split(',')
           .map((item) => item.trim())
-          .filter(Boolean)
+          .filter(Boolean),
+        avatarUrl: settingsForm.avatarUrl
       });
 
       setPageState((currentState) => ({
@@ -193,7 +196,8 @@ export function useProfilePage(navigate) {
           skills: updatedProfile.skills?.length ? updatedProfile.skills : settingsForm.skills
             .split(',')
             .map((item) => item.trim())
-            .filter(Boolean)
+            .filter(Boolean),
+          avatarUrl: updatedProfile.avatarUrl || currentState.profile?.avatarUrl || settingsForm.avatarUrl
         }
       }));
       applyProfileToForm({
@@ -209,7 +213,8 @@ export function useProfilePage(navigate) {
         skills: updatedProfile.skills?.length ? updatedProfile.skills : settingsForm.skills
           .split(',')
           .map((item) => item.trim())
-          .filter(Boolean)
+          .filter(Boolean),
+        avatarUrl: updatedProfile.avatarUrl || pageState.profile?.avatarUrl || settingsForm.avatarUrl
       });
       setFeedback('Profile məlumatları backend üzərindən yeniləndi.');
     } catch (error) {

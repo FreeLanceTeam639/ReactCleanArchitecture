@@ -7,6 +7,9 @@ import { AdminConfirmDialog, AdminModal } from '../../shared/ui/admin/AdminModal
 import AdminPagination from '../../shared/ui/admin/AdminPagination.jsx';
 import AdminStatusBadge from '../../shared/ui/admin/AdminStatusBadge.jsx';
 import AdminToolbar from '../../shared/ui/admin/AdminToolbar.jsx';
+import AdminImageField from '../../shared/ui/admin/AdminImageField.jsx';
+import AdminMediaGalleryField from '../../shared/ui/admin/AdminMediaGalleryField.jsx';
+import AdminActionIconButton from '../../shared/ui/admin/AdminActionIconButton.jsx';
 
 function formatDate(value) {
   return new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(value));
@@ -19,7 +22,10 @@ function buildJobFormState(job) {
     budget: job?.budget || 0,
     status: job?.status || 'pending',
     visibility: job?.visibility || 'visible',
-    description: job?.description || ''
+    description: job?.description || '',
+    coverImageUrl: job?.coverImageUrl || '',
+    media: Array.isArray(job?.media) ? job.media : [],
+    tagsText: Array.isArray(job?.tags) ? job.tags.join(', ') : ''
   };
 }
 
@@ -89,7 +95,8 @@ export default function AdminJobsPage({ navigate, pathname = ROUTES.adminJobs })
     await saveJob(editingJob.id, {
       ...formState,
       budget: Number(formState.budget),
-      categoryName: selectedCategory?.name || editingJob.categoryName
+      categoryName: selectedCategory?.name || editingJob.categoryName,
+      tags: formState.tagsText.split(',').map((item) => item.trim()).filter(Boolean)
     });
 
     setEditingJob(null);
@@ -100,7 +107,7 @@ export default function AdminJobsPage({ navigate, pathname = ROUTES.adminJobs })
       navigate={navigate}
       pathname={pathname}
       title="Jobs"
-      description="Elanları status və görünürlük baxımından idarə et."
+      description="Elanları status, görünürlük və şəkil qalereyası ilə birlikdə idarə et."
     >
       {feedback ? <div className="adminNotice success">{feedback}</div> : null}
       {error ? <div className="adminNotice error">{error}</div> : null}
@@ -132,7 +139,7 @@ export default function AdminJobsPage({ navigate, pathname = ROUTES.adminJobs })
               <table className="adminTable">
                 <thead>
                   <tr>
-                    <th>Job Title</th>
+                    <th>Job</th>
                     <th>Category</th>
                     <th>Budget</th>
                     <th>Owner</th>
@@ -144,7 +151,15 @@ export default function AdminJobsPage({ navigate, pathname = ROUTES.adminJobs })
                 <tbody>
                   {items.map((job) => (
                     <tr key={job.id}>
-                      <td><strong>{job.title}</strong></td>
+                      <td>
+                        <div className="adminIdentityCell">
+                          {job.coverImageUrl ? <img src={job.coverImageUrl} alt={job.title} className="adminListThumb wide" /> : <div className="adminListThumb wide placeholder">JOB</div>}
+                          <div>
+                            <strong>{job.title}</strong>
+                            <span>{job.description?.slice(0, 72) || 'No description'}{job.description?.length > 72 ? '…' : ''}</span>
+                          </div>
+                        </div>
+                      </td>
                       <td>{job.categoryName}</td>
                       <td>${job.budget}</td>
                       <td>{job.ownerName}</td>
@@ -152,10 +167,10 @@ export default function AdminJobsPage({ navigate, pathname = ROUTES.adminJobs })
                       <td><AdminStatusBadge value={job.visibility} tone={job.visibility} /></td>
                       <td>
                         <div className="adminRowActions">
-                          <button type="button" className="adminIconButton interactive" onClick={() => setViewJob(job)} aria-label="View job"><Eye size={16} /></button>
-                          <button type="button" className="adminIconButton interactive" onClick={() => openEditModal(job)} aria-label="Edit job"><Pencil size={16} /></button>
-                          <button type="button" className="adminIconButton interactive" onClick={() => setVisibilityTarget(job)} aria-label="Toggle job visibility">{job.visibility === 'hidden' ? <Eye size={16} /> : <EyeOff size={16} />}</button>
-                          <button type="button" className="adminIconButton interactive danger" onClick={() => setDeleteTarget(job)} aria-label="Delete job"><Trash2 size={16} /></button>
+                          <AdminActionIconButton icon={Eye} label="View job" onClick={() => setViewJob(job)} />
+                          <AdminActionIconButton icon={Pencil} label="Edit job" onClick={() => openEditModal(job)} />
+                          <AdminActionIconButton icon={job.visibility === 'hidden' ? Eye : EyeOff} label="Toggle job visibility" onClick={() => setVisibilityTarget(job)} tone={job.visibility === 'hidden' ? 'primary' : 'warning'} />
+                          <AdminActionIconButton icon={Trash2} label="Delete job" onClick={() => setDeleteTarget(job)} tone="danger" />
                         </div>
                       </td>
                     </tr>
@@ -174,23 +189,39 @@ export default function AdminJobsPage({ navigate, pathname = ROUTES.adminJobs })
       </section>
 
       {viewJob ? (
-        <AdminModal title="Job details" onClose={() => setViewJob(null)} wide footer={(
-          <button type="button" className="btn soft interactive" onClick={() => setViewJob(null)}>Close</button>
-        )}>
+        <AdminModal title="Job details" onClose={() => setViewJob(null)} wide footer={<button type="button" className="adminSecondaryButton interactive" onClick={() => setViewJob(null)}>Close</button>}>
+          <div className="adminDetailHero">
+            {viewJob.coverImageUrl ? <img src={viewJob.coverImageUrl} alt={viewJob.title} className="adminDetailCover" /> : <div className="adminDetailCover placeholder">No cover</div>}
+            <div>
+              <h4>{viewJob.title}</h4>
+              <p>{viewJob.categoryName} • {viewJob.ownerName}</p>
+              <div className="adminInlineBadges">
+                <AdminStatusBadge value={viewJob.status} />
+                <AdminStatusBadge value={viewJob.visibility} tone={viewJob.visibility} />
+              </div>
+            </div>
+          </div>
           <div className="adminDetailGrid wide">
-            <div><span>Title</span><strong>{viewJob.title}</strong></div>
-            <div><span>Category</span><strong>{viewJob.categoryName}</strong></div>
             <div><span>Budget</span><strong>${viewJob.budget}</strong></div>
-            <div><span>Owner</span><strong>{viewJob.ownerName}</strong></div>
-            <div><span>Status</span><AdminStatusBadge value={viewJob.status} /></div>
-            <div><span>Visibility</span><AdminStatusBadge value={viewJob.visibility} tone={viewJob.visibility} /></div>
             <div><span>Created</span><strong>{formatDate(viewJob.createdAt)}</strong></div>
-            <div><span>Job ID</span><strong>{viewJob.id}</strong></div>
+            <div><span>Images</span><strong>{viewJob.media?.length || 0} files</strong></div>
           </div>
           <div className="adminDetailBlock">
             <span>Description</span>
             <p>{viewJob.description}</p>
           </div>
+          {viewJob.media?.length ? (
+            <div className="adminMediaGrid topGap">
+              {viewJob.media.map((item) => (
+                <div key={item.id} className="adminMediaCard readOnly">
+                  <img src={item.url} alt={viewJob.title} />
+                  <div className="adminMediaMeta">
+                    <span>{item.isPrimary ? 'Primary image' : 'Additional media'}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
         </AdminModal>
       ) : null}
 
@@ -201,47 +232,66 @@ export default function AdminJobsPage({ navigate, pathname = ROUTES.adminJobs })
           wide
           footer={(
             <>
-              <button type="button" className="btn soft interactive" onClick={() => setEditingJob(null)}>Cancel</button>
+              <button type="button" className="adminSecondaryButton interactive" onClick={() => setEditingJob(null)}>Cancel</button>
               <button type="button" className="btn primary interactive" onClick={handleSave}>Save changes</button>
             </>
           )}
         >
-          <div className="adminFormGrid wide">
-            <label>
-              <span>Title</span>
-              <input value={formState.title} onChange={(event) => setFormState((current) => ({ ...current, title: event.target.value }))} />
-            </label>
-            <label>
-              <span>Category</span>
-              <select value={formState.categoryId} onChange={(event) => setFormState((current) => ({ ...current, categoryId: event.target.value }))}>
-                {categoryOptions.map((item) => (
-                  <option key={item.id} value={item.id}>{item.name}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              <span>Budget</span>
-              <input type="number" value={formState.budget} onChange={(event) => setFormState((current) => ({ ...current, budget: event.target.value }))} />
-            </label>
-            <label>
-              <span>Status</span>
-              <select value={formState.status} onChange={(event) => setFormState((current) => ({ ...current, status: event.target.value }))}>
-                <option value="active">Active</option>
-                <option value="pending">Pending</option>
-                <option value="closed">Closed</option>
-              </select>
-            </label>
-            <label>
-              <span>Visibility</span>
-              <select value={formState.visibility} onChange={(event) => setFormState((current) => ({ ...current, visibility: event.target.value }))}>
-                <option value="visible">Visible</option>
-                <option value="hidden">Hidden</option>
-              </select>
-            </label>
-            <label className="fullSpan">
-              <span>Description</span>
-              <textarea rows="5" value={formState.description} onChange={(event) => setFormState((current) => ({ ...current, description: event.target.value }))} />
-            </label>
+          <div className="adminFormStack">
+            <AdminImageField
+              label="Cover image"
+              value={formState.coverImageUrl}
+              onChange={(value) => setFormState((current) => ({ ...current, coverImageUrl: value }))}
+              hint="Primary image və ya listing cover kimi istifadə oluna bilər."
+            />
+
+            <div className="adminFormGrid wide">
+              <label>
+                <span>Title</span>
+                <input value={formState.title} onChange={(event) => setFormState((current) => ({ ...current, title: event.target.value }))} />
+              </label>
+              <label>
+                <span>Category</span>
+                <select value={formState.categoryId} onChange={(event) => setFormState((current) => ({ ...current, categoryId: event.target.value }))}>
+                  {categoryOptions.map((item) => (
+                    <option key={item.id} value={item.id}>{item.name}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>Budget</span>
+                <input type="number" value={formState.budget} onChange={(event) => setFormState((current) => ({ ...current, budget: event.target.value }))} />
+              </label>
+              <label>
+                <span>Status</span>
+                <select value={formState.status} onChange={(event) => setFormState((current) => ({ ...current, status: event.target.value }))}>
+                  <option value="active">Active</option>
+                  <option value="pending">Pending</option>
+                  <option value="closed">Closed</option>
+                </select>
+              </label>
+              <label>
+                <span>Visibility</span>
+                <select value={formState.visibility} onChange={(event) => setFormState((current) => ({ ...current, visibility: event.target.value }))}>
+                  <option value="visible">Visible</option>
+                  <option value="hidden">Hidden</option>
+                </select>
+              </label>
+              <label>
+                <span>Tags</span>
+                <input value={formState.tagsText} onChange={(event) => setFormState((current) => ({ ...current, tagsText: event.target.value }))} placeholder="React, UI, Marketplace" />
+              </label>
+              <label className="fullSpan">
+                <span>Description</span>
+                <textarea rows="5" value={formState.description} onChange={(event) => setFormState((current) => ({ ...current, description: event.target.value }))} />
+              </label>
+            </div>
+
+            <AdminMediaGalleryField items={formState.media} onChange={(nextItems) => setFormState((current) => ({
+              ...current,
+              media: nextItems,
+              coverImageUrl: current.coverImageUrl || nextItems[0]?.url || ''
+            }))} />
           </div>
         </AdminModal>
       ) : null}
@@ -249,7 +299,7 @@ export default function AdminJobsPage({ navigate, pathname = ROUTES.adminJobs })
       {visibilityTarget ? (
         <AdminConfirmDialog
           title={visibilityTarget.visibility === 'hidden' ? 'Show job?' : 'Hide job?'}
-          description={`Bu job ${visibilityTarget.visibility === 'hidden' ? 'yenidən görünən' : 'gizli'} olacaq.`}
+          description={`Bu job ${visibilityTarget.visibility === 'hidden' ? 'public siyahıda görünəcək' : 'public siyahıdan gizlədiləcək'}.`}
           confirmLabel={visibilityTarget.visibility === 'hidden' ? 'Show' : 'Hide'}
           onConfirm={async () => {
             await toggleVisibility(visibilityTarget);
@@ -263,7 +313,7 @@ export default function AdminJobsPage({ navigate, pathname = ROUTES.adminJobs })
       {deleteTarget ? (
         <AdminConfirmDialog
           title="Delete job?"
-          description="Job admin siyahısından silinəcək və geri qaytarmaq mümkün olmayacaq."
+          description="Bu əməliyyat job-u admin siyahısından siləcək."
           confirmLabel="Delete"
           onConfirm={async () => {
             await deleteJob(deleteTarget.id);

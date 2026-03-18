@@ -4722,3 +4722,456 @@ h2 {
     padding-bottom: 20px;
   }
 }
+
+/* ==========================
+   Admin panel premium refresh
+========================== */
+.adminShell {
+  background:
+    radial-gradient(circle at top right, rgba(255, 132, 73, 0.08), transparent 28%),
+    linear-gradient(180deg, #f8f7f5 0%, #f2efea 100%);
+}
+
+.adminSidebar {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(250, 247, 244, 0.92) 100%);
+  border-right-color: rgba(223, 214, 205, 0.8);
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.5);
+}
+
+.adminSidebarMeta,
+.adminSidebarFooter,
+.adminStatCard,
+.adminPanelCard,
+.adminToolbar,
+.adminPricingCard,
+.adminTalentCard,
+.adminSimpleRow.elevated {
+  box-shadow: 0 22px 45px rgba(34, 21, 12, 0.05);
+}
+
+.adminSidebarLink,
+.adminIconButton,
+.adminPaginationButton,
+.adminActionTextButton,
+.adminSecondaryButton,
+.adminInlineInput,
+.adminFilterField select,
+.adminFormGrid input,
+.adminFormGrid select,
+.adminFormGrid textarea,
+.adminSearchField {
+  background: rgba(255, 250, 246, 0.9);
+  border-color: rgba(231, 220, 209, 0.92);
+}
+
+.adminSidebarLink:hover,
+.adminIconButton:hover,
+.adminPaginationButton:hover,
+.adminActionTextButton:hover,
+.adminSecondaryButton:hover {
+  border-color: rgba(255, 90, 20, 0.18);
+  background: #fff6f1;
+}
+
+.adminIconButton {
+  color: #5b6474;
+}
+
+.adminIconButton.primary,
+.adminIconButton.active {
+  color: var(--accent-dark);
+  background: rgba(255, 90, 20, 0.12);
+}
+
+.adminIconButton.warning {
+  color: #9a5a16;
+  background: rgba(244, 186, 56, 0.12);
+}
+
+.adminSecondaryButton {
+  min-height: 42px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(231, 220, 209, 0.92);
+  color: #556070;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.adminSecondaryButton.danger {
+  color: #a33d12;
+}
+
+.adminFieldHint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.adminFormStack {
+  display: grid;
+  gap: 18px;
+}
+
+.adminField,
+.adminInlineInput {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.adminInlineInput {
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 14px;
+  width: 100%;
+}
+
+.adminInlineInput input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  outline: none;
+}
+
+.adminImageField {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+  padding: 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(231, 220, 209, 0.92);
+  background: rgba(255, 250, 246, 0.72);
+}
+
+.adminImageFieldPreview {
+  width: 112px;
+  height: 112px;
+  border-radius: 22px;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(255, 90, 20, 0.08) 0%, rgba(255, 255, 255, 0.96) 100%);
+  border: 1px dashed rgba(255, 90, 20, 0.24);
+  display: grid;
+  place-items: center;
+  color: var(--accent-dark);
+  font-weight: 800;
+}
+
+.adminImageFieldPreview.circle {
+  border-radius: 999px;
+}
+
+.adminImageFieldPreview img,
+.adminAvatarImage,
+.adminListThumb,
+.adminDetailAvatar,
+.adminDetailCover,
+.adminTalentAvatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.adminImageFieldControls {
+  display: grid;
+  gap: 12px;
+}
+
+.adminImageFieldActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.adminHiddenFileInput {
+  display: none;
+}
+
+.adminAvatarImage,
+.adminListThumb.avatar,
+.adminDetailAvatar,
+.adminTalentAvatar {
+  border-radius: 999px;
+}
+
+.adminAvatarImage {
+  width: 44px;
+  height: 44px;
+}
+
+.adminListThumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(231, 220, 209, 0.92);
+  background: #fff6f1;
+}
+
+.adminListThumb.wide {
+  width: 64px;
+  height: 52px;
+  border-radius: 14px;
+}
+
+.adminListThumb.placeholder,
+.adminDetailCover.placeholder {
+  display: grid;
+  place-items: center;
+  color: var(--accent-dark);
+  font-weight: 700;
+}
+
+.adminAvatarPlaceholder.large {
+  width: 78px;
+  height: 78px;
+  border-radius: 999px;
+}
+
+.adminSimpleStack {
+  display: grid;
+  gap: 12px;
+}
+
+.adminSimpleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(231, 220, 209, 0.92);
+  background: rgba(255, 250, 246, 0.72);
+}
+
+.adminSimpleRowIdentity,
+.adminSimpleRowMeta,
+.adminDetailHero,
+.adminInlineBadges {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.adminSimpleRowIdentity {
+  min-width: 0;
+}
+
+.adminSimpleRowMeta {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.adminDetailHero {
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.adminDetailHero h4 {
+  margin: 0 0 4px;
+  font-size: 1.25rem;
+}
+
+.adminDetailHero p,
+.adminTalentCopy {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.adminDetailAvatar {
+  width: 78px;
+  height: 78px;
+}
+
+.adminDetailCover {
+  width: 160px;
+  height: 102px;
+  border-radius: 20px;
+  border: 1px solid rgba(231, 220, 209, 0.92);
+  flex: 0 0 auto;
+}
+
+.adminInlineBadges.wrap,
+.adminRowActions.wrap,
+.adminPricingGrid.soft,
+.adminTalentGrid,
+.adminMediaGrid {
+  flex-wrap: wrap;
+}
+
+.adminStatsGrid.sixCols {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.adminTalentGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.adminTalentCard {
+  padding: 20px;
+  border-radius: 24px;
+  border: 1px solid rgba(231, 220, 209, 0.92);
+  background: rgba(255, 255, 255, 0.88);
+  display: grid;
+  gap: 14px;
+}
+
+.adminTalentCardHeader,
+.adminTalentMeta,
+.adminMediaFieldHeader,
+.adminMediaComposer,
+.adminMediaMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.adminTalentCardHeader {
+  align-items: flex-start;
+}
+
+.adminTalentCardHeader h3 {
+  margin: 0 0 4px;
+}
+
+.adminTalentCardHeader p,
+.adminTalentMeta span,
+.adminMediaMeta span {
+  margin: 0;
+  color: var(--muted);
+}
+
+.adminTalentAvatar {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 auto;
+}
+
+.adminTalentMeta {
+  justify-content: space-between;
+  border-top: 1px solid rgba(231, 220, 209, 0.92);
+  border-bottom: 1px solid rgba(231, 220, 209, 0.92);
+  padding: 12px 0;
+  flex-wrap: wrap;
+}
+
+.adminMediaField {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(231, 220, 209, 0.92);
+  background: rgba(255, 250, 246, 0.72);
+}
+
+.adminMediaFieldHeader {
+  justify-content: space-between;
+}
+
+.adminMediaComposer {
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.adminMediaGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.adminMediaCard {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(231, 220, 209, 0.92);
+  background: #fff;
+}
+
+.adminMediaCard.readOnly {
+  background: rgba(255, 250, 246, 0.72);
+}
+
+.adminMediaCard img {
+  width: 100%;
+  height: 176px;
+  object-fit: cover;
+  border-radius: 16px;
+}
+
+.adminMediaMeta {
+  justify-content: space-between;
+}
+
+.adminPricingCard.featured {
+  border-color: rgba(255, 90, 20, 0.18);
+  background: linear-gradient(180deg, rgba(255, 245, 240, 0.96) 0%, rgba(255, 255, 255, 0.95) 100%);
+}
+
+.adminActionTextButton,
+.adminSecondaryButton,
+.adminShell .btn.soft {
+  background: rgba(255, 250, 246, 0.9);
+  color: #576170;
+}
+
+.adminShell .btn.soft:hover {
+  background: #fff6f1;
+}
+
+.adminTopGap,
+.topGap {
+  margin-top: 16px;
+}
+
+.profileAvatarImage {
+  object-fit: cover;
+}
+
+@media (max-width: 1320px) {
+  .adminStatsGrid.sixCols {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 960px) {
+  .adminTalentGrid,
+  .adminMediaGrid,
+  .adminStatsGrid.sixCols {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .adminImageField {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 680px) {
+  .adminTalentGrid,
+  .adminMediaGrid,
+  .adminStatsGrid.sixCols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .adminSimpleRow,
+  .adminDetailHero,
+  .adminMediaMeta,
+  .adminMediaComposer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .adminDetailCover {
+    width: 100%;
+    height: 180px;
+  }
+}

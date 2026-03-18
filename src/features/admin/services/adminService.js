@@ -1,19 +1,85 @@
-import { API_ENDPOINTS, buildAdminCategoryStatusEndpoint, buildAdminFeaturedEndpoint, buildAdminJobStatusEndpoint, buildAdminJobVisibilityEndpoint, buildAdminResourceEndpoint, buildAdminUserStatusEndpoint } from '../../../shared/api/endpoints.js';
+import {
+  API_ENDPOINTS,
+  buildAdminCategoryIconEndpoint,
+  buildAdminCategoryStatusEndpoint,
+  buildAdminFeaturedEndpoint,
+  buildAdminJobMediaEndpoint,
+  buildAdminJobMediaItemEndpoint,
+  buildAdminJobMediaPrimaryEndpoint,
+  buildAdminJobMediaReorderEndpoint,
+  buildAdminJobStatusEndpoint,
+  buildAdminJobVisibilityEndpoint,
+  buildAdminResourceEndpoint,
+  buildAdminTalentAvatarEndpoint,
+  buildAdminTalentStatusEndpoint,
+  buildAdminUserAvatarEndpoint,
+  buildAdminUserStatusEndpoint
+} from '../../../shared/api/endpoints.js';
 import { httpClient } from '../../../shared/api/httpClient.js';
 import { extractEntity } from '../../../shared/lib/response/extractEntity.js';
+import { STORAGE_KEYS } from '../../../shared/constants/storageKeys.js';
 import { fallbackAdminContent } from '../data/fallbackAdminContent.js';
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-const adminStore = {
-  users: clone(fallbackAdminContent.users),
-  categories: clone(fallbackAdminContent.categories),
-  jobs: clone(fallbackAdminContent.jobs),
-  talent: clone(fallbackAdminContent.talent),
-  pricing: clone(fallbackAdminContent.pricing)
-};
+function safeStorageGet(key) {
+  try {
+    return typeof window !== 'undefined' ? window.localStorage.getItem(key) : null;
+  } catch {
+    return null;
+  }
+}
+
+function safeStorageSet(key, value) {
+  try {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(key, value);
+    }
+  } catch {
+    // ignore storage errors in demo mode
+  }
+}
+
+function createDefaultStore() {
+  return {
+    users: clone(fallbackAdminContent.users),
+    categories: clone(fallbackAdminContent.categories),
+    jobs: clone(fallbackAdminContent.jobs),
+    talent: clone(fallbackAdminContent.talent),
+    pricing: clone(fallbackAdminContent.pricing)
+  };
+}
+
+function loadPersistedStore() {
+  const rawValue = safeStorageGet(STORAGE_KEYS.adminContent);
+
+  if (!rawValue) {
+    return createDefaultStore();
+  }
+
+  try {
+    const parsed = JSON.parse(rawValue);
+    return {
+      ...createDefaultStore(),
+      ...parsed,
+      users: Array.isArray(parsed?.users) ? parsed.users : clone(fallbackAdminContent.users),
+      categories: Array.isArray(parsed?.categories) ? parsed.categories : clone(fallbackAdminContent.categories),
+      jobs: Array.isArray(parsed?.jobs) ? parsed.jobs : clone(fallbackAdminContent.jobs),
+      talent: Array.isArray(parsed?.talent) ? parsed.talent : clone(fallbackAdminContent.talent),
+      pricing: Array.isArray(parsed?.pricing) ? parsed.pricing : clone(fallbackAdminContent.pricing)
+    };
+  } catch {
+    return createDefaultStore();
+  }
+}
+
+const adminStore = loadPersistedStore();
+
+function persistStore() {
+  safeStorageSet(STORAGE_KEYS.adminContent, JSON.stringify(adminStore));
+}
 
 function pickFirst(...values) {
   return values.find((value) => value !== undefined && value !== null && value !== '');
@@ -32,7 +98,7 @@ function normalizeMeta(meta = {}, fallbackLength = 0, page = 1, pageSize = 10) {
     page: safePage,
     pageSize: safePageSize,
     total,
-    totalPages: Math.max(1, Number(meta.totalPages ?? Math.ceil(total / safePageSize))|| 1)
+    totalPages: Math.max(1, Number(meta.totalPages ?? Math.ceil(total / safePageSize)) || 1)
   };
 }
 
@@ -58,16 +124,68 @@ function formatCurrency(amount) {
 }
 
 function createId(prefix) {
-  return `${prefix}_${Math.random().toString(36).slice(2, 8)}`;
+  return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function buildInitials(value = '') {
+  return value
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((item) => item[0])
+    .join('')
+    .toUpperCase();
+}
+
+function normalizeMediaItem(item = {}, fallbackSortOrder = 1) {
+  const url = pickFirst(item.url, item.imageUrl, item.src, '');
+
+  return {
+    id: pickFirst(item.id, item._id, createId('med')),
+    url,
+    type: pickFirst(item.type, 'image'),
+    isPrimary: Boolean(pickFirst(item.isPrimary, item.primary, false)),
+    sortOrder: Number(pickFirst(item.sortOrder, fallbackSortOrder)) || fallbackSortOrder
+  };
+}
+
+function normalizeMediaList(items = [], coverImageUrl = '') {
+  const baseItems = Array.isArray(items) ? items : [];
+  let result = baseItems.map((item, index) => normalizeMediaItem(item, index + 1)).filter((item) => item.url);
+
+  if (!result.length && coverImageUrl) {
+    result = [{ id: createId('med'), url: coverImageUrl, type: 'image', isPrimary: true, sortOrder: 1 }];
+  }
+
+  if (result.length && !result.some((item) => item.isPrimary)) {
+    result[0] = { ...result[0], isPrimary: true };
+  }
+
+  return result
+    .sort((left, right) => Number(left.sortOrder || 0) - Number(right.sortOrder || 0))
+    .map((item, index) => ({ ...item, sortOrder: index + 1, isPrimary: index === 0 ? Boolean(item.isPrimary) : Boolean(item.isPrimary) }));
+}
+
+function getPrimaryMediaUrl(media = [], fallbackCover = '') {
+  const primary = media.find((item) => item.isPrimary) || media[0];
+  return primary?.url || fallbackCover || '';
 }
 
 function normalizeUser(item = {}) {
+  const fullName = pickFirst(item.fullName, item.name, `${item.firstName || ''} ${item.lastName || ''}`.trim(), 'Unknown user');
+
   return {
     id: pickFirst(item.id, item._id, createId('usr')),
-    fullName: pickFirst(item.fullName, item.name, `${item.firstName || ''} ${item.lastName || ''}`.trim(), 'Unknown user'),
+    fullName,
     email: pickFirst(item.email, 'unknown@example.com'),
+    username: pickFirst(item.username, fullName.toLowerCase().replace(/[^a-z0-9]+/g, ''), ''),
     role: toLower(pickFirst(item.role, 'client')),
     status: toLower(pickFirst(item.status, 'active')),
+    phone: pickFirst(item.phone, ''),
+    country: pickFirst(item.country, item.location, ''),
+    bio: pickFirst(item.bio, item.description, ''),
+    avatarUrl: pickFirst(item.avatarUrl, item.avatar, item.imageUrl, ''),
+    initials: pickFirst(item.initials, buildInitials(fullName), 'US'),
     registeredAt: pickFirst(item.registeredAt, item.createdAt, new Date().toISOString())
   };
 }
@@ -77,11 +195,15 @@ function normalizeCategory(item = {}) {
     id: pickFirst(item.id, item._id, createId('cat')),
     name: pickFirst(item.name, item.title, 'Category'),
     slug: pickFirst(item.slug, item.name ? item.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') : 'category'),
-    status: toLower(pickFirst(item.status, 'active'))
+    status: toLower(pickFirst(item.status, 'active')),
+    iconUrl: pickFirst(item.iconUrl, item.imageUrl, item.image, '')
   };
 }
 
 function normalizeJob(item = {}) {
+  const media = normalizeMediaList(item.media, pickFirst(item.coverImageUrl, item.cover, item.imageUrl, ''));
+  const coverImageUrl = pickFirst(item.coverImageUrl, item.cover, getPrimaryMediaUrl(media, item.imageUrl), '');
+
   return {
     id: pickFirst(item.id, item._id, createId('job')),
     title: pickFirst(item.title, item.name, 'Untitled job'),
@@ -93,6 +215,9 @@ function normalizeJob(item = {}) {
     status: toLower(pickFirst(item.status, 'pending')),
     visibility: toLower(pickFirst(item.visibility, 'visible')),
     description: pickFirst(item.description, item.summary, ''),
+    coverImageUrl,
+    media,
+    tags: Array.isArray(item.tags) ? item.tags : [],
     createdAt: pickFirst(item.createdAt, item.publishedAt, new Date().toISOString())
   };
 }
@@ -103,10 +228,13 @@ function normalizeTalent(item = {}) {
     name: pickFirst(item.name, 'Talent'),
     title: pickFirst(item.title, item.professionalTitle, 'Professional'),
     skill: pickFirst(item.skill, item.primarySkill, 'General'),
+    categoryId: pickFirst(item.categoryId, ''),
+    categoryName: pickFirst(item.categoryName, item.category, ''),
     rating: Number(pickFirst(item.rating, 0)) || 0,
     imageUrl: pickFirst(item.imageUrl, item.avatar, ''),
     status: toLower(pickFirst(item.status, 'active')),
-    featured: Boolean(pickFirst(item.featured, false))
+    featured: Boolean(pickFirst(item.featured, false)),
+    bio: pickFirst(item.bio, item.description, '')
   };
 }
 
@@ -115,8 +243,9 @@ function normalizePricing(item = {}) {
     id: pickFirst(item.id, item._id, createId('pkg')),
     name: pickFirst(item.name, 'Package'),
     price: Number(pickFirst(item.price, 0)) || 0,
-    features: Array.isArray(item.features) ? item.features : [],
-    status: toLower(pickFirst(item.status, 'active'))
+    features: Array.isArray(item.features) ? item.features.filter(Boolean) : [],
+    status: toLower(pickFirst(item.status, 'active')),
+    badge: pickFirst(item.badge, '')
   };
 }
 
@@ -129,7 +258,10 @@ function normalizeOverviewResponse(payload) {
       users: Number(totals.users ?? 0),
       freelancers: Number(totals.freelancers ?? 0),
       jobs: Number(totals.jobs ?? 0),
-      activeCategories: Number(totals.activeCategories ?? 0)
+      activeCategories: Number(totals.activeCategories ?? 0),
+      featuredTalent: Number(totals.featuredTalent ?? 0),
+      activePackages: Number(totals.activePackages ?? 0),
+      mediaItems: Number(totals.mediaItems ?? 0)
     },
     recentJobs: Array.isArray(root.recentJobs) ? root.recentJobs.map(normalizeJob) : [],
     recentUsers: Array.isArray(root.recentUsers) ? root.recentUsers.map(normalizeUser) : []
@@ -166,13 +298,19 @@ function buildFallbackOverview() {
   const users = adminStore.users.map(normalizeUser);
   const jobs = adminStore.jobs.map(normalizeJob);
   const categories = adminStore.categories.map(normalizeCategory);
+  const talent = adminStore.talent.map(normalizeTalent);
+  const pricing = adminStore.pricing.map(normalizePricing);
+  const mediaItems = jobs.reduce((sum, item) => sum + item.media.length, 0);
 
   return {
     totals: {
       users: users.length,
       freelancers: users.filter((item) => item.role === 'freelancer').length,
       jobs: jobs.length,
-      activeCategories: categories.filter((item) => item.status === 'active').length
+      activeCategories: categories.filter((item) => item.status === 'active').length,
+      featuredTalent: talent.filter((item) => item.featured).length,
+      activePackages: pricing.filter((item) => item.status === 'active').length,
+      mediaItems
     },
     recentJobs: [...jobs].sort((a, b) => sortByDateDesc(a, b, 'createdAt')).slice(0, 5),
     recentUsers: [...users].sort((a, b) => sortByDateDesc(a, b, 'registeredAt')).slice(0, 5)
@@ -181,7 +319,7 @@ function buildFallbackOverview() {
 
 function fallbackUsers(params = {}) {
   let items = adminStore.users.map(normalizeUser);
-  items = filterCollection(items, params, ['fullName', 'email']);
+  items = filterCollection(items, params, ['fullName', 'email', 'username', 'country']);
 
   const role = toLower(params.role || 'all');
   const status = toLower(params.status || 'all');
@@ -200,10 +338,11 @@ function fallbackUsers(params = {}) {
 
 function fallbackJobs(params = {}) {
   let items = adminStore.jobs.map(normalizeJob);
-  items = filterCollection(items, params, ['title', 'categoryName', 'ownerName']);
+  items = filterCollection(items, params, ['title', 'categoryName', 'ownerName', 'description']);
 
   const categoryId = toLower(params.categoryId || 'all');
   const status = toLower(params.status || 'all');
+  const visibility = toLower(params.visibility || 'all');
 
   if (categoryId !== 'all') {
     items = items.filter((item) => toLower(item.categoryId) === categoryId || toLower(item.categoryName) === categoryId);
@@ -211,6 +350,10 @@ function fallbackJobs(params = {}) {
 
   if (status !== 'all') {
     items = items.filter((item) => item.status === status);
+  }
+
+  if (visibility !== 'all') {
+    items = items.filter((item) => item.visibility === visibility);
   }
 
   items = [...items].sort((a, b) => sortByDateDesc(a, b, 'createdAt'));
@@ -232,7 +375,7 @@ function fallbackCategories(params = {}) {
 
 function fallbackTalent(params = {}) {
   let items = adminStore.talent.map(normalizeTalent);
-  items = filterCollection(items, params, ['name', 'title', 'skill']);
+  items = filterCollection(items, params, ['name', 'title', 'skill', 'categoryName']);
 
   const status = toLower(params.status || 'all');
   const featured = toLower(params.featured || 'all');
@@ -252,7 +395,7 @@ function fallbackTalent(params = {}) {
 
 function fallbackPricing(params = {}) {
   let items = adminStore.pricing.map(normalizePricing);
-  items = filterCollection(items, params, ['name']);
+  items = filterCollection(items, params, ['name', 'badge']);
 
   const status = toLower(params.status || 'all');
   if (status !== 'all') {
@@ -273,6 +416,7 @@ function upsertById(collection, item, mapper) {
     collection.unshift(normalized);
   }
 
+  persistStore();
   return normalized;
 }
 
@@ -280,12 +424,101 @@ function removeById(collection, id) {
   const index = collection.findIndex((entry) => entry.id === id);
   if (index >= 0) {
     collection.splice(index, 1);
+    persistStore();
   }
 }
 
 function getById(collection, id, mapper) {
   const found = collection.find((item) => item.id === id);
   return found ? mapper(found) : null;
+}
+
+function withCategoryName(values = {}) {
+  const categories = adminStore.categories.map(normalizeCategory);
+  const category = categories.find((item) => item.id === values.categoryId) || categories.find((item) => item.name === values.categoryName);
+
+  return {
+    ...values,
+    categoryName: values.categoryName || category?.name || 'General'
+  };
+}
+
+function setPrimaryMedia(items = [], mediaId) {
+  return items.map((item, index) => ({
+    ...item,
+    isPrimary: item.id === mediaId,
+    sortOrder: index + 1
+  }));
+}
+
+export function getAdminSnapshot() {
+  return {
+    users: adminStore.users.map(normalizeUser),
+    categories: adminStore.categories.map(normalizeCategory),
+    jobs: adminStore.jobs.map(normalizeJob),
+    talent: adminStore.talent.map(normalizeTalent),
+    pricing: adminStore.pricing.map(normalizePricing)
+  };
+}
+
+export function getAdminCategoryOptions() {
+  return adminStore.categories.map(normalizeCategory).filter((item) => item.status === 'active');
+}
+
+export function getPricingSummary(items = []) {
+  return items.map((item) => ({ ...item, formattedPrice: formatCurrency(item.price) }));
+}
+
+export function getHomeCategoryTabs() {
+  const activeNames = adminStore.categories
+    .map(normalizeCategory)
+    .filter((item) => item.status === 'active')
+    .map((item) => item.name);
+
+  return ['All', ...Array.from(new Set(activeNames))];
+}
+
+export function getHomePricingPlans() {
+  return adminStore.pricing
+    .map(normalizePricing)
+    .filter((item) => item.status === 'active')
+    .map((item, index) => ({
+      name: item.name,
+      description: item.badge ? `${item.badge} package for growing marketplace teams.` : 'Flexible plan for marketplace growth.',
+      monthly: item.price,
+      yearly: item.price * 10,
+      features: item.features,
+      badge: item.badge,
+      isFeatured: index === 1
+    }));
+}
+
+export function getHomeTalentCollection() {
+  return adminStore.talent
+    .map(normalizeTalent)
+    .filter((item) => item.status === 'active')
+    .map((item, index) => ({
+      id: item.id,
+      name: item.name,
+      title: item.title,
+      location: 'Remote',
+      rating: item.rating,
+      reviews: 18 + index * 7,
+      price: 45 + index * 8,
+      hourlyRate: 45 + index * 8,
+      icon: '✨',
+      label: item.skill,
+      category: item.categoryName || item.skill,
+      avatar: item.imageUrl,
+      banner: item.imageUrl,
+      duration: `${6 + index} Days`,
+      tools: [item.skill, item.categoryName || 'Marketplace', 'Delivery'],
+      badge: item.featured ? 'Featured Talent' : item.skill,
+      featured: item.featured,
+      availability: 'Available now',
+      completedProjects: 12 + index * 4,
+      bio: item.bio
+    }));
 }
 
 export async function fetchAdminOverview() {
@@ -320,7 +553,16 @@ export async function updateAdminUser(id, values) {
     const payload = await httpClient.put(buildAdminResourceEndpoint(API_ENDPOINTS.admin.users, id), values);
     return normalizeUser(extractEntity(payload, ['data', 'item', 'result']) || values);
   } catch {
-    return upsertById(adminStore.users, { ...values, id }, normalizeUser);
+    return upsertById(adminStore.users, { ...getById(adminStore.users, id, normalizeUser), ...values, id }, normalizeUser);
+  }
+}
+
+export async function updateAdminUserAvatar(id, avatarUrl) {
+  try {
+    const payload = await httpClient.patch(buildAdminUserAvatarEndpoint(id), { avatarUrl });
+    return normalizeUser(extractEntity(payload, ['data', 'item', 'result']) || { id, avatarUrl });
+  } catch {
+    return upsertById(adminStore.users, { ...getById(adminStore.users, id, normalizeUser), avatarUrl }, normalizeUser);
   }
 }
 
@@ -329,8 +571,7 @@ export async function updateAdminUserStatus(id, status) {
     const payload = await httpClient.patch(buildAdminUserStatusEndpoint(id), { status });
     return normalizeUser(extractEntity(payload, ['data', 'item', 'result']) || { id, status });
   } catch {
-    const nextItem = upsertById(adminStore.users, { ...getById(adminStore.users, id, normalizeUser), status }, normalizeUser);
-    return nextItem;
+    return upsertById(adminStore.users, { ...getById(adminStore.users, id, normalizeUser), status }, normalizeUser);
   }
 }
 
@@ -363,13 +604,13 @@ export async function fetchAdminJobById(id) {
 }
 
 export async function updateAdminJob(id, values) {
+  const nextValues = withCategoryName(values);
+
   try {
-    const payload = await httpClient.put(buildAdminResourceEndpoint(API_ENDPOINTS.admin.jobs, id), values);
-    return normalizeJob(extractEntity(payload, ['data', 'item', 'result']) || values);
+    const payload = await httpClient.put(buildAdminResourceEndpoint(API_ENDPOINTS.admin.jobs, id), nextValues);
+    return normalizeJob(extractEntity(payload, ['data', 'item', 'result']) || nextValues);
   } catch {
-    const categories = adminStore.categories.map(normalizeCategory);
-    const category = categories.find((item) => item.id === values.categoryId) || categories.find((item) => item.name === values.categoryName);
-    return upsertById(adminStore.jobs, { ...getById(adminStore.jobs, id, normalizeJob), ...values, id, categoryName: values.categoryName || category?.name || 'General' }, normalizeJob);
+    return upsertById(adminStore.jobs, { ...getById(adminStore.jobs, id, normalizeJob), ...nextValues, id }, normalizeJob);
   }
 }
 
@@ -388,6 +629,70 @@ export async function updateAdminJobVisibility(id, visibility) {
     return normalizeJob(extractEntity(payload, ['data', 'item', 'result']) || { id, visibility });
   } catch {
     return upsertById(adminStore.jobs, { ...getById(adminStore.jobs, id, normalizeJob), visibility }, normalizeJob);
+  }
+}
+
+export async function addAdminJobMedia(id, mediaItem) {
+  try {
+    const payload = await httpClient.post(buildAdminJobMediaEndpoint(id), mediaItem);
+    return normalizeJob(extractEntity(payload, ['data', 'item', 'result']) || { id });
+  } catch {
+    const currentJob = getById(adminStore.jobs, id, normalizeJob);
+    const nextMedia = normalizeMediaList([...(currentJob?.media || []), mediaItem], currentJob?.coverImageUrl);
+    return upsertById(adminStore.jobs, {
+      ...currentJob,
+      media: nextMedia,
+      coverImageUrl: getPrimaryMediaUrl(nextMedia, currentJob?.coverImageUrl)
+    }, normalizeJob);
+  }
+}
+
+export async function removeAdminJobMedia(id, mediaId) {
+  try {
+    await httpClient.delete(buildAdminJobMediaItemEndpoint(id, mediaId));
+  } catch {
+    const currentJob = getById(adminStore.jobs, id, normalizeJob);
+    const nextMedia = normalizeMediaList((currentJob?.media || []).filter((item) => item.id !== mediaId), '');
+    upsertById(adminStore.jobs, {
+      ...currentJob,
+      media: nextMedia,
+      coverImageUrl: getPrimaryMediaUrl(nextMedia, '')
+    }, normalizeJob);
+  }
+}
+
+export async function setAdminJobPrimaryMedia(id, mediaId) {
+  try {
+    const payload = await httpClient.patch(buildAdminJobMediaPrimaryEndpoint(id, mediaId), { mediaId });
+    return normalizeJob(extractEntity(payload, ['data', 'item', 'result']) || { id });
+  } catch {
+    const currentJob = getById(adminStore.jobs, id, normalizeJob);
+    const nextMedia = setPrimaryMedia(currentJob?.media || [], mediaId);
+    return upsertById(adminStore.jobs, {
+      ...currentJob,
+      media: nextMedia,
+      coverImageUrl: getPrimaryMediaUrl(nextMedia, currentJob?.coverImageUrl)
+    }, normalizeJob);
+  }
+}
+
+export async function reorderAdminJobMedia(id, mediaIds = []) {
+  try {
+    const payload = await httpClient.patch(buildAdminJobMediaReorderEndpoint(id), { mediaIds });
+    return normalizeJob(extractEntity(payload, ['data', 'item', 'result']) || { id });
+  } catch {
+    const currentJob = getById(adminStore.jobs, id, normalizeJob);
+    const nextMedia = mediaIds
+      .map((mediaId, index) => {
+        const found = (currentJob?.media || []).find((item) => item.id === mediaId);
+        return found ? { ...found, sortOrder: index + 1, isPrimary: index === 0 ? found.isPrimary : false } : null;
+      })
+      .filter(Boolean);
+    return upsertById(adminStore.jobs, {
+      ...currentJob,
+      media: nextMedia,
+      coverImageUrl: getPrimaryMediaUrl(nextMedia, currentJob?.coverImageUrl)
+    }, normalizeJob);
   }
 }
 
@@ -425,6 +730,15 @@ export async function updateAdminCategory(id, values) {
     return normalizeCategory(extractEntity(payload, ['data', 'item', 'result']) || values);
   } catch {
     return upsertById(adminStore.categories, { ...getById(adminStore.categories, id, normalizeCategory), ...values, id }, normalizeCategory);
+  }
+}
+
+export async function updateAdminCategoryIcon(id, iconUrl) {
+  try {
+    const payload = await httpClient.patch(buildAdminCategoryIconEndpoint(id), { iconUrl });
+    return normalizeCategory(extractEntity(payload, ['data', 'item', 'result']) || { id, iconUrl });
+  } catch {
+    return upsertById(adminStore.categories, { ...getById(adminStore.categories, id, normalizeCategory), iconUrl }, normalizeCategory);
   }
 }
 
@@ -466,17 +780,19 @@ export async function createAdminTalent(values) {
 }
 
 export async function updateAdminTalent(id, values) {
+  const nextValues = withCategoryName(values);
+
   try {
-    const payload = await httpClient.put(buildAdminResourceEndpoint(API_ENDPOINTS.admin.talent, id), values);
-    return normalizeTalent(extractEntity(payload, ['data', 'item', 'result']) || values);
+    const payload = await httpClient.put(buildAdminResourceEndpoint(API_ENDPOINTS.admin.talent, id), nextValues);
+    return normalizeTalent(extractEntity(payload, ['data', 'item', 'result']) || nextValues);
   } catch {
-    return upsertById(adminStore.talent, { ...getById(adminStore.talent, id, normalizeTalent), ...values, id }, normalizeTalent);
+    return upsertById(adminStore.talent, { ...getById(adminStore.talent, id, normalizeTalent), ...nextValues, id }, normalizeTalent);
   }
 }
 
 export async function updateAdminTalentStatus(id, status) {
   try {
-    const payload = await httpClient.patch(buildAdminResourceEndpoint(API_ENDPOINTS.admin.talent, `${id}/status`), { status });
+    const payload = await httpClient.patch(buildAdminTalentStatusEndpoint(id), { status });
     return normalizeTalent(extractEntity(payload, ['data', 'item', 'result']) || { id, status });
   } catch {
     return upsertById(adminStore.talent, { ...getById(adminStore.talent, id, normalizeTalent), status }, normalizeTalent);
@@ -489,6 +805,15 @@ export async function updateAdminTalentFeatured(id, featured) {
     return normalizeTalent(extractEntity(payload, ['data', 'item', 'result']) || { id, featured });
   } catch {
     return upsertById(adminStore.talent, { ...getById(adminStore.talent, id, normalizeTalent), featured }, normalizeTalent);
+  }
+}
+
+export async function updateAdminTalentAvatar(id, imageUrl) {
+  try {
+    const payload = await httpClient.patch(buildAdminTalentAvatarEndpoint(id), { imageUrl });
+    return normalizeTalent(extractEntity(payload, ['data', 'item', 'result']) || { id, imageUrl });
+  } catch {
+    return upsertById(adminStore.talent, { ...getById(adminStore.talent, id, normalizeTalent), imageUrl }, normalizeTalent);
   }
 }
 
@@ -537,12 +862,4 @@ export async function deleteAdminPricing(id) {
   }
 
   return { success: true };
-}
-
-export function getAdminCategoryOptions() {
-  return adminStore.categories.map(normalizeCategory).filter((item) => item.status === 'active');
-}
-
-export function getPricingSummary(items = []) {
-  return items.map((item) => ({ ...item, formattedPrice: formatCurrency(item.price) }));
 }

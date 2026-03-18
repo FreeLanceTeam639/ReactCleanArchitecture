@@ -122,6 +122,10 @@ export function buildAdminUserStatusEndpoint(userId) {
   return `${API_ENDPOINTS.admin.users}/${userId}/status`;
 }
 
+export function buildAdminUserAvatarEndpoint(userId) {
+  return `${API_ENDPOINTS.admin.users}/${userId}/avatar`;
+}
+
 export function buildAdminJobStatusEndpoint(jobId) {
   return `${API_ENDPOINTS.admin.jobs}/${jobId}/status`;
 }
@@ -130,10 +134,38 @@ export function buildAdminJobVisibilityEndpoint(jobId) {
   return `${API_ENDPOINTS.admin.jobs}/${jobId}/visibility`;
 }
 
+export function buildAdminJobMediaEndpoint(jobId) {
+  return `${API_ENDPOINTS.admin.jobs}/${jobId}/media`;
+}
+
+export function buildAdminJobMediaItemEndpoint(jobId, mediaId) {
+  return `${API_ENDPOINTS.admin.jobs}/${jobId}/media/${mediaId}`;
+}
+
+export function buildAdminJobMediaPrimaryEndpoint(jobId, mediaId) {
+  return `${API_ENDPOINTS.admin.jobs}/${jobId}/media/${mediaId}/primary`;
+}
+
+export function buildAdminJobMediaReorderEndpoint(jobId) {
+  return `${API_ENDPOINTS.admin.jobs}/${jobId}/media/reorder`;
+}
+
 export function buildAdminCategoryStatusEndpoint(categoryId) {
   return `${API_ENDPOINTS.admin.categories}/${categoryId}/status`;
 }
 
+export function buildAdminCategoryIconEndpoint(categoryId) {
+  return `${API_ENDPOINTS.admin.categories}/${categoryId}/icon`;
+}
+
 export function buildAdminFeaturedEndpoint(talentId) {
   return `${API_ENDPOINTS.admin.talent}/${talentId}/featured`;
+}
+
+export function buildAdminTalentStatusEndpoint(talentId) {
+  return `${API_ENDPOINTS.admin.talent}/${talentId}/status`;
+}
+
+export function buildAdminTalentAvatarEndpoint(talentId) {
+  return `${API_ENDPOINTS.admin.talent}/${talentId}/avatar`;
 }

@@ -7,6 +7,8 @@ import { AdminConfirmDialog, AdminModal } from '../../shared/ui/admin/AdminModal
 import AdminPagination from '../../shared/ui/admin/AdminPagination.jsx';
 import AdminStatusBadge from '../../shared/ui/admin/AdminStatusBadge.jsx';
 import AdminToolbar from '../../shared/ui/admin/AdminToolbar.jsx';
+import AdminImageField from '../../shared/ui/admin/AdminImageField.jsx';
+import AdminActionIconButton from '../../shared/ui/admin/AdminActionIconButton.jsx';
 
 function formatDate(value) {
   return new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(value));
@@ -16,9 +18,30 @@ function buildUserFormState(user) {
   return {
     fullName: user?.fullName || '',
     email: user?.email || '',
+    username: user?.username || '',
     role: user?.role || 'client',
-    status: user?.status || 'active'
+    status: user?.status || 'active',
+    phone: user?.phone || '',
+    country: user?.country || '',
+    bio: user?.bio || '',
+    avatarUrl: user?.avatarUrl || ''
   };
+}
+
+function UserIdentity({ user }) {
+  return (
+    <div className="adminIdentityCell">
+      {user.avatarUrl ? (
+        <img src={user.avatarUrl} alt={user.fullName} className="adminAvatarImage" />
+      ) : (
+        <div className="adminAvatarPlaceholder">{user.initials || user.fullName?.slice(0, 2)?.toUpperCase()}</div>
+      )}
+      <div>
+        <strong>{user.fullName}</strong>
+        <span>@{user.username || 'user'}</span>
+      </div>
+    </div>
+  );
 }
 
 export default function AdminUsersPage({ navigate, pathname = ROUTES.adminUsers }) {
@@ -91,7 +114,7 @@ export default function AdminUsersPage({ navigate, pathname = ROUTES.adminUsers 
       navigate={navigate}
       pathname={pathname}
       title="Users"
-      description="Client və freelancer hesablarını sadə şəkildə idarə et."
+      description="Client və freelancer profillərini daha detallı və yumşaq admin görünüşü ilə idarə et."
     >
       {feedback ? <div className="adminNotice success">{feedback}</div> : null}
       {error ? <div className="adminNotice error">{error}</div> : null}
@@ -99,15 +122,15 @@ export default function AdminUsersPage({ navigate, pathname = ROUTES.adminUsers 
       <AdminToolbar
         searchValue={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Search by name or email"
+        searchPlaceholder="Search by name, email, username or country"
         filters={toolbarFilters}
       />
 
       <section className="adminPanelCard cardLift">
         <div className="adminPanelCardHeader">
           <div>
-            <span className="adminPageEyebrow">Overview</span>
-            <h2>User List</h2>
+            <span className="adminPageEyebrow">Accounts</span>
+            <h2>User Directory</h2>
           </div>
           <span className="adminPanelCount">{meta.total} total</span>
         </div>
@@ -123,10 +146,11 @@ export default function AdminUsersPage({ navigate, pathname = ROUTES.adminUsers 
               <table className="adminTable">
                 <thead>
                   <tr>
-                    <th>Full Name</th>
+                    <th>User</th>
                     <th>Email</th>
                     <th>Role</th>
                     <th>Status</th>
+                    <th>Country</th>
                     <th>Registered</th>
                     <th>Actions</th>
                   </tr>
@@ -134,17 +158,21 @@ export default function AdminUsersPage({ navigate, pathname = ROUTES.adminUsers 
                 <tbody>
                   {items.map((user) => (
                     <tr key={user.id}>
-                      <td><strong>{user.fullName}</strong></td>
-                      <td>{user.email}</td>
+                      <td><UserIdentity user={user} /></td>
+                      <td>
+                        <strong>{user.email}</strong>
+                        {user.phone ? <span>{user.phone}</span> : null}
+                      </td>
                       <td className="textCap">{user.role}</td>
                       <td><AdminStatusBadge value={user.status} /></td>
+                      <td>{user.country || '—'}</td>
                       <td>{formatDate(user.registeredAt)}</td>
                       <td>
                         <div className="adminRowActions">
-                          <button type="button" className="adminIconButton interactive" onClick={() => setViewUser(user)} aria-label="View user"><Eye size={16} /></button>
-                          <button type="button" className="adminIconButton interactive" onClick={() => openEditModal(user)} aria-label="Edit user"><Pencil size={16} /></button>
-                          <button type="button" className="adminIconButton interactive" onClick={() => setStatusTarget(user)} aria-label="Toggle user status"><ShieldBan size={16} /></button>
-                          <button type="button" className="adminIconButton interactive danger" onClick={() => setDeleteTarget(user)} aria-label="Delete user"><Trash2 size={16} /></button>
+                          <AdminActionIconButton icon={Eye} label="View user" onClick={() => setViewUser(user)} />
+                          <AdminActionIconButton icon={Pencil} label="Edit user" onClick={() => openEditModal(user)} />
+                          <AdminActionIconButton icon={ShieldBan} label="Toggle user status" onClick={() => setStatusTarget(user)} tone={user.status === 'blocked' ? 'primary' : 'warning'} />
+                          <AdminActionIconButton icon={Trash2} label="Delete user" onClick={() => setDeleteTarget(user)} tone="danger" />
                         </div>
                       </td>
                     </tr>
@@ -163,16 +191,34 @@ export default function AdminUsersPage({ navigate, pathname = ROUTES.adminUsers 
       </section>
 
       {viewUser ? (
-        <AdminModal title="User details" onClose={() => setViewUser(null)} footer={(
-          <button type="button" className="btn soft interactive" onClick={() => setViewUser(null)}>Close</button>
-        )}>
-          <div className="adminDetailGrid">
-            <div><span>Full Name</span><strong>{viewUser.fullName}</strong></div>
-            <div><span>Email</span><strong>{viewUser.email}</strong></div>
-            <div><span>Role</span><strong className="textCap">{viewUser.role}</strong></div>
-            <div><span>Status</span><AdminStatusBadge value={viewUser.status} /></div>
+        <AdminModal
+          title="User details"
+          onClose={() => setViewUser(null)}
+          wide
+          footer={<button type="button" className="adminSecondaryButton interactive" onClick={() => setViewUser(null)}>Close</button>}
+        >
+          <div className="adminDetailHero">
+            {viewUser.avatarUrl ? (
+              <img src={viewUser.avatarUrl} alt={viewUser.fullName} className="adminDetailAvatar" />
+            ) : (
+              <div className="adminAvatarPlaceholder large">{viewUser.initials || viewUser.fullName?.slice(0, 2)?.toUpperCase()}</div>
+            )}
+            <div>
+              <h4>{viewUser.fullName}</h4>
+              <p>@{viewUser.username || 'user'} • {viewUser.email}</p>
+              <div className="adminInlineBadges">
+                <AdminStatusBadge value={viewUser.role} tone="primary" />
+                <AdminStatusBadge value={viewUser.status} />
+              </div>
+            </div>
+          </div>
+
+          <div className="adminDetailGrid wide">
+            <div><span>Phone</span><strong>{viewUser.phone || 'Not set'}</strong></div>
+            <div><span>Country</span><strong>{viewUser.country || 'Not set'}</strong></div>
             <div><span>Registered</span><strong>{formatDate(viewUser.registeredAt)}</strong></div>
             <div><span>User ID</span><strong>{viewUser.id}</strong></div>
+            <div className="fullSpan"><span>Bio</span><strong>{viewUser.bio || 'No bio added yet.'}</strong></div>
           </div>
         </AdminModal>
       ) : null}
@@ -181,36 +227,63 @@ export default function AdminUsersPage({ navigate, pathname = ROUTES.adminUsers 
         <AdminModal
           title="Edit user"
           onClose={() => setEditingUser(null)}
+          wide
           footer={(
             <>
-              <button type="button" className="btn soft interactive" onClick={() => setEditingUser(null)}>Cancel</button>
+              <button type="button" className="adminSecondaryButton interactive" onClick={() => setEditingUser(null)}>Cancel</button>
               <button type="button" className="btn primary interactive" onClick={handleSave}>Save changes</button>
             </>
           )}
         >
-          <div className="adminFormGrid">
-            <label>
-              <span>Full Name</span>
-              <input value={formState.fullName} onChange={(event) => setFormState((current) => ({ ...current, fullName: event.target.value }))} />
-            </label>
-            <label>
-              <span>Email</span>
-              <input value={formState.email} onChange={(event) => setFormState((current) => ({ ...current, email: event.target.value }))} />
-            </label>
-            <label>
-              <span>Role</span>
-              <select value={formState.role} onChange={(event) => setFormState((current) => ({ ...current, role: event.target.value }))}>
-                <option value="client">Client</option>
-                <option value="freelancer">Freelancer</option>
-              </select>
-            </label>
-            <label>
-              <span>Status</span>
-              <select value={formState.status} onChange={(event) => setFormState((current) => ({ ...current, status: event.target.value }))}>
-                <option value="active">Active</option>
-                <option value="blocked">Blocked</option>
-              </select>
-            </label>
+          <div className="adminFormStack">
+            <AdminImageField
+              label="Profile image"
+              value={formState.avatarUrl}
+              onChange={(value) => setFormState((current) => ({ ...current, avatarUrl: value }))}
+              shape="circle"
+              hint="Admin bu şəkli dəyişəndə gələcəkdə PATCH /api/admin/users/:id/avatar endpoint-inə bağlana bilər."
+            />
+
+            <div className="adminFormGrid wide">
+              <label>
+                <span>Full Name</span>
+                <input value={formState.fullName} onChange={(event) => setFormState((current) => ({ ...current, fullName: event.target.value }))} />
+              </label>
+              <label>
+                <span>Email</span>
+                <input value={formState.email} onChange={(event) => setFormState((current) => ({ ...current, email: event.target.value }))} />
+              </label>
+              <label>
+                <span>Username</span>
+                <input value={formState.username} onChange={(event) => setFormState((current) => ({ ...current, username: event.target.value }))} />
+              </label>
+              <label>
+                <span>Phone</span>
+                <input value={formState.phone} onChange={(event) => setFormState((current) => ({ ...current, phone: event.target.value }))} />
+              </label>
+              <label>
+                <span>Country</span>
+                <input value={formState.country} onChange={(event) => setFormState((current) => ({ ...current, country: event.target.value }))} />
+              </label>
+              <label>
+                <span>Role</span>
+                <select value={formState.role} onChange={(event) => setFormState((current) => ({ ...current, role: event.target.value }))}>
+                  <option value="client">Client</option>
+                  <option value="freelancer">Freelancer</option>
+                </select>
+              </label>
+              <label>
+                <span>Status</span>
+                <select value={formState.status} onChange={(event) => setFormState((current) => ({ ...current, status: event.target.value }))}>
+                  <option value="active">Active</option>
+                  <option value="blocked">Blocked</option>
+                </select>
+              </label>
+              <label className="fullSpan">
+                <span>Bio</span>
+                <textarea rows="4" value={formState.bio} onChange={(event) => setFormState((current) => ({ ...current, bio: event.target.value }))} />
+              </label>
+            </div>
           </div>
         </AdminModal>
       ) : null}

@@ -3,6 +3,7 @@ import { httpClient } from '../../../shared/api/httpClient.js';
 import { extractCollection } from '../../../shared/lib/response/extractCollection.js';
 import { extractEntity } from '../../../shared/lib/response/extractEntity.js';
 import { fallbackHomeContent } from '../data/fallbackHomeContent.js';
+import { getHomeCategoryTabs, getHomePricingPlans, getHomeTalentCollection, getAdminSnapshot } from '../../admin/services/adminService.js';
 
 const demoSavedTalentIds = new Set(['talent-2']);
 
@@ -141,7 +142,8 @@ export async function fetchPopularCategories() {
   try {
     return extractCollection(await httpClient.get(homeEndpoints.popularCategories));
   } catch {
-    return fallbackHomeContent.popular;
+    const adminCategories = getAdminSnapshot().categories.filter((item) => item.status === 'active').map((item) => item.name);
+    return adminCategories.length ? adminCategories.slice(0, 3) : fallbackHomeContent.popular;
   }
 }
 
@@ -165,9 +167,10 @@ export async function fetchFeaturedFreelancerCategories() {
   try {
     const payload = await httpClient.get(homeEndpoints.featuredFreelancerCategories);
     const categories = extractCollection(payload).map(mapCategoryLabel);
-    return categories.length ? categories : fallbackHomeContent.tabs;
+    return categories.length ? categories : (getHomeCategoryTabs().length ? getHomeCategoryTabs() : fallbackHomeContent.tabs);
   } catch {
-    return fallbackHomeContent.tabs;
+    const tabs = getHomeCategoryTabs();
+    return tabs.length ? tabs : fallbackHomeContent.tabs;
   }
 }
 
@@ -176,6 +179,58 @@ export async function fetchFeaturedFreelancers(params = {}) {
     const payload = await httpClient.get(homeEndpoints.featuredFreelancers, { query: params });
     return normalizeTalentResponse(payload, params);
   } catch {
+    const adminTalent = getHomeTalentCollection();
+    if (adminTalent.length) {
+      const mergedFallback = { ...fallbackHomeContent, talents: adminTalent };
+      const normalizedSearch = String(params.search || '').trim().toLowerCase();
+      const budgetRange = getBudgetRange(params.budget);
+      let talents = mergedFallback.talents.map((item) => ({ ...item, isSaved: demoSavedTalentIds.has(item.id) }));
+
+      if (params.category && params.category !== 'All') {
+        talents = talents.filter((talent) => talent.category === params.category);
+      }
+
+      if (normalizedSearch) {
+        talents = talents.filter((talent) => [
+          talent.name,
+          talent.title,
+          talent.category,
+          talent.location,
+          ...(talent.tools || [])
+        ].join(' ').toLowerCase().includes(normalizedSearch));
+      }
+
+      if (budgetRange) {
+        talents = talents.filter((talent) => {
+          const rate = Number(talent.hourlyRate || 0);
+          if (budgetRange.min !== undefined && rate < budgetRange.min) return false;
+          if (budgetRange.max !== undefined && rate > budgetRange.max) return false;
+          return true;
+        });
+      }
+
+      const sorters = {
+        rating: (left, right) => Number(right.rating || 0) - Number(left.rating || 0),
+        reviews: (left, right) => Number(right.reviews || 0) - Number(left.reviews || 0),
+        'price-low': (left, right) => Number(left.hourlyRate || 0) - Number(right.hourlyRate || 0),
+        'price-high': (left, right) => Number(right.hourlyRate || 0) - Number(left.hourlyRate || 0)
+      };
+
+      talents = [...talents].sort(sorters[params.sort] || sorters.rating);
+      const safePage = Math.max(1, Number(params.page || 1));
+      const safeLimit = Math.max(1, Number(params.limit || 6));
+      const startIndex = (safePage - 1) * safeLimit;
+      const items = talents.slice(startIndex, startIndex + safeLimit);
+
+      return {
+        items,
+        total: talents.length,
+        page: safePage,
+        limit: safeLimit,
+        hasMore: startIndex + safeLimit < talents.length
+      };
+    }
+
     return applyFallbackTalentQuery(params);
   }
 }
@@ -204,7 +259,8 @@ export async function fetchPricingPlans(params = {}) {
     const payload = await httpClient.get(homeEndpoints.pricingPlans, { query: params });
     return extractCollection(payload).map(normalizePlan);
   } catch {
-    return fallbackHomeContent.plans.map(normalizePlan);
+    const plans = getHomePricingPlans();
+    return (plans.length ? plans : fallbackHomeContent.plans).map(normalizePlan);
   }
 }
 

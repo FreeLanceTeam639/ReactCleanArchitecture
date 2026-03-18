@@ -55,6 +55,24 @@ function toStringArray(value) {
   return [];
 }
 
+
+function readProfileDraft() {
+  try {
+    const rawValue = localStorage.getItem(STORAGE_KEYS.profileDraft);
+    return rawValue ? JSON.parse(rawValue) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveProfileDraft(value) {
+  try {
+    localStorage.setItem(STORAGE_KEYS.profileDraft, JSON.stringify(value));
+  } catch {
+    // ignore storage write errors
+  }
+}
+
 function resolveDemo(factory) {
   if (!isDemoAuthenticatedSession()) {
     return null;
@@ -81,6 +99,7 @@ export function normalizeProfile(payload) {
     availability: pickFirst(entity.availability, entity.status, 'Available'),
     hourlyRate: pickFirst(entity.hourlyRate, entity.rate, entity.pricePerHour, ''),
     avatarInitials: pickFirst(entity.avatarInitials, deriveInitials(fullName), 'AC'),
+    avatarUrl: pickFirst(entity.avatarUrl, entity.avatar, entity.imageUrl, ''),
     completionRate: Number(pickFirst(entity.completionRate, entity.responseRate, 0)) || 0,
     responseTime: pickFirst(entity.responseTime, entity.avgResponseTime, '—'),
     skills: toStringArray(entity.skills)
@@ -187,13 +206,17 @@ function getCollection(payload, preferredKeys = []) {
 }
 
 export async function fetchCurrentUserProfile() {
-  const demoProfile = resolveDemo(buildMockProfile);
+  const demoProfile = resolveDemo(() => buildMockProfile(readProfileDraft()));
   if (demoProfile) return demoProfile;
   return normalizeProfile(await httpClient.get(API_ENDPOINTS.profile.me));
 }
 
 export async function updateCurrentUserProfile(payload) {
-  const demoProfile = resolveDemo(() => buildMockProfile(payload));
+  const demoProfile = resolveDemo(() => {
+    const nextDraft = { ...readProfileDraft(), ...payload };
+    saveProfileDraft(nextDraft);
+    return buildMockProfile(nextDraft);
+  });
   if (demoProfile) return demoProfile;
   return normalizeProfile(await httpClient.patch(API_ENDPOINTS.profile.update, payload));
 }

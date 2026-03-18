@@ -14,6 +14,7 @@ import {
 import { logoutUser } from '../../features/auth/services/authService.js';
 import { PROFILE_TABS, useProfilePage } from '../../features/profile/hooks/useProfilePage.js';
 import MarketplaceHeader from '../../shared/ui/MarketplaceHeader.jsx';
+import AdminImageField from '../../shared/ui/admin/AdminImageField.jsx';
 import { ROUTES } from '../../shared/constants/routes.js';
 import { PROFILE_NAVIGATION_LINKS } from '../../shared/constants/navigationLinks.js';
 import { clearAuthenticatedUser } from '../../shared/lib/storage/authStorage.js';
@@ -512,6 +513,15 @@ export default function ProfilePage({ navigate }) {
             onChange={(event) => setSettingsFieldValue('availability', event.target.value)}
           />
         </label>
+        <div className="profileField fullWidth">
+          <AdminImageField
+            label="Profile image"
+            value={settingsForm.avatarUrl}
+            onChange={(value) => setSettingsFieldValue('avatarUrl', value)}
+            shape="circle"
+            hint="Image URL daxil et və ya lokal preview yüklə. Backend gələndə bu hissə upload endpoint-ə bağlanacaq."
+          />
+        </div>
         <label className="profileField fullWidth">
           <span>Skills</span>
           <input
@@ -550,7 +560,11 @@ export default function ProfilePage({ navigate }) {
         <section className="profileHero cardLift">
           <div className="profileHeroGrid">
             <div className="profileIdentityBlock">
-              <div className="profileAvatar">{profile.avatarInitials || profile.fullName?.slice(0, 2)?.toUpperCase()}</div>
+              {profile.avatarUrl ? (
+                <img src={profile.avatarUrl} alt={profile.fullName} className="profileAvatar profileAvatarImage" />
+              ) : (
+                <div className="profileAvatar">{profile.avatarInitials || profile.fullName?.slice(0, 2)?.toUpperCase()}</div>
+              )}
 
               <div className="profileIdentityCopy">
                 <div className="profileBadgeRow">

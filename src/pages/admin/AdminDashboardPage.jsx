@@ -1,4 +1,4 @@
-import { BriefcaseBusiness, FolderKanban, Sparkles, Users } from 'lucide-react';
+import { BriefcaseBusiness, FolderKanban, ImageIcon, Package2, Sparkles, Users } from 'lucide-react';
 import { useAdminDashboardPage } from '../../features/admin/hooks/useAdminDashboardPage.js';
 import AdminLayout from '../../shared/ui/admin/AdminLayout.jsx';
 import AdminStatusBadge from '../../shared/ui/admin/AdminStatusBadge.jsx';
@@ -31,63 +31,56 @@ export default function AdminDashboardPage({ navigate, pathname = ROUTES.admin }
       navigate={navigate}
       pathname={pathname}
       title="Dashboard"
-      description="Marketplace activity üçün qısa ümumi görüntü."
+      description="Marketplace content, media və əsas idarəetmə axınlarının qısa premium görünüşü."
     >
       {error ? <div className="adminNotice error">{error}</div> : null}
 
-      <section className="adminStatsGrid">
-        <DashboardStatCard icon={Users} label="Total Users" value={overview.totals.users} hint="Platformda qeydiyyatdan keçən hesablar" />
-        <DashboardStatCard icon={Sparkles} label="Total Freelancers" value={overview.totals.freelancers} hint="Aktiv freelancer profilləri" />
+      <section className="adminStatsGrid sixCols">
+        <DashboardStatCard icon={Users} label="Total Users" value={overview.totals.users} hint="Platformada qeydiyyatdan keçən hesablar" />
+        <DashboardStatCard icon={Sparkles} label="Freelancers" value={overview.totals.freelancers} hint="Aktiv freelancer profilləri" />
         <DashboardStatCard icon={BriefcaseBusiness} label="Job Posts" value={overview.totals.jobs} hint="Saytda görünən və ya idarə olunan elanlar" />
-        <DashboardStatCard icon={FolderKanban} label="Active Categories" value={overview.totals.activeCategories} hint="Hazırda aktiv kateqoriya sayı" />
+        <DashboardStatCard icon={FolderKanban} label="Categories" value={overview.totals.activeCategories} hint="Hazırda aktiv kateqoriya sayı" />
+        <DashboardStatCard icon={Package2} label="Featured Talent" value={overview.totals.featuredTalent || 0} hint="Önə çıxarılan freelancer kartları" />
+        <DashboardStatCard icon={ImageIcon} label="Media Items" value={overview.totals.mediaItems || 0} hint="Task və listing şəkilləri" />
       </section>
 
       <section className="adminTwoColumnGrid">
         <article className="adminPanelCard cardLift">
           <div className="adminPanelCardHeader">
             <div>
-              <span className="adminPageEyebrow">Latest</span>
-              <h2>Recent Jobs</h2>
+              <span className="adminPageEyebrow">Recent jobs</span>
+              <h2>Latest Job Activity</h2>
             </div>
+            <span className="adminPanelCount">{overview.recentJobs.length} items</span>
           </div>
 
           {isLoading ? (
             <div className="adminEmptyState compact">
               <strong>Dashboard loading...</strong>
-              <p>Son job siyahısı hazırlanır.</p>
+              <p>İdarəetmə göstəriciləri yüklənir.</p>
             </div>
           ) : overview.recentJobs.length ? (
-            <div className="adminTableWrap">
-              <table className="adminTable">
-                <thead>
-                  <tr>
-                    <th>Job</th>
-                    <th>Owner</th>
-                    <th>Status</th>
-                    <th>Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {overview.recentJobs.map((job) => (
-                    <tr key={job.id}>
-                      <td>
-                        <strong>{job.title}</strong>
-                        <span>{job.categoryName}</span>
-                      </td>
-                      <td>{job.ownerName}</td>
-                      <td>
-                        <AdminStatusBadge value={job.status} />
-                      </td>
-                      <td>{formatDate(job.createdAt)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="adminSimpleStack">
+              {overview.recentJobs.map((job) => (
+                <div key={job.id} className="adminSimpleRow elevated">
+                  <div className="adminSimpleRowIdentity">
+                    {job.coverImageUrl ? <img src={job.coverImageUrl} alt={job.title} className="adminListThumb" /> : <div className="adminListThumb placeholder">JOB</div>}
+                    <div>
+                      <strong>{job.title}</strong>
+                      <p>{job.categoryName} • {job.ownerName}</p>
+                    </div>
+                  </div>
+                  <div className="adminSimpleRowMeta">
+                    <AdminStatusBadge value={job.status} />
+                    <span>{formatDate(job.createdAt)}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
             <div className="adminEmptyState compact">
               <strong>No recent jobs</strong>
-              <p>Yeni elan yaradılanda burada görünəcək.</p>
+              <p>Ən son job activity burada görünəcək.</p>
             </div>
           )}
         </article>
@@ -95,48 +88,39 @@ export default function AdminDashboardPage({ navigate, pathname = ROUTES.admin }
         <article className="adminPanelCard cardLift">
           <div className="adminPanelCardHeader">
             <div>
-              <span className="adminPageEyebrow">Latest</span>
-              <h2>Recent Users</h2>
+              <span className="adminPageEyebrow">Recent users</span>
+              <h2>New Registrations</h2>
             </div>
+            <span className="adminPanelCount">{overview.recentUsers.length} items</span>
           </div>
 
           {isLoading ? (
             <div className="adminEmptyState compact">
-              <strong>Loading users...</strong>
-              <p>Son qeydiyyat olan istifadəçilər yoxlanılır.</p>
+              <strong>Users loading...</strong>
+              <p>Yeni qeydiyyatlar hazırlanır.</p>
             </div>
           ) : overview.recentUsers.length ? (
-            <div className="adminTableWrap">
-              <table className="adminTable">
-                <thead>
-                  <tr>
-                    <th>User</th>
-                    <th>Role</th>
-                    <th>Status</th>
-                    <th>Registered</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {overview.recentUsers.map((user) => (
-                    <tr key={user.id}>
-                      <td>
-                        <strong>{user.fullName}</strong>
-                        <span>{user.email}</span>
-                      </td>
-                      <td className="textCap">{user.role}</td>
-                      <td>
-                        <AdminStatusBadge value={user.status} />
-                      </td>
-                      <td>{formatDate(user.registeredAt)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="adminSimpleStack">
+              {overview.recentUsers.map((user) => (
+                <div key={user.id} className="adminSimpleRow elevated">
+                  <div className="adminSimpleRowIdentity">
+                    {user.avatarUrl ? <img src={user.avatarUrl} alt={user.fullName} className="adminListThumb avatar" /> : <div className="adminListThumb avatar placeholder">{user.initials || 'US'}</div>}
+                    <div>
+                      <strong>{user.fullName}</strong>
+                      <p>{user.email}</p>
+                    </div>
+                  </div>
+                  <div className="adminSimpleRowMeta">
+                    <AdminStatusBadge value={user.role} tone="primary" />
+                    <AdminStatusBadge value={user.status} />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
             <div className="adminEmptyState compact">
               <strong>No recent users</strong>
-              <p>Yeni user-lər qeydiyyatdan keçəndə burada görünəcək.</p>
+              <p>Yeni hesablar burada görünəcək.</p>
             </div>
           )}
         </article>

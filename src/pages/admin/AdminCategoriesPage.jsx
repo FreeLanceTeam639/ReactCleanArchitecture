@@ -8,12 +8,15 @@ import { AdminConfirmDialog, AdminModal } from '../../shared/ui/admin/AdminModal
 import AdminPagination from '../../shared/ui/admin/AdminPagination.jsx';
 import AdminStatusBadge from '../../shared/ui/admin/AdminStatusBadge.jsx';
 import AdminToolbar from '../../shared/ui/admin/AdminToolbar.jsx';
+import AdminImageField from '../../shared/ui/admin/AdminImageField.jsx';
+import AdminActionIconButton from '../../shared/ui/admin/AdminActionIconButton.jsx';
 
 function buildCategoryFormState(category) {
   return {
     name: category?.name || '',
     slug: category?.slug || '',
-    status: category?.status || 'active'
+    status: category?.status || 'active',
+    iconUrl: category?.iconUrl || ''
   };
 }
 
@@ -88,7 +91,7 @@ export default function AdminCategoriesPage({ navigate, pathname = ROUTES.adminC
       navigate={navigate}
       pathname={pathname}
       title="Categories"
-      description="Marketplace taxonomiyasını səliqəli şəkildə saxla."
+      description="Marketplace taxonomiyasını icon və status ilə daha yumşaq idarə et."
     >
       {feedback ? <div className="adminNotice success">{feedback}</div> : null}
       {error ? <div className="adminNotice error">{error}</div> : null}
@@ -122,7 +125,7 @@ export default function AdminCategoriesPage({ navigate, pathname = ROUTES.adminC
               <table className="adminTable">
                 <thead>
                   <tr>
-                    <th>Category Name</th>
+                    <th>Category</th>
                     <th>Slug</th>
                     <th>Status</th>
                     <th>Actions</th>
@@ -131,14 +134,22 @@ export default function AdminCategoriesPage({ navigate, pathname = ROUTES.adminC
                 <tbody>
                   {items.map((category) => (
                     <tr key={category.id}>
-                      <td><strong>{category.name}</strong></td>
+                      <td>
+                        <div className="adminIdentityCell">
+                          {category.iconUrl ? <img src={category.iconUrl} alt={category.name} className="adminListThumb" /> : <div className="adminListThumb placeholder">CAT</div>}
+                          <div>
+                            <strong>{category.name}</strong>
+                            <span>{category.id}</span>
+                          </div>
+                        </div>
+                      </td>
                       <td>{category.slug}</td>
                       <td><AdminStatusBadge value={category.status} /></td>
                       <td>
                         <div className="adminRowActions">
-                          <button type="button" className="adminIconButton interactive" onClick={() => handleOpenEdit(category)} aria-label="Edit category"><Pencil size={16} /></button>
-                          <button type="button" className="adminIconButton interactive" onClick={() => setStatusTarget(category)} aria-label="Toggle category status"><Power size={16} /></button>
-                          <button type="button" className="adminIconButton interactive danger" onClick={() => setDeleteTarget(category)} aria-label="Delete category"><Trash2 size={16} /></button>
+                          <AdminActionIconButton icon={Pencil} label="Edit category" onClick={() => handleOpenEdit(category)} />
+                          <AdminActionIconButton icon={Power} label="Toggle category status" onClick={() => setStatusTarget(category)} tone={category.status === 'active' ? 'warning' : 'primary'} />
+                          <AdminActionIconButton icon={Trash2} label="Delete category" onClick={() => setDeleteTarget(category)} tone="danger" />
                         </div>
                       </td>
                     </tr>
@@ -160,29 +171,37 @@ export default function AdminCategoriesPage({ navigate, pathname = ROUTES.adminC
         <AdminModal
           title={editingCategory.mode === 'create' ? 'Add category' : 'Edit category'}
           onClose={() => setEditingCategory(null)}
+          wide
           footer={(
             <>
-              <button type="button" className="btn soft interactive" onClick={() => setEditingCategory(null)}>Cancel</button>
+              <button type="button" className="adminSecondaryButton interactive" onClick={() => setEditingCategory(null)}>Cancel</button>
               <button type="button" className="btn primary interactive" onClick={handleSave}>{editingCategory.mode === 'create' ? 'Create' : 'Save changes'}</button>
             </>
           )}
         >
-          <div className="adminFormGrid">
-            <label>
-              <span>Category Name</span>
-              <input value={formState.name} onChange={(event) => setFormState((current) => ({ ...current, name: event.target.value, slug: createSlug(event.target.value) }))} />
-            </label>
-            <label>
-              <span>Slug</span>
-              <input value={formState.slug} onChange={(event) => setFormState((current) => ({ ...current, slug: event.target.value }))} />
-            </label>
-            <label>
-              <span>Status</span>
-              <select value={formState.status} onChange={(event) => setFormState((current) => ({ ...current, status: event.target.value }))}>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-            </label>
+          <div className="adminFormStack">
+            <AdminImageField
+              label="Category icon/image"
+              value={formState.iconUrl}
+              onChange={(value) => setFormState((current) => ({ ...current, iconUrl: value }))}
+            />
+            <div className="adminFormGrid wide">
+              <label>
+                <span>Category Name</span>
+                <input value={formState.name} onChange={(event) => setFormState((current) => ({ ...current, name: event.target.value, slug: createSlug(event.target.value) }))} />
+              </label>
+              <label>
+                <span>Slug</span>
+                <input value={formState.slug} onChange={(event) => setFormState((current) => ({ ...current, slug: event.target.value }))} />
+              </label>
+              <label>
+                <span>Status</span>
+                <select value={formState.status} onChange={(event) => setFormState((current) => ({ ...current, status: event.target.value }))}>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </label>
+            </div>
           </div>
         </AdminModal>
       ) : null}
@@ -204,7 +223,7 @@ export default function AdminCategoriesPage({ navigate, pathname = ROUTES.adminC
       {deleteTarget ? (
         <AdminConfirmDialog
           title="Delete category?"
-          description="Bu category admin siyahısından silinəcək."
+          description="Bu category admin siyahısından silinəcək. Home filter bu source-a bağlıdırsa burada da yenilənəcək."
           confirmLabel="Delete"
           onConfirm={async () => {
             await deleteCategory(deleteTarget.id);
