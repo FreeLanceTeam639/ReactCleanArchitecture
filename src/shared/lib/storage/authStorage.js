@@ -14,7 +14,9 @@ function sanitizeSessionPayload(sessionPayload = {}, rememberMe = false) {
     accessToken: sessionPayload.accessToken || sessionPayload.token || null,
     refreshToken: sessionPayload.refreshToken || null,
     csrfToken: sessionPayload.csrfToken || null,
-    expiresAt: sessionPayload.expiresAt || null,
+    expiresAt: sessionPayload.expiresAt || sessionPayload.accessTokenExpiresAt || null,
+    refreshTokenExpiresAt: sessionPayload.refreshTokenExpiresAt || null,
+    user: sessionPayload.user || null,
     authType: sessionPayload.authType || (sessionPayload.accessToken || sessionPayload.token ? 'token' : 'cookie'),
     rememberMe: Boolean(rememberMe)
   };

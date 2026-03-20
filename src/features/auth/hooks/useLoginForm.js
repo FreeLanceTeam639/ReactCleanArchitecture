@@ -4,7 +4,7 @@ import { saveAuthenticatedUser } from '../../../shared/lib/storage/authStorage.j
 import { ROUTES } from '../../../shared/constants/routes.js';
 
 const initialFormState = {
-  email: '',
+  emailOrUserName: '',
   password: ''
 };
 
@@ -23,26 +23,31 @@ export function useLoginForm(navigate) {
     setFeedback({ message: '', type: '' });
   };
 
+  const resolveLoginRoute = (session) => {
+    const roles = session?.user?.roles || [];
+    return roles.some((role) => String(role).toLowerCase() === 'admin') ? ROUTES.admin : ROUTES.profile;
+  };
+
   const submitLogin = async (event) => {
     event.preventDefault();
     setIsSubmitting(true);
     clearFeedback();
 
     try {
-      const payload = await loginUser({
-        email: form.email,
+      const session = await loginUser({
+        emailOrUserName: form.emailOrUserName,
         password: form.password,
         rememberMe
       });
 
-      saveAuthenticatedUser(payload.session || payload, rememberMe);
+      saveAuthenticatedUser(session, rememberMe);
       setFeedback({
         message: 'Giriş uğurludur. Profilə yönləndirilirsiniz...',
         type: 'success'
       });
 
       window.setTimeout(() => {
-        navigate(ROUTES.profile);
+        navigate(resolveLoginRoute(session));
       }, 500);
     } catch (error) {
       setFeedback({

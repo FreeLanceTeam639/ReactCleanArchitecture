@@ -98,6 +98,18 @@ export default function RegisterPage({ navigate }) {
               </label>
 
               <label className="authField">
+                <span>Role</span>
+                <select
+                  value={form.role}
+                  onChange={(event) => setFieldValue('role', event.target.value)}
+                  required
+                >
+                  <option value="Client">Client</option>
+                  <option value="Freelancer">Freelancer</option>
+                </select>
+              </label>
+
+              <label className="authField">
                 <span>Password</span>
                 <div className="passwordWrap">
                   <input

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { registerUser } from '../services/authService.js';
+import { ROUTES } from '../../../shared/constants/routes.js';
 
 const initialForm = {
   firstName: '',
@@ -7,10 +8,11 @@ const initialForm = {
   userName: '',
   email: '',
   password: '',
-  confirmPassword: ''
+  confirmPassword: '',
+  role: 'Client'
 };
 
-export function useRegisterForm() {
+export function useRegisterForm(navigate) {
   const [form, setForm] = useState(initialForm);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -46,19 +48,25 @@ export function useRegisterForm() {
 
     try {
       await registerUser({
-        firstName: form.firstName,
-        lastName: form.lastName,
+        name: form.firstName,
+        surname: form.lastName,
         userName: form.userName,
         email: form.email,
-        password: form.password
+        password: form.password,
+        confirmPassword: form.confirmPassword,
+        role: form.role
       });
 
       setFeedback({
         type: 'success',
-        message: 'Registration request sent successfully.'
+        message: 'Registration completed successfully. Redirecting to sign in...'
       });
 
       setForm(initialForm);
+
+      window.setTimeout(() => {
+        navigate(ROUTES.login);
+      }, 700);
     } catch (error) {
       setFeedback({
         type: 'error',

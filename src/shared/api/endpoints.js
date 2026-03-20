@@ -1,4 +1,4 @@
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5270/api';
 
 const withDefault = (envValue, fallback) => envValue || fallback;
 
@@ -8,7 +8,7 @@ export const API_ENDPOINTS = {
     register: withDefault(import.meta.env.VITE_REGISTER_ENDPOINT, '/auth/register'),
     logout: withDefault(import.meta.env.VITE_LOGOUT_ENDPOINT, '/auth/logout'),
     me: withDefault(import.meta.env.VITE_AUTH_ME_ENDPOINT, '/auth/me'),
-    refresh: withDefault(import.meta.env.VITE_REFRESH_ENDPOINT, '/auth/refresh')
+    refresh: withDefault(import.meta.env.VITE_REFRESH_ENDPOINT, '/auth/refresh-token')
   },
   home: {
     popularCategories: withDefault(import.meta.env.VITE_HOME_POPULAR_CATEGORIES_ENDPOINT, '/categories/popular'),

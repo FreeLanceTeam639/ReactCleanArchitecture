@@ -42,20 +42,20 @@ export default function LoginPage({ navigate }) {
           </a>
 
           <p className="authSubtitle">
-            Please enter your email &amp; password to access your account
+            Please enter your email or username &amp; password to access your account
           </p>
 
           <LoginAlert message={feedback.message} type={feedback.type} />
 
           <form className="authForm" onSubmit={submitLogin}>
             <label className="authField">
-              <span>Email</span>
+              <span>Email or Username</span>
               <input
-                type="email"
-                value={form.email}
-                onChange={(event) => setFieldValue('email', event.target.value)}
-                placeholder="Please enter your email address"
-                autoComplete="email"
+                type="text"
+                value={form.emailOrUserName}
+                onChange={(event) => setFieldValue('emailOrUserName', event.target.value)}
+                placeholder="Please enter your email or username"
+                autoComplete="username"
                 required
               />
             </label>
@@ -114,14 +114,6 @@ export default function LoginPage({ navigate }) {
             </button>
           </p>
 
-          <div className="authHintBox">
-            <p>
-              <span>Email:</span> demo@workreap.com
-            </p>
-            <p>
-              <span>Password:</span> google
-            </p>
-          </div>
         </section>
 
         <section className="authPreview fadeUp delayOne" aria-hidden="true">
@@ -134,7 +126,7 @@ export default function LoginPage({ navigate }) {
                     <span className="previewBrandMark" />
                     <b>Workreap</b>
                   </div>
-                  <p>Please enter your email &amp; password to access your account</p>
+                  <p>Please enter your email or username &amp; password to access your account</p>
                   <div className="previewInput" />
                   <div className="previewInput" />
                   <div className="previewSmallRow">
