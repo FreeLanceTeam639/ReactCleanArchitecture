@@ -1,5 +1,5 @@
 export const TEST_LOGIN_CREDENTIALS = {
-  email: 'demo@workreap.com',
+  email: 'demo@freelanceaze.az',
   password: 'google'
 };
 

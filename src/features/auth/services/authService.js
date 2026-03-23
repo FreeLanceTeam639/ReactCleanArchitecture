@@ -38,10 +38,33 @@ function normalizeAuthSession(payload, rememberMe) {
   };
 }
 
+function normalizeActionResponse(payload, fallbackMessage) {
+  const root = extractEntity(payload, ['data', 'result', 'payload']) || payload || {};
+
+  return {
+    message: root.message || root.detail || fallbackMessage,
+    email: root.email || root.identifier || null
+  };
+}
+
 export async function loginUser(payload) {
   const response = await httpClient.post(API_ENDPOINTS.auth.login, payload);
 
   return normalizeAuthSession(response, payload.rememberMe);
+}
+
+export async function requestPasswordResetCode(payload) {
+  const response = await httpClient.post(API_ENDPOINTS.auth.forgotPassword, {
+    email: payload.email
+  });
+
+  return normalizeActionResponse(response, 'Verification code sent to your email.');
+}
+
+export async function resetPasswordWithCode(payload) {
+  const response = await httpClient.post(API_ENDPOINTS.auth.resetPassword, payload);
+
+  return normalizeActionResponse(response, 'Password reset completed successfully.');
 }
 
 export async function registerUser(payload) {

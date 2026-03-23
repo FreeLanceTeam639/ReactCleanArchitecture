@@ -33,7 +33,7 @@ export const fallbackWorkspaceContent = {
     {
       id: 'ord-103',
       title: 'Landing page copy and visuals',
-      client: 'Worklance',
+      client: 'FreelanceAze',
       freelancer: 'Studio Verve',
       status: 'active',
       role: 'client',
@@ -182,7 +182,7 @@ export const fallbackWorkspaceContent = {
       title: 'Platform service fee',
       amount: '-$86',
       status: 'completed',
-      method: 'Workreap fee',
+      method: 'FreelanceAze fee',
       createdAt: '2026-03-10'
     }
   ],

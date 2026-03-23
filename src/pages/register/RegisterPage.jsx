@@ -1,6 +1,8 @@
 import { ROUTES } from '../../shared/constants/routes.js';
 import { navigateWithScroll } from '../../shared/lib/navigation/navigateWithScroll.js';
 import { useRegisterForm } from '../../features/auth/hooks/useRegisterForm.js';
+import LanguageSwitcher from '../../shared/ui/LanguageSwitcher.jsx';
+import BrandLogo from '../../shared/ui/BrandLogo.jsx';
 
 function RegisterAlert({ message, type }) {
   if (!message) {
@@ -28,18 +30,15 @@ export default function RegisterPage({ navigate }) {
       <div className="authBackdrop" />
       <div className="wrapLarge authGrid">
         <section className="authPanel fadeUp">
-          <div className="authLogoMark" aria-hidden="true">
-            <span />
-            <span />
+          <div className="authPanelTopBar">
+            <LanguageSwitcher className="authLanguageSwitcher" />
           </div>
 
-          <a
+          <BrandLogo
             href={ROUTES.home}
-            className="authBrand"
+            className="brand authBrand"
             onClick={(event) => navigateWithScroll(event, ROUTES.home, navigate)}
-          >
-            Workreap
-          </a>
+          />
 
           <p className="authSubtitle">
             We are delighted to welcome you as a member of our community!
@@ -177,10 +176,7 @@ export default function RegisterPage({ navigate }) {
               <div className="previewNotch" />
               <div className="previewScreen">
                 <div className="previewCard">
-                  <div className="previewBrand">
-                    <span className="previewBrandMark" />
-                    <b>Workreap</b>
-                  </div>
+                  <BrandLogo as="div" className="brand previewBrand" />
                   <p>We are delighted to welcome you as a member of our community!</p>
                   <div className="previewInput" />
                   <div className="previewInput" />

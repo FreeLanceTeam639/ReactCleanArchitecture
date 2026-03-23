@@ -1,5 +1,6 @@
 import HomePage from '../pages/home/HomePage.jsx';
 import LoginPage from '../pages/login/LoginPage.jsx';
+import ForgotPasswordPage from '../pages/forgot-password/ForgotPasswordPage.jsx';
 import TaskDetailPage from '../pages/task-detail/TaskDetailPage.jsx';
 import { isTaskDetailRoute, ROUTES } from '../shared/constants/routes.js';
 import { usePathname } from '../shared/hooks/usePathname.js';
@@ -24,6 +25,10 @@ function App() {
 
   if (pathname === ROUTES.login) {
     return <LoginPage navigate={navigate} />;
+  }
+
+  if (pathname === ROUTES.forgotPassword) {
+    return <ForgotPasswordPage navigate={navigate} />;
   }
 
   if (pathname === ROUTES.register) {

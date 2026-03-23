@@ -3,9 +3,10 @@ import { useAdminDashboardPage } from '../../features/admin/hooks/useAdminDashbo
 import AdminLayout from '../../shared/ui/admin/AdminLayout.jsx';
 import AdminStatusBadge from '../../shared/ui/admin/AdminStatusBadge.jsx';
 import { ROUTES } from '../../shared/constants/routes.js';
+import { getCurrentLocale } from '../../shared/i18n/locale.js';
 
 function formatDate(value) {
-  return new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(value));
+  return new Intl.DateTimeFormat(getCurrentLocale(), { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(value));
 }
 
 function DashboardStatCard({ icon: Icon, label, value, hint }) {

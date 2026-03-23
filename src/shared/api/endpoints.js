@@ -5,6 +5,8 @@ const withDefault = (envValue, fallback) => envValue || fallback;
 export const API_ENDPOINTS = {
   auth: {
     login: withDefault(import.meta.env.VITE_LOGIN_ENDPOINT, '/auth/login'),
+    forgotPassword: withDefault(import.meta.env.VITE_FORGOT_PASSWORD_ENDPOINT, '/auth/forgot-password'),
+    resetPassword: withDefault(import.meta.env.VITE_RESET_PASSWORD_ENDPOINT, '/auth/reset-password'),
     register: withDefault(import.meta.env.VITE_REGISTER_ENDPOINT, '/auth/register'),
     logout: withDefault(import.meta.env.VITE_LOGOUT_ENDPOINT, '/auth/logout'),
     me: withDefault(import.meta.env.VITE_AUTH_ME_ENDPOINT, '/auth/me'),

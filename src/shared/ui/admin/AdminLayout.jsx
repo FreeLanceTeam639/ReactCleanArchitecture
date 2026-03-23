@@ -2,6 +2,7 @@ import { LayoutGrid, Users, BriefcaseBusiness, FolderKanban, Sparkles, BadgeDoll
 import { useMemo, useState } from 'react';
 import BrandLogo from '../BrandLogo.jsx';
 import { ROUTES } from '../../constants/routes.js';
+import LanguageSwitcher from '../LanguageSwitcher.jsx';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', route: ROUTES.admin, icon: LayoutGrid },
@@ -29,7 +30,7 @@ export default function AdminLayout({ navigate, pathname, title, description, ac
     <div className="adminShell">
       <aside className={`adminSidebar${isSidebarOpen ? ' open' : ''}`}>
         <div className="adminSidebarTop">
-          <BrandLogo href={ROUTES.home} label="Workreap" className="brand adminBrand" onClick={(event) => {
+          <BrandLogo href={ROUTES.home} label="FreelanceAze" className="brand adminBrand" onClick={(event) => {
             event.preventDefault();
             handleNavigate(ROUTES.home);
           }} />
@@ -90,13 +91,16 @@ export default function AdminLayout({ navigate, pathname, title, description, ac
               <Menu size={18} />
             </button>
             <div>
-              <span className="adminPageEyebrow">Workreap Admin</span>
+              <span className="adminPageEyebrow">FreelanceAze Admin</span>
               <h1>{title}</h1>
               {description ? <p>{description}</p> : null}
             </div>
           </div>
 
-          {actions ? <div className="adminTopbarActions">{actions}</div> : null}
+          <div className="adminTopbarActions">
+            <LanguageSwitcher className="adminLanguageSwitcher" />
+            {actions}
+          </div>
         </header>
 
         <main className="adminContent wrapLarge">{children}</main>

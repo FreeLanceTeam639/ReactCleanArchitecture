@@ -20,6 +20,7 @@ export default function AdminImageField({
 }) {
   const inputRef = useRef(null);
   const wrapperClassName = shape === 'circle' ? 'adminImageFieldPreview circle' : 'adminImageFieldPreview';
+  const helperHint = /backend/i.test(hint || '') ? 'Add an image URL or upload a local preview file.' : hint;
 
   const handleFileSelection = async (event) => {
     const file = event.target.files?.[0];
@@ -63,7 +64,7 @@ export default function AdminImageField({
         </div>
 
         <input ref={inputRef} className="adminHiddenFileInput" type="file" accept="image/*" onChange={handleFileSelection} />
-        {hint ? <p className="adminFieldHint fullSpan">{hint}</p> : null}
+        {helperHint ? <p className="adminFieldHint fullSpan">{helperHint}</p> : null}
       </div>
     </div>
   );

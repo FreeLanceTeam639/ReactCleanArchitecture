@@ -220,7 +220,7 @@ export const fallbackTaskDetails = fallbackHomeContent.talents.map((talent, inde
       deliveryDays: talent.duration
     },
     contact: {
-      email: 'hello@workreap.co',
+      email: 'hello@freelanceaze.az',
       phone: '+62 877 7726 3549'
     }
   };

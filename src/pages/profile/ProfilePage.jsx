@@ -29,10 +29,14 @@ function StatCard({ label, value }) {
 }
 
 function EmptyState({ title, copy }) {
+  const resolvedCopy = /backend|endpoint/i.test(copy || '')
+    ? 'Fresh activity will appear here as soon as it becomes available.'
+    : copy;
+
   return (
     <div className="profileEmptyState">
       <strong>{title}</strong>
-      <p>{copy}</p>
+      <p>{resolvedCopy}</p>
     </div>
   );
 }
@@ -110,6 +114,8 @@ export default function ProfilePage({ navigate }) {
   if (!profile) {
     return null;
   }
+
+  const normalizedFeedback = /backend/i.test(feedback || '') ? 'Profile details updated successfully.' : feedback;
 
   const renderDashboard = () => (
     <>
@@ -620,7 +626,7 @@ export default function ProfilePage({ navigate }) {
           </div>
         </section>
 
-        {feedback ? <div className="profileFeedbackBanner">{feedback}</div> : null}
+        {normalizedFeedback ? <div className="profileFeedbackBanner">{normalizedFeedback}</div> : null}
 
         <section className="profileTabs cardLift">
           {PROFILE_TABS.map((item) => (

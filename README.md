@@ -1,4 +1,4 @@
-# Worklance Frontend
+# FreelanceAze Frontend
 
 ## Run
 

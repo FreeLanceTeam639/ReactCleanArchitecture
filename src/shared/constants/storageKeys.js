@@ -1,5 +1,6 @@
 export const STORAGE_KEYS = {
-  authSession: 'worklance_auth_session',
-  adminContent: 'worklance_admin_content',
-  profileDraft: 'worklance_profile_draft'
+  authSession: 'freelanceaze_auth_session',
+  adminContent: 'freelanceaze_admin_content',
+  profileDraft: 'freelanceaze_profile_draft',
+  language: 'freelanceaze_language'
 };

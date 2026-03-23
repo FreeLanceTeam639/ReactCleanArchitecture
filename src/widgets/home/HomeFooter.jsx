@@ -23,13 +23,13 @@ export default function HomeFooter() {
           <h4>Post Free To Share Your Question</h4>
           <ul>
             <li>+44 877 723 4554</li>
-            <li>hello@worklance.io</li>
+            <li>hello@freelanceaze.az</li>
             <li>Mon-Sat 09:00 - 18:00</li>
           </ul>
         </div>
       </div>
       <div className="wrap footBottom">
-        <span>Copyright 2025 Worklance</span>
+        <span>Copyright 2026 FreelanceAze</span>
         <div className="socials">
           <span>in</span>
           <span>f</span>

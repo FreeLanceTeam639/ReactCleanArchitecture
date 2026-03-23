@@ -6,9 +6,10 @@ import { ROUTES } from '../constants/routes.js';
 import { navigateWithScroll } from '../lib/navigation/navigateWithScroll.js';
 import { clearAuthenticatedUser, hasAuthenticatedSession } from '../lib/storage/authStorage.js';
 import BrandLogo from './BrandLogo.jsx';
+import LanguageSwitcher from './LanguageSwitcher.jsx';
 
-const MENU_BREAKPOINT = 980;
-const COMPACT_BREAKPOINT = 760;
+const MENU_BREAKPOINT = 1120;
+const COMPACT_BREAKPOINT = 820;
 
 function resolveLinkNavigation(event, link, navigate, closeMenu) {
   if (link.route) {
@@ -25,7 +26,7 @@ export default function MarketplaceHeader({
   promoText = 'Discover the top freelance platform on the market.',
   promoAction = { label: 'Learn more', route: ROUTES.home },
   brandHref = ROUTES.home,
-  brandLabel = 'Workreap',
+  brandLabel = 'FreelanceAze',
   actionButton = null
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -34,6 +35,7 @@ export default function MarketplaceHeader({
   const [searchValue, setSearchValue] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
   const [isCompactLayout, setIsCompactLayout] = useState(false);
+  const [isMenuLayout, setIsMenuLayout] = useState(false);
   const searchWrapRef = useRef(null);
   const searchInputRef = useRef(null);
 
@@ -94,6 +96,7 @@ export default function MarketplaceHeader({
       const canUseMenu = window.innerWidth <= MENU_BREAKPOINT;
 
       setIsCompactLayout(compact);
+      setIsMenuLayout(canUseMenu);
 
       if (!canUseMenu) {
         setIsOpen(false);
@@ -145,6 +148,31 @@ export default function MarketplaceHeader({
     };
   }, [isSearchOpen]);
 
+  useEffect(() => {
+    if (!isOpen || !isMenuLayout) {
+      return undefined;
+    }
+
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousDocumentOverflow = document.documentElement.style.overflow;
+
+    function handleEscape(event) {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+      }
+    }
+
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousDocumentOverflow;
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isOpen, isMenuLayout]);
+
   const closeMenu = () => setIsOpen(false);
 
   const handleOpenSearch = () => {
@@ -191,10 +219,16 @@ export default function MarketplaceHeader({
   };
 
   const headerClassName = isScrolled ? 'detailHeader detailHeaderShared scrolled' : 'detailHeader detailHeaderShared';
-  const rowClassName = `wrap detailHeaderRow${isSearchOpen ? ' searchOpen' : ''}${isCompactLayout ? ' compact' : ''}`;
-  const panelClassName = `${isOpen ? 'detailHeaderPanel open' : 'detailHeaderPanel'}${isSearchOpen ? ' searchHidden' : ''}`;
+  const rowClassName = `wrap detailHeaderRow${isSearchOpen ? ' searchOpen' : ''}${isCompactLayout ? ' compact' : ''}${
+    isMenuLayout ? ' menuLayout' : ''
+  }`;
+  const panelClassName = `${isOpen ? 'detailHeaderPanel open' : 'detailHeaderPanel'}${isSearchOpen ? ' searchHidden' : ''}${
+    isMenuLayout ? ' menuLayout' : ''
+  }`;
   const navClassName = `${isSearchOpen ? 'detailHeaderNav searchHidden' : 'detailHeaderNav'}${isOpen ? ' open' : ''}`;
-  const actionsClassName = `${isSearchOpen ? 'detailHeaderActions searchMode' : 'detailHeaderActions'}${isCompactLayout ? ' compact' : ''}`;
+  const actionsClassName = `${isSearchOpen ? 'detailHeaderActions searchMode' : 'detailHeaderActions'}${
+    isCompactLayout ? ' compact' : ''
+  }${isMenuLayout ? ' menuLayout' : ''}`;
   const searchShellClassName = `${isSearchExpanded ? 'detailSearchShell open' : 'detailSearchShell'}${
     isCompactLayout ? ' compact' : ''
   }`;
@@ -266,7 +300,10 @@ export default function MarketplaceHeader({
           <BrandLogo
             href={brandHref}
             label={brandLabel}
-            onClick={(event) => navigateWithScroll(event, ROUTES.home, navigate)}
+            onClick={(event) => {
+              closeMenu();
+              navigateWithScroll(event, ROUTES.home, navigate);
+            }}
           />
 
           <div className={panelClassName}>
@@ -281,9 +318,21 @@ export default function MarketplaceHeader({
                 </a>
               ))}
             </nav>
+
+            {isMenuLayout ? (
+              <>
+                <div className="detailHeaderPanelUtility">
+                  <LanguageSwitcher className="detailHeaderPanelLanguage" />
+                </div>
+
+                <div className="detailHeaderPanelActions">{authControls}</div>
+              </>
+            ) : null}
           </div>
 
           <div className={actionsClassName}>
+            {isMenuLayout ? null : <LanguageSwitcher className="detailHeaderLanguage" />}
+
             <form ref={searchWrapRef} className={searchShellClassName} onSubmit={handleSearchSubmit}>
               <button
                 type="button"
@@ -316,7 +365,7 @@ export default function MarketplaceHeader({
               </button>
             </form>
 
-            {isSearchOpen ? null : authControls}
+            {isSearchOpen || isMenuLayout ? null : authControls}
           </div>
 
           {isSearchOpen ? null : (
@@ -331,6 +380,15 @@ export default function MarketplaceHeader({
             </button>
           )}
         </div>
+
+        {isMenuLayout && isOpen && !isSearchOpen ? (
+          <button
+            type="button"
+            className="detailHeaderBackdrop"
+            onClick={closeMenu}
+            aria-label="Close navigation"
+          />
+        ) : null}
       </header>
     </>
   );

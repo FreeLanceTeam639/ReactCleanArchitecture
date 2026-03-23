@@ -1,6 +1,8 @@
 import { ROUTES } from '../../shared/constants/routes.js';
 import { navigateWithScroll } from '../../shared/lib/navigation/navigateWithScroll.js';
 import { useLoginForm } from '../../features/auth/hooks/useLoginForm.js';
+import LanguageSwitcher from '../../shared/ui/LanguageSwitcher.jsx';
+import BrandLogo from '../../shared/ui/BrandLogo.jsx';
 
 function LoginAlert({ message, type }) {
   if (!message) {
@@ -28,18 +30,15 @@ export default function LoginPage({ navigate }) {
       <div className="authBackdrop" />
       <div className="wrapLarge authGrid">
         <section className="authPanel fadeUp">
-          <div className="authLogoMark" aria-hidden="true">
-            <span />
-            <span />
+          <div className="authPanelTopBar">
+            <LanguageSwitcher className="authLanguageSwitcher" />
           </div>
 
-          <a
+          <BrandLogo
             href={ROUTES.home}
-            className="authBrand"
+            className="brand authBrand"
             onClick={(event) => navigateWithScroll(event, ROUTES.home, navigate)}
-          >
-            Workreap
-          </a>
+          />
 
           <p className="authSubtitle">
             Please enter your email or username &amp; password to access your account
@@ -93,7 +92,11 @@ export default function LoginPage({ navigate }) {
                 <span>Remember me</span>
               </label>
 
-              <button type="button" className="textButton interactive">
+              <button
+                type="button"
+                className="textButton interactive"
+                onClick={() => navigate(ROUTES.forgotPassword)}
+              >
                 Forgot password?
               </button>
             </div>
@@ -122,10 +125,7 @@ export default function LoginPage({ navigate }) {
               <div className="previewNotch" />
               <div className="previewScreen">
                 <div className="previewCard">
-                  <div className="previewBrand">
-                    <span className="previewBrandMark" />
-                    <b>Workreap</b>
-                  </div>
+                  <BrandLogo as="div" className="brand previewBrand" />
                   <p>Please enter your email or username &amp; password to access your account</p>
                   <div className="previewInput" />
                   <div className="previewInput" />

@@ -10,9 +10,10 @@ import AdminToolbar from '../../shared/ui/admin/AdminToolbar.jsx';
 import AdminImageField from '../../shared/ui/admin/AdminImageField.jsx';
 import AdminMediaGalleryField from '../../shared/ui/admin/AdminMediaGalleryField.jsx';
 import AdminActionIconButton from '../../shared/ui/admin/AdminActionIconButton.jsx';
+import { getCurrentLocale } from '../../shared/i18n/locale.js';
 
 function formatDate(value) {
-  return new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(value));
+  return new Intl.DateTimeFormat(getCurrentLocale(), { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(value));
 }
 
 function buildJobFormState(job) {

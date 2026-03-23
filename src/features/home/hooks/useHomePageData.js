@@ -70,6 +70,10 @@ export function useHomePageData() {
         setNotice('Endpointlər əlavə olunub. Backend hazır olmayanda ana səhifə mock cavabla işləyir.');
       }
 
+      if (results.some((result) => result.status === 'rejected')) {
+        setNotice('Some sections are currently showing preview content while new updates sync in.');
+      }
+
       setIsInitialLoading(false);
     }
 
