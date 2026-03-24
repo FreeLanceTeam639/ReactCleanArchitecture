@@ -1,4 +1,4 @@
-import { LayoutGrid, Users, BriefcaseBusiness, FolderKanban, Sparkles, BadgeDollarSign, Menu, X, ArrowLeft } from 'lucide-react';
+import { LayoutGrid, Users, BriefcaseBusiness, FolderKanban, Sparkles, BadgeDollarSign, ShieldCheck, Menu, X, ArrowLeft } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import BrandLogo from '../BrandLogo.jsx';
 import { ROUTES } from '../../constants/routes.js';
@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { label: 'Dashboard', route: ROUTES.admin, icon: LayoutGrid },
   { label: 'Users', route: ROUTES.adminUsers, icon: Users },
   { label: 'Jobs', route: ROUTES.adminJobs, icon: BriefcaseBusiness },
+  { label: 'Verification', route: ROUTES.adminVerification, icon: ShieldCheck },
   { label: 'Categories', route: ROUTES.adminCategories, icon: FolderKanban },
   { label: 'Talent', route: ROUTES.adminTalent, icon: Sparkles },
   { label: 'Pricing', route: ROUTES.adminPricing, icon: BadgeDollarSign }

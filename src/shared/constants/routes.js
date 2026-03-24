@@ -4,6 +4,7 @@ export const ROUTES = {
   forgotPassword: '/forgot-password',
   register: '/register',
   profile: '/profile',
+  verification: '/verification',
   orders: '/orders',
   messages: '/messages',
   notifications: '/notifications',
@@ -17,7 +18,8 @@ export const ROUTES = {
   adminJobs: '/admin/jobs',
   adminCategories: '/admin/categories',
   adminTalent: '/admin/talent',
-  adminPricing: '/admin/pricing'
+  adminPricing: '/admin/pricing',
+  adminVerification: '/admin/verification'
 };
 
 export function buildTaskDetailRoute(slug = '') {

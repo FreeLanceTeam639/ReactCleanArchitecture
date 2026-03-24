@@ -2,7 +2,20 @@ import { useEffect, useState } from 'react';
 import { fetchAdminOverview } from '../services/adminService.js';
 
 export function useAdminDashboardPage() {
-  const [overview, setOverview] = useState({ totals: { users: 0, freelancers: 0, jobs: 0, activeCategories: 0, featuredTalent: 0, activePackages: 0, mediaItems: 0 }, recentJobs: [], recentUsers: [] });
+  const [overview, setOverview] = useState({
+    totals: {
+      users: 0,
+      verifiedUsers: 0,
+      pendingVerification: 0,
+      jobs: 0,
+      activeCategories: 0,
+      featuredTalent: 0,
+      activePackages: 0,
+      mediaItems: 0
+    },
+    recentJobs: [],
+    recentUsers: []
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 

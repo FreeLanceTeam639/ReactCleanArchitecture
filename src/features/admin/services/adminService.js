@@ -1,5 +1,6 @@
 import {
   API_ENDPOINTS,
+  buildAdminVerificationTicketEndpoint,
   buildAdminCategoryIconEndpoint,
   buildAdminCategoryStatusEndpoint,
   buildAdminFeaturedEndpoint,
@@ -45,6 +46,7 @@ function safeStorageSet(key, value) {
 function createDefaultStore() {
   return {
     users: clone(fallbackAdminContent.users),
+    verificationTickets: clone(fallbackAdminContent.verificationTickets || []),
     categories: clone(fallbackAdminContent.categories),
     jobs: clone(fallbackAdminContent.jobs),
     talent: clone(fallbackAdminContent.talent),
@@ -65,6 +67,9 @@ function loadPersistedStore() {
       ...createDefaultStore(),
       ...parsed,
       users: Array.isArray(parsed?.users) ? parsed.users : clone(fallbackAdminContent.users),
+      verificationTickets: Array.isArray(parsed?.verificationTickets)
+        ? parsed.verificationTickets
+        : clone(fallbackAdminContent.verificationTickets || []),
       categories: Array.isArray(parsed?.categories) ? parsed.categories : clone(fallbackAdminContent.categories),
       jobs: Array.isArray(parsed?.jobs) ? parsed.jobs : clone(fallbackAdminContent.jobs),
       talent: Array.isArray(parsed?.talent) ? parsed.talent : clone(fallbackAdminContent.talent),
@@ -178,15 +183,17 @@ function normalizeUser(item = {}) {
     id: pickFirst(item.id, item._id, createId('usr')),
     fullName,
     email: pickFirst(item.email, 'unknown@example.com'),
-    username: pickFirst(item.username, fullName.toLowerCase().replace(/[^a-z0-9]+/g, ''), ''),
-    role: toLower(pickFirst(item.role, 'client')),
+    username: pickFirst(item.username, item.userName, fullName.toLowerCase().replace(/[^a-z0-9]+/g, ''), ''),
+    role: toLower(pickFirst(item.role, 'member')),
     status: toLower(pickFirst(item.status, 'active')),
-    phone: pickFirst(item.phone, ''),
+    phone: pickFirst(item.phone, item.phoneNumber, ''),
     country: pickFirst(item.country, item.location, ''),
     bio: pickFirst(item.bio, item.description, ''),
     avatarUrl: pickFirst(item.avatarUrl, item.avatar, item.imageUrl, ''),
     initials: pickFirst(item.initials, buildInitials(fullName), 'US'),
-    registeredAt: pickFirst(item.registeredAt, item.createdAt, new Date().toISOString())
+    registeredAt: pickFirst(item.registeredAt, item.createdAt, new Date().toISOString()),
+    isVerified: Boolean(pickFirst(item.isVerified, false)),
+    verificationStatus: toLower(pickFirst(item.verificationStatus, item.verification, item.isVerified ? 'verified' : 'unverified'))
   };
 }
 
@@ -249,19 +256,36 @@ function normalizePricing(item = {}) {
   };
 }
 
+function normalizeVerificationTicket(item = {}) {
+  return {
+    id: pickFirst(item.id, item._id, createId('ver')),
+    userId: pickFirst(item.userId, ''),
+    fullName: pickFirst(item.fullName, item.name, 'Unknown user'),
+    email: pickFirst(item.email, 'unknown@example.com'),
+    subject: pickFirst(item.subject, 'Verification request'),
+    message: pickFirst(item.message, ''),
+    portfolioUrl: pickFirst(item.portfolioUrl, ''),
+    status: toLower(pickFirst(item.status, 'pending')),
+    createdAt: pickFirst(item.createdAt, new Date().toISOString()),
+    reviewedAt: pickFirst(item.reviewedAt, ''),
+    adminNote: pickFirst(item.adminNote, '')
+  };
+}
+
 function normalizeOverviewResponse(payload) {
   const root = extractEntity(payload, ['data', 'result', 'payload']) || {};
   const totals = root.totals || {};
 
   return {
     totals: {
-      users: Number(totals.users ?? 0),
-      freelancers: Number(totals.freelancers ?? 0),
-      jobs: Number(totals.jobs ?? 0),
-      activeCategories: Number(totals.activeCategories ?? 0),
-      featuredTalent: Number(totals.featuredTalent ?? 0),
-      activePackages: Number(totals.activePackages ?? 0),
-      mediaItems: Number(totals.mediaItems ?? 0)
+      users: Number(pickFirst(totals.users, root.totalUsers, 0)),
+      verifiedUsers: Number(pickFirst(totals.verifiedUsers, root.totalVerifiedUsers, totals.freelancers, root.totalFreelancers, 0)),
+      pendingVerification: Number(pickFirst(totals.pendingVerification, root.pendingVerification, 0)),
+      jobs: Number(pickFirst(totals.jobs, root.totalJobs, 0)),
+      activeCategories: Number(pickFirst(totals.activeCategories, root.activeCategories, 0)),
+      featuredTalent: Number(pickFirst(totals.featuredTalent, root.featuredTalent, 0)),
+      activePackages: Number(pickFirst(totals.activePackages, root.activePackages, 0)),
+      mediaItems: Number(pickFirst(totals.mediaItems, root.mediaItems, 0))
     },
     recentJobs: Array.isArray(root.recentJobs) ? root.recentJobs.map(normalizeJob) : [],
     recentUsers: Array.isArray(root.recentUsers) ? root.recentUsers.map(normalizeUser) : []
@@ -305,7 +329,8 @@ function buildFallbackOverview() {
   return {
     totals: {
       users: users.length,
-      freelancers: users.filter((item) => item.role === 'freelancer').length,
+      verifiedUsers: users.filter((item) => item.isVerified).length,
+      pendingVerification: users.filter((item) => item.verificationStatus === 'pending').length,
       jobs: jobs.length,
       activeCategories: categories.filter((item) => item.status === 'active').length,
       featuredTalent: talent.filter((item) => item.featured).length,
@@ -323,6 +348,7 @@ function fallbackUsers(params = {}) {
 
   const role = toLower(params.role || 'all');
   const status = toLower(params.status || 'all');
+  const verificationStatus = toLower(params.verificationStatus || 'all');
 
   if (role !== 'all') {
     items = items.filter((item) => item.role === role);
@@ -330,6 +356,10 @@ function fallbackUsers(params = {}) {
 
   if (status !== 'all') {
     items = items.filter((item) => item.status === status);
+  }
+
+  if (verificationStatus !== 'all') {
+    items = items.filter((item) => item.verificationStatus === verificationStatus);
   }
 
   items = [...items].sort((a, b) => sortByDateDesc(a, b, 'registeredAt'));
@@ -404,6 +434,22 @@ function fallbackPricing(params = {}) {
 
   items = [...items].sort((left, right) => left.price - right.price);
   return buildListResponse(items, params);
+}
+
+function fallbackVerificationTickets(params = {}) {
+  let items = (adminStore.verificationTickets || []).map(normalizeVerificationTicket);
+  const search = toLower(params.search);
+  const status = toLower(params.status || 'all');
+
+  if (search) {
+    items = items.filter((item) => `${item.fullName} ${item.email} ${item.subject} ${item.message}`.toLowerCase().includes(search));
+  }
+
+  if (status !== 'all') {
+    items = items.filter((item) => item.status === status);
+  }
+
+  return [...items].sort((left, right) => sortByDateDesc(left, right, 'createdAt'));
 }
 
 function upsertById(collection, item, mapper) {
@@ -533,7 +579,25 @@ export async function fetchAdminOverview() {
 export async function fetchAdminUsers(params = {}) {
   try {
     const payload = await httpClient.get(API_ENDPOINTS.admin.users, { query: params });
-    return normalizeListPayload(payload, normalizeUser, params);
+    const response = normalizeListPayload(payload, normalizeUser, { page: 1, pageSize: 1000 });
+    return buildListResponse(
+      response.items
+        .filter((item) => {
+          const search = toLower(params.search);
+          const role = toLower(params.role || 'all');
+          const status = toLower(params.status || 'all');
+          const verificationStatus = toLower(params.verificationStatus || 'all');
+
+          const matchesSearch = !search || `${item.fullName} ${item.email} ${item.username} ${item.country}`.toLowerCase().includes(search);
+          const matchesRole = role === 'all' || item.role === role;
+          const matchesStatus = status === 'all' || item.status === status;
+          const matchesVerification = verificationStatus === 'all' || item.verificationStatus === verificationStatus;
+
+          return matchesSearch && matchesRole && matchesStatus && matchesVerification;
+        })
+        .sort((left, right) => sortByDateDesc(left, right, 'registeredAt')),
+      params
+    );
   } catch {
     return fallbackUsers(params);
   }
@@ -583,6 +647,63 @@ export async function deleteAdminUser(id) {
   }
 
   return { success: true };
+}
+
+export async function fetchAdminVerificationTickets(params = {}) {
+  try {
+    const payload = await httpClient.get(API_ENDPOINTS.admin.verificationTickets, { query: params });
+    const items = extractEntity(payload, ['data', 'items', 'result']) || payload;
+    return (Array.isArray(items) ? items : [])
+      .map(normalizeVerificationTicket)
+      .filter((item) => {
+        const search = toLower(params.search);
+        const status = toLower(params.status || 'all');
+
+        const matchesSearch = !search || `${item.fullName} ${item.email} ${item.subject} ${item.message}`.toLowerCase().includes(search);
+        const matchesStatus = status === 'all' || item.status === status;
+
+        return matchesSearch && matchesStatus;
+      })
+      .sort((left, right) => sortByDateDesc(left, right, 'createdAt'));
+  } catch {
+    return fallbackVerificationTickets(params);
+  }
+}
+
+export async function reviewAdminVerificationTicket(ticketId, values) {
+  try {
+    const payload = await httpClient.patch(buildAdminVerificationTicketEndpoint(ticketId), values);
+    return normalizeVerificationTicket(extractEntity(payload, ['data', 'item', 'result']) || payload);
+  } catch {
+    const nextStatus = toLower(values.status || 'pending');
+    adminStore.verificationTickets = (adminStore.verificationTickets || []).map((item) => (
+      item.id === ticketId
+        ? {
+            ...item,
+            status: nextStatus,
+            adminNote: values.adminNote || item.adminNote,
+            reviewedAt: new Date().toISOString()
+          }
+        : item
+    ));
+
+    const reviewedTicket = (adminStore.verificationTickets || []).find((item) => item.id === ticketId);
+
+    if (reviewedTicket?.userId) {
+      adminStore.users = adminStore.users.map((user) => (
+        user.id === reviewedTicket.userId
+          ? {
+              ...user,
+              isVerified: nextStatus === 'approved',
+              verificationStatus: nextStatus === 'approved' ? 'verified' : nextStatus === 'rejected' ? 'rejected' : user.verificationStatus
+            }
+          : user
+      ));
+    }
+
+    persistStore();
+    return normalizeVerificationTicket(reviewedTicket || { id: ticketId, ...values });
+  }
 }
 
 export async function fetchAdminJobs(params = {}) {

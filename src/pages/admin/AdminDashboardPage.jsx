@@ -1,4 +1,4 @@
-import { BriefcaseBusiness, FolderKanban, ImageIcon, Package2, Sparkles, Users } from 'lucide-react';
+import { BriefcaseBusiness, FolderKanban, ImageIcon, ShieldCheck, Users } from 'lucide-react';
 import { useAdminDashboardPage } from '../../features/admin/hooks/useAdminDashboardPage.js';
 import AdminLayout from '../../shared/ui/admin/AdminLayout.jsx';
 import AdminStatusBadge from '../../shared/ui/admin/AdminStatusBadge.jsx';
@@ -32,17 +32,17 @@ export default function AdminDashboardPage({ navigate, pathname = ROUTES.admin }
       navigate={navigate}
       pathname={pathname}
       title="Dashboard"
-      description="Marketplace content, media və əsas idarəetmə axınlarının qısa premium görünüşü."
+      description="Marketplace content, media and verification flow summaries in one place."
     >
       {error ? <div className="adminNotice error">{error}</div> : null}
 
       <section className="adminStatsGrid sixCols">
-        <DashboardStatCard icon={Users} label="Total Users" value={overview.totals.users} hint="Platformada qeydiyyatdan keçən hesablar" />
-        <DashboardStatCard icon={Sparkles} label="Freelancers" value={overview.totals.freelancers} hint="Aktiv freelancer profilləri" />
-        <DashboardStatCard icon={BriefcaseBusiness} label="Job Posts" value={overview.totals.jobs} hint="Saytda görünən və ya idarə olunan elanlar" />
-        <DashboardStatCard icon={FolderKanban} label="Categories" value={overview.totals.activeCategories} hint="Hazırda aktiv kateqoriya sayı" />
-        <DashboardStatCard icon={Package2} label="Featured Talent" value={overview.totals.featuredTalent || 0} hint="Önə çıxarılan freelancer kartları" />
-        <DashboardStatCard icon={ImageIcon} label="Media Items" value={overview.totals.mediaItems || 0} hint="Task və listing şəkilləri" />
+        <DashboardStatCard icon={Users} label="Total Users" value={overview.totals.users} hint="Platformada qeydiyyatdan keÃ§É™n hesablar" />
+        <DashboardStatCard icon={ShieldCheck} label="Verified Users" value={overview.totals.verifiedUsers} hint="Job post etmÉ™yÉ™ icazÉ™li hesablar" />
+        <DashboardStatCard icon={ShieldCheck} label="Verification Queue" value={overview.totals.pendingVerification} hint="HazÄ±rda review gÃ¶zlÉ™yÉ™n ticket-lÉ™r" />
+        <DashboardStatCard icon={BriefcaseBusiness} label="Job Posts" value={overview.totals.jobs} hint="Saytda gÃ¶rÃ¼nÉ™n vÉ™ ya idarÉ™ olunan elanlar" />
+        <DashboardStatCard icon={FolderKanban} label="Categories" value={overview.totals.activeCategories} hint="HazÄ±rda aktiv kateqoriya sayÄ±" />
+        <DashboardStatCard icon={ImageIcon} label="Media Items" value={overview.totals.mediaItems || 0} hint="Task vÉ™ listing ÅŸÉ™killÉ™ri" />
       </section>
 
       <section className="adminTwoColumnGrid">
@@ -58,7 +58,7 @@ export default function AdminDashboardPage({ navigate, pathname = ROUTES.admin }
           {isLoading ? (
             <div className="adminEmptyState compact">
               <strong>Dashboard loading...</strong>
-              <p>İdarəetmə göstəriciləri yüklənir.</p>
+              <p>Ä°darÉ™etmÉ™ gÃ¶stÉ™ricilÉ™ri yÃ¼klÉ™nir.</p>
             </div>
           ) : overview.recentJobs.length ? (
             <div className="adminSimpleStack">
@@ -81,7 +81,7 @@ export default function AdminDashboardPage({ navigate, pathname = ROUTES.admin }
           ) : (
             <div className="adminEmptyState compact">
               <strong>No recent jobs</strong>
-              <p>Ən son job activity burada görünəcək.</p>
+              <p>Æn son job activity burada gÃ¶rÃ¼nÉ™cÉ™k.</p>
             </div>
           )}
         </article>
@@ -98,7 +98,7 @@ export default function AdminDashboardPage({ navigate, pathname = ROUTES.admin }
           {isLoading ? (
             <div className="adminEmptyState compact">
               <strong>Users loading...</strong>
-              <p>Yeni qeydiyyatlar hazırlanır.</p>
+              <p>Yeni qeydiyyatlar hazÄ±rlanÄ±r.</p>
             </div>
           ) : overview.recentUsers.length ? (
             <div className="adminSimpleStack">
@@ -113,6 +113,7 @@ export default function AdminDashboardPage({ navigate, pathname = ROUTES.admin }
                   </div>
                   <div className="adminSimpleRowMeta">
                     <AdminStatusBadge value={user.role} tone="primary" />
+                    <AdminStatusBadge value={user.verificationStatus || 'unverified'} />
                     <AdminStatusBadge value={user.status} />
                   </div>
                 </div>
@@ -121,7 +122,7 @@ export default function AdminDashboardPage({ navigate, pathname = ROUTES.admin }
           ) : (
             <div className="adminEmptyState compact">
               <strong>No recent users</strong>
-              <p>Yeni hesablar burada görünəcək.</p>
+              <p>Yeni hesablar burada gÃ¶rÃ¼nÉ™cÉ™k.</p>
             </div>
           )}
         </article>

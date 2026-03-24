@@ -5,6 +5,7 @@ export function useAdminUsersPage() {
   const [search, setSearch] = useState('');
   const [role, setRole] = useState('all');
   const [status, setStatus] = useState('all');
+  const [verificationStatus, setVerificationStatus] = useState('all');
   const [page, setPage] = useState(1);
   const [items, setItems] = useState([]);
   const [meta, setMeta] = useState({ page: 1, pageSize: 8, total: 0, totalPages: 1 });
@@ -14,12 +15,13 @@ export function useAdminUsersPage() {
 
   useEffect(() => {
     let isCancelled = false;
+
     const timeoutId = window.setTimeout(async () => {
       setIsLoading(true);
       setError('');
 
       try {
-        const response = await fetchAdminUsers({ search, role, status, page, pageSize: 8 });
+        const response = await fetchAdminUsers({ search, role, status, verificationStatus, page, pageSize: 8 });
         if (!isCancelled) {
           setItems(response.items);
           setMeta(response.meta);
@@ -39,10 +41,10 @@ export function useAdminUsersPage() {
       isCancelled = true;
       window.clearTimeout(timeoutId);
     };
-  }, [search, role, status, page]);
+  }, [search, role, status, verificationStatus, page]);
 
   const refresh = async () => {
-    const response = await fetchAdminUsers({ search, role, status, page, pageSize: 8 });
+    const response = await fetchAdminUsers({ search, role, status, verificationStatus, page, pageSize: 8 });
     setItems(response.items);
     setMeta(response.meta);
   };
@@ -62,6 +64,11 @@ export function useAdminUsersPage() {
     setStatus: (value) => {
       setPage(1);
       setStatus(value);
+    },
+    verificationStatus,
+    setVerificationStatus: (value) => {
+      setPage(1);
+      setVerificationStatus(value);
     },
     page,
     setPage,

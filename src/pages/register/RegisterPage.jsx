@@ -41,7 +41,7 @@ export default function RegisterPage({ navigate }) {
           />
 
           <p className="authSubtitle">
-            We are delighted to welcome you as a member of our community!
+            Every account starts as a member and can unlock job posting after verification.
           </p>
 
           <RegisterAlert message={feedback.message} type={feedback.type} />
@@ -94,18 +94,6 @@ export default function RegisterPage({ navigate }) {
                   autoComplete="email"
                   required
                 />
-              </label>
-
-              <label className="authField">
-                <span>Role</span>
-                <select
-                  value={form.role}
-                  onChange={(event) => setFieldValue('role', event.target.value)}
-                  required
-                >
-                  <option value="Client">Client</option>
-                  <option value="Freelancer">Freelancer</option>
-                </select>
               </label>
 
               <label className="authField">
@@ -177,7 +165,7 @@ export default function RegisterPage({ navigate }) {
               <div className="previewScreen">
                 <div className="previewCard">
                   <BrandLogo as="div" className="brand previewBrand" />
-                  <p>We are delighted to welcome you as a member of our community!</p>
+                  <p>Join once as a member, then request verification when you are ready to post jobs.</p>
                   <div className="previewInput" />
                   <div className="previewInput" />
                   <div className="previewInput" />

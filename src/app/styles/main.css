@@ -28,6 +28,7 @@ button { font: inherit; cursor: pointer; }
 input { font: inherit; }
 .wrap { width: min(1180px, calc(100% - 32px)); margin: 0 auto; }
 .wrapLarge { width: min(1220px, calc(100% - 32px)); margin: 0 auto; }
+.detailHeaderFrame { width: min(1380px, calc(100% - 32px)); margin: 0 auto; }
 
 .interactive,
 .btn,
@@ -949,7 +950,8 @@ h2 {
 
 @media (max-width: 780px) {
   .wrap,
-  .wrapLarge {
+  .wrapLarge,
+  .detailHeaderFrame {
     width: min(100% - 20px, 1180px);
   }
   .serviceGrid,
@@ -1329,7 +1331,7 @@ h2 {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   position: relative;
   transition: min-height 0.28s ease, gap 0.28s ease, padding 0.28s ease;
 }
@@ -1361,9 +1363,10 @@ h2 {
 .detailHeaderNav {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 14px;
   color: #475467;
   font-weight: 600;
+  font-size: 0.95rem;
   min-width: 0;
   transition: opacity 0.28s ease, transform 0.28s ease, filter 0.28s ease;
 }
@@ -1389,7 +1392,7 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
   width: auto;
   justify-self: end;
@@ -1548,17 +1551,21 @@ h2 {
 }
 
 .detailHeaderRegister {
-  padding-inline: 18px;
-  min-height: 48px;
+  padding-inline: 16px;
+  min-height: 46px;
 }
 
 .detailHeaderActionButton {
+  min-height: 46px;
+  padding-inline: 16px;
+  font-size: 0.95rem;
   box-shadow: 0 14px 28px rgba(255, 90, 20, 0.18);
 }
 
 .detailHeaderProfileButton {
-  width: 48px;
-  min-width: 48px;
+  width: 46px;
+  min-width: 46px;
+  min-height: 46px;
   padding: 0;
 }
 
@@ -1570,6 +1577,131 @@ h2 {
   border: 1px solid rgba(22, 34, 57, 0.08);
   background: #ffffff;
   color: #162239;
+}
+
+.detailHeaderRow.menuLayout {
+  grid-template-columns: auto minmax(0, 1fr) auto !important;
+  gap: 14px;
+  z-index: 14;
+}
+
+.detailHeaderRow.menuLayout.searchOpen {
+  grid-template-columns: auto minmax(0, 1fr) !important;
+}
+
+.detailHeaderRow.menuLayout > .detailMenuButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: end;
+}
+
+.detailHeaderPanel.menuLayout {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 10px);
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(22, 34, 57, 0.08);
+  border-radius: 22px;
+  box-shadow: 0 24px 50px rgba(18, 38, 63, 0.12);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 12;
+}
+
+.detailHeaderPanel.menuLayout.open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.detailHeaderPanel.menuLayout .detailHeaderNav,
+.detailHeaderPanel.menuLayout .detailHeaderPanelUtility,
+.detailHeaderPanel.menuLayout .detailHeaderPanelActions {
+  display: grid;
+}
+
+.detailHeaderPanel.menuLayout .detailHeaderNav {
+  gap: 12px;
+}
+
+.detailHeaderPanel.menuLayout .detailHeaderNav a {
+  display: flex;
+  align-items: center;
+  min-height: 50px;
+  padding: 0 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 90, 20, 0.1);
+  background: #fffaf7;
+  color: var(--text);
+}
+
+.detailHeaderPanel.menuLayout .detailHeaderPanelUtility {
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(22, 34, 57, 0.08);
+}
+
+.detailHeaderPanel.menuLayout .detailHeaderPanelActions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.detailHeaderPanelLanguage,
+.detailHeaderActions.menuLayout,
+.detailHeaderActions.menuLayout .detailSearchShell {
+  min-width: 0;
+}
+
+.detailHeaderPanelLanguage {
+  width: 100%;
+}
+
+.detailHeaderPanelLanguage.languageSwitcher {
+  width: 100%;
+  justify-content: center;
+}
+
+.detailHeaderActions.menuLayout {
+  width: auto;
+  justify-self: end;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.detailHeaderActions.menuLayout .detailSearchShell.open {
+  width: clamp(280px, 40vw, 460px);
+}
+
+.detailHeaderPanel.menuLayout .detailHeaderPanelActions > * {
+  width: 100%;
+}
+
+.detailHeaderPanel.menuLayout .detailHeaderPanelActions .detailHeaderLink,
+.detailHeaderPanel.menuLayout .detailHeaderPanelActions .detailHeaderRegister,
+.detailHeaderPanel.menuLayout .detailHeaderPanelActions .detailHeaderActionButton,
+.detailHeaderPanel.menuLayout .detailHeaderPanelActions .detailHeaderProfileButton,
+.detailHeaderPanel.menuLayout .detailHeaderPanelActions .detailHeaderLogout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50px;
+  min-width: 0;
+  padding-inline: 16px;
+}
+
+.detailHeaderPanel.menuLayout .detailHeaderPanelActions .detailHeaderLink {
+  border: 1px solid rgba(255, 90, 20, 0.1);
+  border-radius: 16px;
+  background: #fffaf7;
 }
 
 .detailPage {
@@ -2366,13 +2498,19 @@ h2 {
   background: #fff;
   color: var(--text);
   border-radius: 14px;
-  min-height: 48px;
-  padding: 0 14px;
+  min-height: 46px;
+  padding: 0 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.detailHeaderLogout {
+  width: 46px;
+  min-width: 46px;
+  padding: 0;
 }
 
 .detailHeaderUser:hover,
@@ -5152,8 +5290,8 @@ h2 {
 .languageSwitcher {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px;
+  gap: 4px;
+  padding: 3px;
   border-radius: 999px;
   border: 1px solid rgba(232, 225, 217, 0.92);
   background: rgba(255, 255, 255, 0.92);
@@ -5161,14 +5299,14 @@ h2 {
 }
 
 .languageSwitchButton {
-  min-width: 40px;
-  height: 34px;
-  padding: 0 12px;
+  min-width: 36px;
+  height: 32px;
+  padding: 0 10px;
   border: 0;
   border-radius: 999px;
   background: transparent;
   color: #6d665f;
-  font-size: 0.8rem;
+  font-size: 0.76rem;
   font-weight: 800;
   letter-spacing: 0.06em;
 }

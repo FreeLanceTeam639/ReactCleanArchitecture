@@ -6,6 +6,7 @@ import { isTaskDetailRoute, ROUTES } from '../shared/constants/routes.js';
 import { usePathname } from '../shared/hooks/usePathname.js';
 import RegisterPage from '../pages/register/RegisterPage.jsx';
 import ProfilePage from '../pages/profile/ProfilePage.jsx';
+import VerificationPage from '../pages/verification/VerificationPage.jsx';
 import OrdersPage from '../pages/orders/OrdersPage.jsx';
 import MessagesPage from '../pages/messages/MessagesPage.jsx';
 import NotificationsPage from '../pages/notifications/NotificationsPage.jsx';
@@ -19,6 +20,7 @@ import AdminJobsPage from '../pages/admin/AdminJobsPage.jsx';
 import AdminCategoriesPage from '../pages/admin/AdminCategoriesPage.jsx';
 import AdminTalentPage from '../pages/admin/AdminTalentPage.jsx';
 import AdminPricingPage from '../pages/admin/AdminPricingPage.jsx';
+import AdminVerificationPage from '../pages/admin/AdminVerificationPage.jsx';
 
 function App() {
   const [pathname, navigate] = usePathname();
@@ -37,6 +39,10 @@ function App() {
 
   if (pathname === ROUTES.profile) {
     return <ProfilePage navigate={navigate} />;
+  }
+
+  if (pathname === ROUTES.verification) {
+    return <VerificationPage navigate={navigate} />;
   }
 
   if (pathname === ROUTES.orders) {
@@ -89,6 +95,10 @@ function App() {
 
   if (pathname === ROUTES.adminPricing) {
     return <AdminPricingPage navigate={navigate} pathname={pathname} />;
+  }
+
+  if (pathname === ROUTES.adminVerification) {
+    return <AdminVerificationPage navigate={navigate} pathname={pathname} />;
   }
 
   if (isTaskDetailRoute(pathname)) {

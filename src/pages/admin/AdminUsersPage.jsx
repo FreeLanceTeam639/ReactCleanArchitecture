@@ -20,8 +20,9 @@ function buildUserFormState(user) {
     fullName: user?.fullName || '',
     email: user?.email || '',
     username: user?.username || '',
-    role: user?.role || 'client',
+    role: user?.role || 'member',
     status: user?.status || 'active',
+    verificationStatus: user?.verificationStatus || 'unverified',
     phone: user?.phone || '',
     country: user?.country || '',
     bio: user?.bio || '',
@@ -53,6 +54,8 @@ export default function AdminUsersPage({ navigate, pathname = ROUTES.adminUsers 
     setRole,
     status,
     setStatus,
+    verificationStatus,
+    setVerificationStatus,
     page,
     setPage,
     items,
@@ -76,28 +79,41 @@ export default function AdminUsersPage({ navigate, pathname = ROUTES.adminUsers 
     () => [
       {
         key: 'role',
-        label: 'Role',
+        label: 'Account',
         value: role,
         onChange: setRole,
         options: [
-          { value: 'all', label: 'All roles' },
-          { value: 'client', label: 'Client' },
-          { value: 'freelancer', label: 'Freelancer' }
+          { value: 'all', label: 'All accounts' },
+          { value: 'member', label: 'Member' },
+          { value: 'admin', label: 'Admin' }
+        ]
+      },
+      {
+        key: 'verificationStatus',
+        label: 'Verification',
+        value: verificationStatus,
+        onChange: setVerificationStatus,
+        options: [
+          { value: 'all', label: 'All statuses' },
+          { value: 'verified', label: 'Verified' },
+          { value: 'pending', label: 'Pending' },
+          { value: 'rejected', label: 'Rejected' },
+          { value: 'unverified', label: 'Unverified' }
         ]
       },
       {
         key: 'status',
-        label: 'Status',
+        label: 'Access',
         value: status,
         onChange: setStatus,
         options: [
-          { value: 'all', label: 'All statuses' },
+          { value: 'all', label: 'All access' },
           { value: 'active', label: 'Active' },
           { value: 'blocked', label: 'Blocked' }
         ]
       }
     ],
-    [role, setRole, status, setStatus]
+    [role, setRole, verificationStatus, setVerificationStatus, status, setStatus]
   );
 
   const openEditModal = (user) => {
@@ -115,7 +131,7 @@ export default function AdminUsersPage({ navigate, pathname = ROUTES.adminUsers 
       navigate={navigate}
       pathname={pathname}
       title="Users"
-      description="Client və freelancer profillərini daha detallı və yumşaq admin görünüşü ilə idarə et."
+      description="Member accounts, verification state and access status in one clean directory."
     >
       {feedback ? <div className="adminNotice success">{feedback}</div> : null}
       {error ? <div className="adminNotice error">{error}</div> : null}
@@ -149,9 +165,9 @@ export default function AdminUsersPage({ navigate, pathname = ROUTES.adminUsers 
                   <tr>
                     <th>User</th>
                     <th>Email</th>
-                    <th>Role</th>
-                    <th>Status</th>
-                    <th>Country</th>
+                    <th>Account</th>
+                    <th>Verification</th>
+                    <th>Access</th>
                     <th>Registered</th>
                     <th>Actions</th>
                   </tr>
@@ -164,9 +180,9 @@ export default function AdminUsersPage({ navigate, pathname = ROUTES.adminUsers 
                         <strong>{user.email}</strong>
                         {user.phone ? <span>{user.phone}</span> : null}
                       </td>
-                      <td className="textCap">{user.role}</td>
+                      <td><AdminStatusBadge value={user.role} tone="primary" /></td>
+                      <td><AdminStatusBadge value={user.verificationStatus || 'unverified'} /></td>
                       <td><AdminStatusBadge value={user.status} /></td>
-                      <td>{user.country || '—'}</td>
                       <td>{formatDate(user.registeredAt)}</td>
                       <td>
                         <div className="adminRowActions">
@@ -209,6 +225,7 @@ export default function AdminUsersPage({ navigate, pathname = ROUTES.adminUsers 
               <p>@{viewUser.username || 'user'} • {viewUser.email}</p>
               <div className="adminInlineBadges">
                 <AdminStatusBadge value={viewUser.role} tone="primary" />
+                <AdminStatusBadge value={viewUser.verificationStatus || 'unverified'} />
                 <AdminStatusBadge value={viewUser.status} />
               </div>
             </div>
@@ -219,6 +236,8 @@ export default function AdminUsersPage({ navigate, pathname = ROUTES.adminUsers 
             <div><span>Country</span><strong>{viewUser.country || 'Not set'}</strong></div>
             <div><span>Registered</span><strong>{formatDate(viewUser.registeredAt)}</strong></div>
             <div><span>User ID</span><strong>{viewUser.id}</strong></div>
+            <div><span>Can post jobs</span><strong>{viewUser.isVerified ? 'Yes' : 'No'}</strong></div>
+            <div><span>Verification</span><strong>{viewUser.verificationStatus || 'unverified'}</strong></div>
             <div className="fullSpan"><span>Bio</span><strong>{viewUser.bio || 'No bio added yet.'}</strong></div>
           </div>
         </AdminModal>
@@ -267,14 +286,15 @@ export default function AdminUsersPage({ navigate, pathname = ROUTES.adminUsers 
                 <input value={formState.country} onChange={(event) => setFormState((current) => ({ ...current, country: event.target.value }))} />
               </label>
               <label>
-                <span>Role</span>
-                <select value={formState.role} onChange={(event) => setFormState((current) => ({ ...current, role: event.target.value }))}>
-                  <option value="client">Client</option>
-                  <option value="freelancer">Freelancer</option>
-                </select>
+                <span>Account type</span>
+                <input value={formState.role} disabled />
               </label>
               <label>
-                <span>Status</span>
+                <span>Verification</span>
+                <input value={formState.verificationStatus} disabled />
+              </label>
+              <label>
+                <span>Access</span>
                 <select value={formState.status} onChange={(event) => setFormState((current) => ({ ...current, status: event.target.value }))}>
                   <option value="active">Active</option>
                   <option value="blocked">Blocked</option>

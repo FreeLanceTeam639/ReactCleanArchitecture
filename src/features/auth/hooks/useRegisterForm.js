@@ -8,8 +8,7 @@ const initialForm = {
   userName: '',
   email: '',
   password: '',
-  confirmPassword: '',
-  role: 'Client'
+  confirmPassword: ''
 };
 
 export function useRegisterForm(navigate) {
@@ -53,8 +52,7 @@ export function useRegisterForm(navigate) {
         userName: form.userName,
         email: form.email,
         password: form.password,
-        confirmPassword: form.confirmPassword,
-        role: form.role
+        confirmPassword: form.confirmPassword
       });
 
       setFeedback({

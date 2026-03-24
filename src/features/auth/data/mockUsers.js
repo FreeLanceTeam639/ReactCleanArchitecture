@@ -16,15 +16,15 @@ export function buildDemoSession(rememberMe = false) {
 
 export function buildMockProfile(overrides = {}) {
   return {
-    id: 'demo-freelancer-01',
+    id: 'demo-member-01',
     firstName: 'Orkhan',
     fullName: 'Orkhan Mammadov',
     email: TEST_LOGIN_CREDENTIALS.email,
-    profession: 'Frontend Developer & UI Specialist',
+    profession: 'Marketplace Member',
     headline: 'React, Vite ve marketplace dashboard UI qurulumu',
     location: 'Baku, Azerbaijan',
     memberSince: '2024',
-    badge: 'Top Rated Talent',
+    badge: 'Verified Member',
     bio: 'Frontend ve UI sahəsində freelance işləyirəm. Marketplace, dashboard və landing page layihələrində fokuslanıram.',
     availability: 'Available now',
     hourlyRate: '$25',
@@ -32,6 +32,10 @@ export function buildMockProfile(overrides = {}) {
     avatarUrl: '',
     completionRate: 98,
     responseTime: '1 saat',
+    isVerified: true,
+    canPostJobs: true,
+    verificationStatus: 'Verified',
+    verificationNote: '',
     skills: ['React', 'Vite', 'JavaScript', 'UI Design', 'REST API'],
     ...overrides
   };

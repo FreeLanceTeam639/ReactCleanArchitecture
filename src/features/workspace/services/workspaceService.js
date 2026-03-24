@@ -663,13 +663,7 @@ export async function submitTask(payload, mode = 'publish') {
   try {
     const response = await httpClient.post(API_ENDPOINTS.workspace.postTask, normalizedPayload);
     return extractEntity(response, ['task', 'data']) || normalizedPayload;
-  } catch {
-    const item = {
-      id: `task-${Date.now()}`,
-      ...normalizedPayload,
-      createdAt: 'Now'
-    };
-    workspaceStore.createdTasks.unshift(item);
-    return item;
+  } catch (error) {
+    throw error;
   }
 }

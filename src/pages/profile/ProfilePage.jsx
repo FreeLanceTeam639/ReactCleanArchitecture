@@ -559,7 +559,10 @@ export default function ProfilePage({ navigate }) {
       <MarketplaceHeader
         navigate={navigate}
         links={PROFILE_NAVIGATION_LINKS}
-        actionButton={{ label: 'Post Job', route: ROUTES.postTask }}
+        actionButton={{
+          label: profile.canPostJobs ? 'Post Job' : 'Get Verified',
+          route: profile.canPostJobs ? ROUTES.postTask : ROUTES.verification
+        }}
       />
 
       <main className="wrap profilePage fadeUp">
@@ -578,6 +581,7 @@ export default function ProfilePage({ navigate }) {
                     <ShieldCheck size={16} /> {profile.badge}
                   </span>
                   {profile.availability ? <span className="profileBadge mutedBadge">{profile.availability}</span> : null}
+                  {profile.verificationStatus ? <span className="profileBadge mutedBadge">{profile.verificationStatus}</span> : null}
                 </div>
                 <h1>{profile.fullName}</h1>
                 <p>{profile.headline || profile.profession}</p>
@@ -600,6 +604,17 @@ export default function ProfilePage({ navigate }) {
 
           {profile.bio ? <p className="profileBioText">{profile.bio}</p> : null}
 
+          {!profile.canPostJobs ? (
+            <div className="profileFeedbackBanner">
+              Job posting is locked until your verification request is approved.
+              {' '}
+              <button type="button" className="inlineLink interactive" onClick={() => navigate(ROUTES.verification)}>
+                Open verification center
+              </button>
+              {profile.verificationNote ? ` • ${profile.verificationNote}` : ''}
+            </div>
+          ) : null}
+
           {profile.skills?.length ? (
             <div className="profileSkillRow">
               {profile.skills.map((skill) => (
@@ -617,8 +632,12 @@ export default function ProfilePage({ navigate }) {
             <button type="button" className="btn ghost interactive" onClick={() => navigate(ROUTES.orders)}>
               My Orders
             </button>
-            <button type="button" className="btn ghost interactive" onClick={() => navigate(ROUTES.postTask)}>
-              Post Job
+            <button
+              type="button"
+              className="btn ghost interactive"
+              onClick={() => navigate(profile.canPostJobs ? ROUTES.postTask : ROUTES.verification)}
+            >
+              {profile.canPostJobs ? 'Post Job' : 'Get Verified'}
             </button>
             <button type="button" className="btn ghost interactive" onClick={handleLogout}>
               <LogOut size={16} /> Sign Out

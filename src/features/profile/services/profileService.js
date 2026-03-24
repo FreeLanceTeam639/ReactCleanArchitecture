@@ -7,6 +7,7 @@ import {
   buildProfileSavedItemEndpoint
 } from '../../../shared/api/endpoints.js';
 import { httpClient } from '../../../shared/api/httpClient.js';
+import { STORAGE_KEYS } from '../../../shared/constants/storageKeys.js';
 import { isDemoAuthenticatedSession } from '../../../shared/lib/storage/authStorage.js';
 import { extractCollection } from '../../../shared/lib/response/extractCollection.js';
 import { extractEntity } from '../../../shared/lib/response/extractEntity.js';
@@ -21,10 +22,6 @@ import {
   buildMockSummary,
   buildMockTasks
 } from '../../auth/data/mockUsers.js';
-
-function asArray(value) {
-  return Array.isArray(value) ? value : [];
-}
 
 function pickFirst(...values) {
   return values.find((value) => value !== undefined && value !== null && value !== '');
@@ -55,7 +52,6 @@ function toStringArray(value) {
   return [];
 }
 
-
 function readProfileDraft() {
   try {
     const rawValue = localStorage.getItem(STORAGE_KEYS.profileDraft);
@@ -84,25 +80,32 @@ function resolveDemo(factory) {
 export function normalizeProfile(payload) {
   const entity = extractEntity(payload, ['profile', 'user', 'data']) || {};
   const fullName = pickFirst(entity.fullName, entity.name, `${entity.firstName || ''} ${entity.lastName || ''}`.trim(), 'Account');
+  const verificationStatus = String(pickFirst(entity.verificationStatus, 'Unverified'));
+  const isVerified = Boolean(pickFirst(entity.isVerified, false));
+  const canPostJobs = Boolean(pickFirst(entity.canPostJobs, isVerified));
 
   return {
     id: pickFirst(entity.id, entity._id, entity.userId, ''),
     firstName: pickFirst(entity.firstName, fullName.split(' ')[0], ''),
     fullName,
     email: pickFirst(entity.email, ''),
-    profession: pickFirst(entity.profession, entity.title, entity.role, 'Freelancer'),
+    profession: pickFirst(entity.profession, entity.title, entity.role, 'Member'),
     headline: pickFirst(entity.headline, entity.profession, entity.title, ''),
     location: pickFirst(entity.location, entity.country, 'Location not specified'),
-    memberSince: pickFirst(entity.memberSince, entity.createdAt?.slice?.(0, 4), '—'),
-    badge: pickFirst(entity.badge, entity.level, 'Verified Talent'),
+    memberSince: pickFirst(entity.memberSince, entity.createdAt?.slice?.(0, 4), '-'),
+    badge: pickFirst(entity.badge, entity.level, isVerified ? 'Verified Member' : 'Member'),
     bio: pickFirst(entity.bio, entity.description, ''),
     availability: pickFirst(entity.availability, entity.status, 'Available'),
     hourlyRate: pickFirst(entity.hourlyRate, entity.rate, entity.pricePerHour, ''),
     avatarInitials: pickFirst(entity.avatarInitials, deriveInitials(fullName), 'AC'),
     avatarUrl: pickFirst(entity.avatarUrl, entity.avatar, entity.imageUrl, ''),
     completionRate: Number(pickFirst(entity.completionRate, entity.responseRate, 0)) || 0,
-    responseTime: pickFirst(entity.responseTime, entity.avgResponseTime, '—'),
-    skills: toStringArray(entity.skills)
+    responseTime: pickFirst(entity.responseTime, entity.avgResponseTime, '-'),
+    skills: toStringArray(entity.skills),
+    isVerified,
+    canPostJobs,
+    verificationStatus,
+    verificationNote: pickFirst(entity.verificationNote, '')
   };
 }
 
@@ -122,7 +125,7 @@ export function normalizeSummary(payload) {
     savedItems: pickFirst(entity.savedItems, entity.savedCount, 0),
     unreadMessages: pickFirst(entity.unreadMessages, entity.newMessages, 0),
     completionRate: pickFirst(entity.completionRate, entity.responseRate, '0%'),
-    responseTime: pickFirst(entity.responseTime, entity.avgResponseTime, '—')
+    responseTime: pickFirst(entity.responseTime, entity.avgResponseTime, '-')
   };
 }
 

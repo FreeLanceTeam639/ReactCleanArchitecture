@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
-import { hasAuthenticatedSession } from '../../../shared/lib/storage/authStorage.js';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { hasAuthenticatedSession, isDemoAuthenticatedSession } from '../../../shared/lib/storage/authStorage.js';
 import { ROUTES } from '../../../shared/constants/routes.js';
+import { createWorkspaceSocketSubscription } from '../../../shared/realtime/workspaceSocket.js';
 import {
   fetchConversationIndex,
   fetchConversationThread,
@@ -17,6 +18,43 @@ export function useMessagesPage(navigate) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [busyKey, setBusyKey] = useState('');
+  const activeConversationIdRef = useRef('');
+
+  useEffect(() => {
+    activeConversationIdRef.current = activeConversationId;
+  }, [activeConversationId]);
+
+  const loadConversations = useCallback(async (preferredConversationId = '') => {
+    const items = await fetchConversationIndex(filters);
+    const nextItems = items || [];
+
+    setConversations(nextItems);
+
+    const nextActiveConversationId =
+      nextItems.find((item) => item.id === preferredConversationId)?.id ||
+      nextItems.find((item) => item.id === activeConversationIdRef.current)?.id ||
+      nextItems[0]?.id ||
+      '';
+
+    setActiveConversationId(nextActiveConversationId);
+
+    return {
+      items: nextItems,
+      activeConversationId: nextActiveConversationId
+    };
+  }, [filters]);
+
+  const loadThread = useCallback(async (conversationId) => {
+    if (!conversationId) {
+      setThread([]);
+      return [];
+    }
+
+    const items = await fetchConversationThread(conversationId);
+    const nextThread = items || [];
+    setThread(nextThread);
+    return nextThread;
+  }, []);
 
   useEffect(() => {
     if (!hasAuthenticatedSession()) {
@@ -28,17 +66,28 @@ export function useMessagesPage(navigate) {
     setIsLoading(true);
     setError('');
 
-    fetchConversationIndex(filters)
-      .then((items) => {
-        if (cancelled) return;
-        setConversations(items || []);
-        const nextActive = items.find((item) => item.id === activeConversationId)?.id || items[0]?.id || '';
-        setActiveConversationId(nextActive);
+    loadConversations()
+      .then(({ activeConversationId: nextActiveConversationId }) => {
+        if (cancelled) {
+          return;
+        }
+
         setIsLoading(false);
+
+        if (nextActiveConversationId) {
+          loadThread(nextActiveConversationId).catch(() => {
+            if (!cancelled) {
+              setThread([]);
+            }
+          });
+        } else {
+          setThread([]);
+        }
       })
       .catch((nextError) => {
         if (!cancelled) {
           setConversations([]);
+          setThread([]);
           setError(nextError?.message || 'Messages could not be loaded.');
           setIsLoading(false);
         }
@@ -47,7 +96,7 @@ export function useMessagesPage(navigate) {
     return () => {
       cancelled = true;
     };
-  }, [filters, navigate]);
+  }, [filters, loadConversations, loadThread, navigate]);
 
   useEffect(() => {
     if (!activeConversationId) {
@@ -57,22 +106,36 @@ export function useMessagesPage(navigate) {
 
     let cancelled = false;
 
-    fetchConversationThread(activeConversationId)
-      .then((items) => {
-        if (!cancelled) {
-          setThread(items || []);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setThread([]);
-        }
-      });
+    loadThread(activeConversationId).catch(() => {
+      if (!cancelled) {
+        setThread([]);
+      }
+    });
 
     return () => {
       cancelled = true;
     };
-  }, [activeConversationId]);
+  }, [activeConversationId, loadThread]);
+
+  useEffect(() => {
+    if (!hasAuthenticatedSession() || isDemoAuthenticatedSession()) {
+      return () => {};
+    }
+
+    return createWorkspaceSocketSubscription(async (event) => {
+      if (event?.type !== 'conversation.updated') {
+        return;
+      }
+
+      const targetConversationId = event.conversationId || activeConversationId;
+      const result = await loadConversations(targetConversationId);
+      const resolvedConversationId = result.activeConversationId || targetConversationId;
+
+      if (resolvedConversationId) {
+        await loadThread(resolvedConversationId);
+      }
+    });
+  }, [activeConversationId, loadConversations, loadThread]);
 
   const activeConversation = useMemo(
     () => conversations.find((item) => item.id === activeConversationId) || null,
@@ -86,10 +149,11 @@ export function useMessagesPage(navigate) {
   const openConversation = async (conversationId) => {
     setActiveConversationId(conversationId);
     setBusyKey(`read:${conversationId}`);
+
     try {
       await markConversationRead(conversationId);
-      const items = await fetchConversationIndex(filters);
-      setConversations(items || []);
+      await loadConversations(conversationId);
+      await loadThread(conversationId);
     } finally {
       setBusyKey('');
     }
@@ -102,11 +166,18 @@ export function useMessagesPage(navigate) {
     }
 
     setBusyKey('reply');
+
     try {
       const createdMessage = await sendConversationReply(activeConversationId, draftMessage.trim());
-      setThread((current) => [...current, createdMessage]);
-      const items = await fetchConversationIndex(filters);
-      setConversations(items || []);
+      setThread((current) => {
+        if (current.some((item) => item.id === createdMessage.id)) {
+          return current;
+        }
+
+        return [...current, createdMessage];
+      });
+
+      await loadConversations(activeConversationId);
       setDraftMessage('');
     } finally {
       setBusyKey('');

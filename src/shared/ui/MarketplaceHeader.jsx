@@ -8,8 +8,8 @@ import { clearAuthenticatedUser, hasAuthenticatedSession } from '../lib/storage/
 import BrandLogo from './BrandLogo.jsx';
 import LanguageSwitcher from './LanguageSwitcher.jsx';
 
-const MENU_BREAKPOINT = 1120;
-const COMPACT_BREAKPOINT = 820;
+const MENU_BREAKPOINT = 1360;
+const COMPACT_BREAKPOINT = 900;
 
 function resolveLinkNavigation(event, link, navigate, closeMenu) {
   if (link.route) {
@@ -219,7 +219,7 @@ export default function MarketplaceHeader({
   };
 
   const headerClassName = isScrolled ? 'detailHeader detailHeaderShared scrolled' : 'detailHeader detailHeaderShared';
-  const rowClassName = `wrap detailHeaderRow${isSearchOpen ? ' searchOpen' : ''}${isCompactLayout ? ' compact' : ''}${
+  const rowClassName = `detailHeaderFrame detailHeaderRow${isSearchOpen ? ' searchOpen' : ''}${isCompactLayout ? ' compact' : ''}${
     isMenuLayout ? ' menuLayout' : ''
   }`;
   const panelClassName = `${isOpen ? 'detailHeaderPanel open' : 'detailHeaderPanel'}${isSearchOpen ? ' searchHidden' : ''}${

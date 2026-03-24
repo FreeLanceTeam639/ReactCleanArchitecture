@@ -19,5 +19,6 @@ export const AUTHENTICATED_NAVIGATION_LINKS = [
 
 export const PROFILE_NAVIGATION_LINKS = [
   ...AUTHENTICATED_NAVIGATION_LINKS,
+  { label: 'Verification', route: ROUTES.verification },
   { label: 'Security', route: ROUTES.security }
 ];

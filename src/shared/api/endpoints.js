@@ -37,6 +37,10 @@ export const API_ENDPOINTS = {
     notifications: withDefault(import.meta.env.VITE_PROFILE_NOTIFICATIONS_ENDPOINT, '/profile/notifications'),
     messages: withDefault(import.meta.env.VITE_PROFILE_MESSAGES_ENDPOINT, '/profile/messages')
   },
+  verification: {
+    me: withDefault(import.meta.env.VITE_VERIFICATION_ME_ENDPOINT, '/verification/me'),
+    tickets: withDefault(import.meta.env.VITE_VERIFICATION_TICKETS_ENDPOINT, '/verification/tickets')
+  },
   workspace: {
     orders: withDefault(import.meta.env.VITE_WORKSPACE_ORDERS_ENDPOINT, '/workspace/orders'),
     messages: withDefault(import.meta.env.VITE_WORKSPACE_MESSAGES_ENDPOINT, '/workspace/messages'),
@@ -59,7 +63,8 @@ export const API_ENDPOINTS = {
     jobs: withDefault(import.meta.env.VITE_ADMIN_JOBS_ENDPOINT, '/admin/jobs'),
     categories: withDefault(import.meta.env.VITE_ADMIN_CATEGORIES_ENDPOINT, '/admin/categories'),
     talent: withDefault(import.meta.env.VITE_ADMIN_TALENT_ENDPOINT, '/admin/talent'),
-    pricing: withDefault(import.meta.env.VITE_ADMIN_PRICING_ENDPOINT, '/admin/pricing')
+    pricing: withDefault(import.meta.env.VITE_ADMIN_PRICING_ENDPOINT, '/admin/pricing'),
+    verificationTickets: withDefault(import.meta.env.VITE_ADMIN_VERIFICATION_TICKETS_ENDPOINT, '/admin/verification-tickets')
   }
 };
 
@@ -67,6 +72,7 @@ export const authEndpoints = API_ENDPOINTS.auth;
 export const homeEndpoints = API_ENDPOINTS.home;
 export const taskDetailEndpoints = API_ENDPOINTS.taskDetail;
 export const adminEndpoints = API_ENDPOINTS.admin;
+export const verificationEndpoints = API_ENDPOINTS.verification;
 
 export function buildProfileListingStatusEndpoint(listingId) {
   return `${API_ENDPOINTS.profile.listings}/${listingId}/status`;
@@ -114,6 +120,10 @@ export function buildWorkspaceReviewFeatureEndpoint(reviewId) {
 
 export function buildWorkspaceSessionEndpoint(sessionId) {
   return `${API_ENDPOINTS.workspace.sessions}/${sessionId}`;
+}
+
+export function buildAdminVerificationTicketEndpoint(ticketId) {
+  return `${API_ENDPOINTS.admin.verificationTickets}/${ticketId}`;
 }
 
 export function buildAdminResourceEndpoint(resourcePath, resourceId) {
