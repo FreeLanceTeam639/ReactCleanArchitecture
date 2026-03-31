@@ -4,6 +4,10 @@ function getCurrentPathname() {
   return window.location.pathname || '/';
 }
 
+function notifyPathnameChange() {
+  window.dispatchEvent(new PopStateEvent('popstate'));
+}
+
 export function usePathname() {
   const [pathname, setPathname] = useState(getCurrentPathname);
 
@@ -17,13 +21,19 @@ export function usePathname() {
     };
   }, []);
 
-  const navigate = (nextPathname) => {
+  const navigate = (nextPathname, options = {}) => {
     if (nextPathname === pathname) {
       return;
     }
 
-    window.history.pushState({}, '', nextPathname);
+    if (options.replace) {
+      window.history.replaceState({}, '', nextPathname);
+    } else {
+      window.history.pushState({}, '', nextPathname);
+    }
+
     setPathname(nextPathname);
+    notifyPathnameChange();
   };
 
   return [pathname, navigate];

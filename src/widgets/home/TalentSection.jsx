@@ -1,4 +1,5 @@
 import { Search } from 'lucide-react';
+import { useI18n } from '../../shared/i18n/I18nProvider.jsx';
 import FreelancerProfileCard from '../../shared/ui/FreelancerProfileCard.jsx';
 
 const BUDGET_FILTERS = [
@@ -35,6 +36,7 @@ export default function TalentSection({
   hasMoreTalents,
   onLoadMore
 }) {
+  const { t } = useI18n();
   const safeTabs = Array.isArray(tabs) ? tabs : [];
   const safeTalents = Array.isArray(talents) ? talents : [];
 
@@ -42,13 +44,13 @@ export default function TalentSection({
     <section className="section wrap" id="talents">
       <div className="sectionHead splitHead talentHead">
         <div>
-          <span className="eyebrow">Top talents</span>
-          <h2>Meet the professionals ready for your next project</h2>
-          <p className="lead">Filter by category, rate and relevance to narrow down your shortlist faster.</p>
+          <span className="eyebrow">{t('Top members')}</span>
+          <h2>{t('Meet verified specialists ready for your next project')}</h2>
+          <p className="lead">{t('Filter by category, rate and relevance to narrow down your shortlist faster.')}</p>
         </div>
         <div className="talentCounterCard cardLift">
-          <span>Profiles matched</span>
-          <strong>{isLoading ? 'Loading...' : `${filteredTalentCount} talents`}</strong>
+          <span>{t('Profiles matched')}</span>
+          <strong>{isLoading ? t('Loading...') : `${filteredTalentCount} ${t('profiles')}`}</strong>
         </div>
       </div>
 
@@ -71,8 +73,8 @@ export default function TalentSection({
           <input
             value={searchQuery}
             onChange={(event) => onSearchChange(event.target.value)}
-            placeholder="Filter by title, skill or location"
-            aria-label="Filter talent"
+            placeholder={t('Filter by title, skill or location')}
+            aria-label={t('Filter members')}
           />
         </div>
 
@@ -89,7 +91,7 @@ export default function TalentSection({
         </select>
 
         <button type="button" className="btn soft interactive talentResetButton" onClick={onResetFilters}>
-          Reset
+          {t('Reset')}
         </button>
       </div>
 
@@ -107,20 +109,20 @@ export default function TalentSection({
         </div>
       ) : (
         <div className="talentEmptyState cardLift">
-          <strong>No matching talent found</strong>
-          <p>Adjust the category, search or budget filter to widen the shortlist.</p>
-          <button type="button" className="btn primary interactive" onClick={onResetFilters}>Clear filters</button>
+          <strong>{t('No matching profile found')}</strong>
+          <p>{t('Adjust the category, search or budget filter to widen the shortlist.')}</p>
+          <button type="button" className="btn primary interactive" onClick={onResetFilters}>{t('Clear filters')}</button>
         </div>
       )}
 
       <div className="center">
         {hasMoreTalents ? (
           <button type="button" className="btn soft interactive" onClick={onLoadMore}>
-            Load more talents
+            {t('Load more profiles')}
           </button>
         ) : (
           <a href="#cta" className="btn soft interactive">
-            Start a project brief
+            {t('Start a project brief')}
           </a>
         )}
       </div>

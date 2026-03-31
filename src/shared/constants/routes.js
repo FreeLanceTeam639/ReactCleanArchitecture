@@ -3,12 +3,14 @@ export const ROUTES = {
   login: '/login',
   forgotPassword: '/forgot-password',
   register: '/register',
+  exploreMembers: '/talents',
   profile: '/profile',
   verification: '/verification',
   orders: '/orders',
   messages: '/messages',
   notifications: '/notifications',
   postTask: '/post-task',
+  billing: '/billing',
   wallet: '/wallet',
   reviews: '/reviews',
   security: '/security',
@@ -19,7 +21,8 @@ export const ROUTES = {
   adminCategories: '/admin/categories',
   adminTalent: '/admin/talent',
   adminPricing: '/admin/pricing',
-  adminVerification: '/admin/verification'
+  adminVerification: '/admin/verification',
+  adminAuditLogs: '/admin/audit-logs'
 };
 
 export function buildTaskDetailRoute(slug = '') {

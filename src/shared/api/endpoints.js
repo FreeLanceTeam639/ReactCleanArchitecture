@@ -1,6 +1,59 @@
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5270/api';
+function normalizeApiBaseUrl(value) {
+  const trimmedValue = String(value || '').trim();
 
-const withDefault = (envValue, fallback) => envValue || fallback;
+  if (!trimmedValue) {
+    return 'http://localhost:5270/api';
+  }
+
+  const withoutTrailingSlash = trimmedValue.replace(/\/+$/, '');
+
+  if (withoutTrailingSlash.toLowerCase().endsWith('/api')) {
+    return withoutTrailingSlash;
+  }
+
+  return `${withoutTrailingSlash}/api`;
+}
+
+export const API_BASE_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL);
+
+function normalizeEndpointPath(value) {
+  const trimmedValue = String(value || '').trim();
+
+  if (!trimmedValue) {
+    return '';
+  }
+
+  let normalizedValue = trimmedValue;
+
+  if (/^https?:\/\//i.test(normalizedValue)) {
+    try {
+      const parsedUrl = new URL(normalizedValue);
+      normalizedValue = `${parsedUrl.pathname}${parsedUrl.search}`;
+    } catch {
+      normalizedValue = trimmedValue;
+    }
+  }
+
+  const queryIndex = normalizedValue.indexOf('?');
+  const pathPart = queryIndex >= 0 ? normalizedValue.slice(0, queryIndex) : normalizedValue;
+  const queryPart = queryIndex >= 0 ? normalizedValue.slice(queryIndex) : '';
+
+  let normalizedPathPart = pathPart.replace(/\/+$/, '');
+
+  if (!normalizedPathPart.startsWith('/')) {
+    normalizedPathPart = `/${normalizedPathPart}`;
+  }
+
+  normalizedPathPart = normalizedPathPart.replace(/^\/api(?=\/|$)/i, '');
+
+  if (!normalizedPathPart.startsWith('/')) {
+    normalizedPathPart = `/${normalizedPathPart}`;
+  }
+
+  return `${normalizedPathPart || '/'}${queryPart}`;
+}
+
+const withDefault = (envValue, fallback) => normalizeEndpointPath(envValue || fallback);
 
 export const API_ENDPOINTS = {
   auth: {
@@ -16,11 +69,13 @@ export const API_ENDPOINTS = {
     popularCategories: withDefault(import.meta.env.VITE_HOME_POPULAR_CATEGORIES_ENDPOINT, '/categories/popular'),
     categoryOverview: withDefault(import.meta.env.VITE_HOME_CATEGORY_OVERVIEW_ENDPOINT, '/categories/overview'),
     featuredTestimonials: withDefault(import.meta.env.VITE_HOME_TESTIMONIALS_ENDPOINT, '/testimonials/featured'),
+    liveJobs: withDefault(import.meta.env.VITE_HOME_LIVE_JOBS_ENDPOINT, '/jobs/live'),
     featuredFreelancerCategories: withDefault(
       import.meta.env.VITE_HOME_FREELANCER_CATEGORIES_ENDPOINT,
       '/freelancers/featured/categories'
     ),
     featuredFreelancers: withDefault(import.meta.env.VITE_HOME_FREELANCERS_ENDPOINT, '/freelancers/featured'),
+    exploreMembers: withDefault(import.meta.env.VITE_HOME_EXPLORE_MEMBERS_ENDPOINT, '/freelancers/explore'),
     featuredFreelancerSave: withDefault(import.meta.env.VITE_HOME_FREELANCER_SAVE_ENDPOINT, '/freelancers/featured/saved'),
     pricingPlans: withDefault(import.meta.env.VITE_HOME_PRICING_ENDPOINT, '/plans'),
     latestBlogs: withDefault(import.meta.env.VITE_HOME_BLOGS_ENDPOINT, '/blogs/latest')
@@ -47,6 +102,8 @@ export const API_ENDPOINTS = {
     notifications: withDefault(import.meta.env.VITE_WORKSPACE_NOTIFICATIONS_ENDPOINT, '/workspace/notifications'),
     postTaskMeta: withDefault(import.meta.env.VITE_WORKSPACE_TASK_META_ENDPOINT, '/workspace/tasks/meta'),
     postTask: withDefault(import.meta.env.VITE_WORKSPACE_TASK_CREATE_ENDPOINT, '/workspace/tasks'),
+    subscription: withDefault(import.meta.env.VITE_WORKSPACE_SUBSCRIPTION_ENDPOINT, '/workspace/subscription'),
+    subscriptionCheckout: withDefault(import.meta.env.VITE_WORKSPACE_SUBSCRIPTION_CHECKOUT_ENDPOINT, '/workspace/subscription/checkout'),
     walletSummary: withDefault(import.meta.env.VITE_WORKSPACE_WALLET_SUMMARY_ENDPOINT, '/workspace/wallet/summary'),
     transactions: withDefault(import.meta.env.VITE_WORKSPACE_TRANSACTIONS_ENDPOINT, '/workspace/wallet/transactions'),
     withdrawals: withDefault(import.meta.env.VITE_WORKSPACE_WITHDRAWALS_ENDPOINT, '/workspace/wallet/withdrawals'),
@@ -57,6 +114,9 @@ export const API_ENDPOINTS = {
   taskDetail: {
     detail: withDefault(import.meta.env.VITE_TASK_DETAIL_ENDPOINT, '/tasks')
   },
+  media: {
+    uploadImage: withDefault(import.meta.env.VITE_MEDIA_UPLOAD_ENDPOINT, '/media/upload-image')
+  },
   admin: {
     dashboardOverview: withDefault(import.meta.env.VITE_ADMIN_DASHBOARD_ENDPOINT, '/admin/dashboard/overview'),
     users: withDefault(import.meta.env.VITE_ADMIN_USERS_ENDPOINT, '/admin/users'),
@@ -64,7 +124,11 @@ export const API_ENDPOINTS = {
     categories: withDefault(import.meta.env.VITE_ADMIN_CATEGORIES_ENDPOINT, '/admin/categories'),
     talent: withDefault(import.meta.env.VITE_ADMIN_TALENT_ENDPOINT, '/admin/talent'),
     pricing: withDefault(import.meta.env.VITE_ADMIN_PRICING_ENDPOINT, '/admin/pricing'),
-    verificationTickets: withDefault(import.meta.env.VITE_ADMIN_VERIFICATION_TICKETS_ENDPOINT, '/admin/verification-tickets')
+    verificationTickets: withDefault(import.meta.env.VITE_ADMIN_VERIFICATION_TICKETS_ENDPOINT, '/admin/verification-tickets'),
+    auditLogs: withDefault(import.meta.env.VITE_ADMIN_AUDIT_LOGS_ENDPOINT, '/admin/audit-logs')
+  },
+  reference: {
+    countries: withDefault(import.meta.env.VITE_REFERENCE_COUNTRIES_ENDPOINT, '/reference/countries')
   }
 };
 
@@ -72,6 +136,7 @@ export const authEndpoints = API_ENDPOINTS.auth;
 export const homeEndpoints = API_ENDPOINTS.home;
 export const taskDetailEndpoints = API_ENDPOINTS.taskDetail;
 export const adminEndpoints = API_ENDPOINTS.admin;
+export const mediaEndpoints = API_ENDPOINTS.media;
 export const verificationEndpoints = API_ENDPOINTS.verification;
 
 export function buildProfileListingStatusEndpoint(listingId) {
@@ -100,6 +165,10 @@ export function buildFeaturedTalentSaveEndpoint(talentId) {
 
 export function buildTaskDetailEndpoint(slug) {
   return `${API_ENDPOINTS.taskDetail.detail}/${slug}`;
+}
+
+export function buildTaskConversationEndpoint(slug) {
+  return `${API_ENDPOINTS.taskDetail.detail}/${slug}/contact`;
 }
 
 export function buildWorkspaceConversationEndpoint(conversationId) {
@@ -138,6 +207,10 @@ export function buildAdminUserAvatarEndpoint(userId) {
   return `${API_ENDPOINTS.admin.users}/${userId}/avatar`;
 }
 
+export function buildAdminUserPasswordEndpoint(userId) {
+  return `${API_ENDPOINTS.admin.users}/${userId}/password`;
+}
+
 export function buildAdminJobStatusEndpoint(jobId) {
   return `${API_ENDPOINTS.admin.jobs}/${jobId}/status`;
 }
@@ -167,7 +240,7 @@ export function buildAdminCategoryStatusEndpoint(categoryId) {
 }
 
 export function buildAdminCategoryIconEndpoint(categoryId) {
-  return `${API_ENDPOINTS.admin.categories}/${categoryId}/icon`;
+  return `${API_ENDPOINTS.admin.categories}/${categoryId}`;
 }
 
 export function buildAdminFeaturedEndpoint(talentId) {

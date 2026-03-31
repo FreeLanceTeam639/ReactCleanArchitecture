@@ -7,11 +7,11 @@ const LANGUAGE_OPTIONS = [
 ];
 
 export default function LanguageSwitcher({ className = '' }) {
-  const { language, setLanguage } = useI18n();
+  const { language, setLanguage, t } = useI18n();
   const wrapperClassName = className ? `languageSwitcher ${className}` : 'languageSwitcher';
 
   return (
-    <div className={wrapperClassName} aria-label="Language switcher">
+    <div className={wrapperClassName} aria-label={t('Language switcher')} data-i18n-skip="true">
       {LANGUAGE_OPTIONS.map((item) => (
         <button
           key={item.value}

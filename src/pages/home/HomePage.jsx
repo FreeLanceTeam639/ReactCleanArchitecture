@@ -1,15 +1,12 @@
-import { useMemo } from 'react';
 import { useHomePageData } from '../../features/home/hooks/useHomePageData.js';
 import NoticeBanner from '../../shared/ui/NoticeBanner.jsx';
-import BlogSection from '../../widgets/home/BlogSection.jsx';
 import CtaSection from '../../widgets/home/CtaSection.jsx';
 import HomeFooter from '../../widgets/home/HomeFooter.jsx';
 import HomeHeader from '../../widgets/home/HomeHeader.jsx';
 import HeroSection from '../../widgets/home/HeroSection.jsx';
+import LiveJobsSection from '../../widgets/home/LiveJobsSection.jsx';
 import PricingSection from '../../widgets/home/PricingSection.jsx';
-import ServicesSection from '../../widgets/home/ServicesSection.jsx';
 import TalentSection from '../../widgets/home/TalentSection.jsx';
-import TestimonialSection from '../../widgets/home/TestimonialSection.jsx';
 
 export default function HomePage({ navigate }) {
   const {
@@ -35,21 +32,11 @@ export default function HomePage({ navigate }) {
     loadMoreTalents,
     resetTalentFilters,
     heroHighlights,
-    trustIndicators,
-    activeTestimonial,
-    activeTestimonialIndex,
-    setActiveTestimonialIndex,
-    goToNextTestimonial,
-    goToPreviousTestimonial
+    trustIndicators
   } = useHomePageData();
 
-  const selectedService = useMemo(
-    () => homeData.services.find((service) => service.title === activeTalentCategory) || homeData.services[0],
-    [activeTalentCategory, homeData.services]
-  );
-
   return (
-    <div>
+    <div className="homeShell">
       <HomeHeader navigate={navigate} />
       <HeroSection
         popularCategories={homeData.popular}
@@ -63,20 +50,7 @@ export default function HomePage({ navigate }) {
         isLoading={isInitialLoading}
       />
       <NoticeBanner message={notice} />
-      <ServicesSection
-        services={homeData.services}
-        selectedService={selectedService}
-        activeServiceTitle={activeTalentCategory}
-        onSelectService={(serviceTitle) => setActiveTalentCategory(serviceTitle)}
-      />
-      <TestimonialSection
-        testimonials={homeData.testimonials}
-        activeTestimonial={activeTestimonial}
-        activeIndex={activeTestimonialIndex}
-        onDotClick={setActiveTestimonialIndex}
-        onPrevious={goToPreviousTestimonial}
-        onNext={goToNextTestimonial}
-      />
+      <LiveJobsSection jobs={homeData.jobs} navigate={navigate} />
       <TalentSection
         tabs={homeData.tabs}
         activeTab={activeTalentCategory}
@@ -98,11 +72,11 @@ export default function HomePage({ navigate }) {
         onLoadMore={loadMoreTalents}
       />
       <PricingSection
+        navigate={navigate}
         billingPeriod={billingPeriod}
         onBillingChange={setBillingPeriod}
         plans={homeData.plans}
       />
-      <BlogSection blogs={homeData.blogs} />
       <CtaSection navigate={navigate} />
       <HomeFooter />
     </div>

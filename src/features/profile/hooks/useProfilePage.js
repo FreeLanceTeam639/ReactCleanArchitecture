@@ -1,6 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ROUTES } from '../../../shared/constants/routes.js';
-import { clearAuthenticatedUser, hasAuthenticatedSession } from '../../../shared/lib/storage/authStorage.js';
+import { useCountryDirectory } from '../../../shared/hooks/useCountryDirectory.js';
+import {
+  detectCountryByPhoneValue,
+  findCountryByName,
+  syncPhoneNumberToCountry
+} from '../../../shared/lib/forms/countryPhone.js';
+import { useToast } from '../../../shared/hooks/useToast.js';
+import {
+  clearAuthenticatedUser,
+  hasAuthenticatedSession,
+  updateAuthenticatedSessionUser
+} from '../../../shared/lib/storage/authStorage.js';
 import {
   fetchCurrentUserProfile,
   fetchMessages,
@@ -49,18 +60,22 @@ function buildInitialState() {
 }
 
 export function useProfilePage(navigate) {
+  const toast = useToast();
+  const { countries, isLoading: isCountriesLoading, defaultCountry } = useCountryDirectory();
   const [activeTab, setActiveTab] = useState(PROFILE_TABS[0]);
   const [pageState, setPageState] = useState(buildInitialState);
   const [settingsForm, setSettingsForm] = useState({
-    fullName: '',
-    profession: '',
-    headline: '',
-    location: '',
+      fullName: '',
+      profession: '',
+      headline: '',
+      country: '',
+      phoneNumber: '',
     hourlyRate: '',
     availability: '',
     bio: '',
     skills: '',
-    avatarUrl: ''
+    avatarUrl: '',
+    bannerUrl: ''
   });
   const [isLoading, setIsLoading] = useState(true);
   const [pageError, setPageError] = useState('');
@@ -72,12 +87,14 @@ export function useProfilePage(navigate) {
       fullName: profile.fullName || '',
       profession: profile.profession || '',
       headline: profile.headline || '',
-      location: profile.location || '',
+      country: profile.country || profile.location || '',
+      phoneNumber: profile.phoneNumber || '',
       hourlyRate: profile.hourlyRate || '',
       availability: profile.availability || '',
       bio: profile.bio || '',
       skills: Array.isArray(profile.skills) ? profile.skills.join(', ') : '',
-      avatarUrl: profile.avatarUrl || ''
+      avatarUrl: profile.avatarUrl || '',
+      bannerUrl: profile.bannerUrl || ''
     });
   }, []);
 
@@ -123,11 +140,20 @@ export function useProfilePage(navigate) {
     const rejectedCount = results.filter((result) => result.status === 'rejected').length;
 
     if (rejectedCount > 1) {
-      setFeedback('Bəzi profile endpoint-ləri cavab vermədi. Yüklənən məlumatlar göstərilir.');
+      setFeedback('Some account panels are still syncing. Available information is shown below.');
     }
 
     setIsLoading(false);
   }, [applyProfileToForm, navigate]);
+
+  useEffect(() => {
+    if (!settingsForm.country && defaultCountry?.name) {
+      setSettingsForm((currentState) => ({
+        ...currentState,
+        country: defaultCountry.name
+      }));
+    }
+  }, [defaultCountry, settingsForm.country]);
 
   useEffect(() => {
     loadProfilePage().catch((error) => {
@@ -136,7 +162,7 @@ export function useProfilePage(navigate) {
         return;
       }
 
-      setPageError(error?.message || 'Profile məlumatları yüklənə bilmədi.');
+      setPageError(error?.message || 'Profile details could not be loaded.');
       setIsLoading(false);
     });
   }, [loadProfilePage, navigate]);
@@ -160,25 +186,72 @@ export function useProfilePage(navigate) {
     }));
   };
 
+  const setSettingsCountryValue = (country) => {
+    setSettingsForm((currentState) => ({
+      ...currentState,
+      country,
+      phoneNumber: syncPhoneNumberToCountry(
+        currentState.phoneNumber,
+        currentState.country,
+        country,
+        countries
+      )
+    }));
+  };
+
   const submitSettings = async (event) => {
     event.preventDefault();
     setBusyKey('settings');
     setFeedback('');
 
+    const resolvedCountry =
+      findCountryByName(countries, settingsForm.country) ||
+      detectCountryByPhoneValue(countries, settingsForm.phoneNumber) ||
+      defaultCountry ||
+      null;
+
+    const normalizedCountry = resolvedCountry?.name || '';
+    const normalizedPhoneNumber = settingsForm.phoneNumber
+      ? syncPhoneNumberToCountry(
+          settingsForm.phoneNumber,
+          settingsForm.country,
+          normalizedCountry,
+          countries
+        )
+      : '';
+
+    if (settingsForm.phoneNumber && !normalizedCountry) {
+      const nextMessage = 'Telefon nomresi ucun duzgun olke secilmeyib.';
+      setFeedback(nextMessage);
+      setBusyKey('');
+      toast.error({
+        title: 'Profil yenilenmedi',
+        message: nextMessage
+      });
+      return;
+    }
+
     try {
+      const normalizedSkills = settingsForm.skills
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .slice(0, 20)
+        .map((item) => item.slice(0, 50));
+
       const updatedProfile = await updateCurrentUserProfile({
-        fullName: settingsForm.fullName,
-        profession: settingsForm.profession,
-        headline: settingsForm.headline,
-        location: settingsForm.location,
-        hourlyRate: settingsForm.hourlyRate,
-        availability: settingsForm.availability,
-        bio: settingsForm.bio,
-        skills: settingsForm.skills
-          .split(',')
-          .map((item) => item.trim())
-          .filter(Boolean),
-        avatarUrl: settingsForm.avatarUrl
+        fullName: settingsForm.fullName.trim(),
+        profession: settingsForm.profession.trim(),
+        headline: settingsForm.headline.trim(),
+        country: normalizedCountry,
+        location: normalizedCountry,
+        phoneNumber: normalizedPhoneNumber,
+        hourlyRate: settingsForm.hourlyRate.trim(),
+        availability: settingsForm.availability.trim(),
+        bio: settingsForm.bio.trim(),
+        skills: normalizedSkills,
+        avatarUrl: settingsForm.avatarUrl,
+        bannerUrl: settingsForm.bannerUrl
       });
 
       setPageState((currentState) => ({
@@ -189,7 +262,9 @@ export function useProfilePage(navigate) {
           fullName: updatedProfile.fullName || currentState.profile?.fullName || settingsForm.fullName,
           profession: updatedProfile.profession || currentState.profile?.profession || settingsForm.profession,
           headline: updatedProfile.headline || currentState.profile?.headline || settingsForm.headline,
-          location: updatedProfile.location || currentState.profile?.location || settingsForm.location,
+          country: updatedProfile.country || currentState.profile?.country || settingsForm.country,
+          location: updatedProfile.location || updatedProfile.country || currentState.profile?.location || settingsForm.country,
+          phoneNumber: updatedProfile.phoneNumber || currentState.profile?.phoneNumber || settingsForm.phoneNumber,
           hourlyRate: updatedProfile.hourlyRate || currentState.profile?.hourlyRate || settingsForm.hourlyRate,
           availability: updatedProfile.availability || currentState.profile?.availability || settingsForm.availability,
           bio: updatedProfile.bio || currentState.profile?.bio || settingsForm.bio,
@@ -197,7 +272,8 @@ export function useProfilePage(navigate) {
             .split(',')
             .map((item) => item.trim())
             .filter(Boolean),
-          avatarUrl: updatedProfile.avatarUrl || currentState.profile?.avatarUrl || settingsForm.avatarUrl
+          avatarUrl: updatedProfile.avatarUrl || currentState.profile?.avatarUrl || settingsForm.avatarUrl,
+          bannerUrl: updatedProfile.bannerUrl || currentState.profile?.bannerUrl || settingsForm.bannerUrl
         }
       }));
       applyProfileToForm({
@@ -206,7 +282,9 @@ export function useProfilePage(navigate) {
         fullName: updatedProfile.fullName || pageState.profile?.fullName || settingsForm.fullName,
         profession: updatedProfile.profession || pageState.profile?.profession || settingsForm.profession,
         headline: updatedProfile.headline || pageState.profile?.headline || settingsForm.headline,
-        location: updatedProfile.location || pageState.profile?.location || settingsForm.location,
+        country: updatedProfile.country || pageState.profile?.country || settingsForm.country,
+        location: updatedProfile.location || updatedProfile.country || pageState.profile?.location || settingsForm.country,
+        phoneNumber: updatedProfile.phoneNumber || pageState.profile?.phoneNumber || settingsForm.phoneNumber,
         hourlyRate: updatedProfile.hourlyRate || pageState.profile?.hourlyRate || settingsForm.hourlyRate,
         availability: updatedProfile.availability || pageState.profile?.availability || settingsForm.availability,
         bio: updatedProfile.bio || pageState.profile?.bio || settingsForm.bio,
@@ -214,11 +292,27 @@ export function useProfilePage(navigate) {
           .split(',')
           .map((item) => item.trim())
           .filter(Boolean),
-        avatarUrl: updatedProfile.avatarUrl || pageState.profile?.avatarUrl || settingsForm.avatarUrl
+        avatarUrl: updatedProfile.avatarUrl || pageState.profile?.avatarUrl || settingsForm.avatarUrl,
+        bannerUrl: updatedProfile.bannerUrl || pageState.profile?.bannerUrl || settingsForm.bannerUrl
       });
-      setFeedback('Profile məlumatları backend üzərindən yeniləndi.');
+      updateAuthenticatedSessionUser({
+        firstName: updatedProfile.firstName || settingsForm.fullName?.split(' ')[0] || '',
+        fullName: updatedProfile.fullName || settingsForm.fullName,
+        avatarUrl: updatedProfile.avatarUrl || settingsForm.avatarUrl,
+        country: updatedProfile.country || settingsForm.country
+      });
+      setFeedback('Profil melumatlari yadda saxlanildi.');
+      toast.success({
+        title: 'Profil yenilendi',
+        message: 'Deyisiklikleriniz ugurla yadda saxlandi.'
+      });
     } catch (error) {
-      setFeedback(error?.message || 'Profile yenilənmədi.');
+      const nextMessage = error?.message || 'Profil yenilenmedi.';
+      setFeedback(nextMessage);
+      toast.error({
+        title: 'Profil yenilenmedi',
+        message: nextMessage
+      });
     } finally {
       setBusyKey('');
     }
@@ -253,8 +347,17 @@ export function useProfilePage(navigate) {
             : item
         ))
       }));
+      toast.success({
+        title: 'Elan statusu yenilendi',
+        message: `Elaniniz ${nextStatus === 'active' ? 'aktiv' : 'dayandirildi'} veziyyete kecdi.`
+      });
     } catch (error) {
-      setFeedback(error?.message || 'Listing status yenilənmədi.');
+      const nextMessage = error?.message || 'Elan statusunu yenilemek mumkun olmadi.';
+      setFeedback(nextMessage);
+      toast.error({
+        title: 'Elan statusu yenilenmedi',
+        message: nextMessage
+      });
     } finally {
       setBusyKey('');
     }
@@ -289,8 +392,17 @@ export function useProfilePage(navigate) {
             : item
         ))
       }));
+      toast.success({
+        title: 'Proposal yenilendi',
+        message: `Proposal statusu ${nextStatus} olaraq yenilendi.`
+      });
     } catch (error) {
-      setFeedback(error?.message || 'Proposal status yenilənmədi.');
+      const nextMessage = error?.message || 'Proposal statusunu yenilemek mumkun olmadi.';
+      setFeedback(nextMessage);
+      toast.error({
+        title: 'Proposal yenilenmedi',
+        message: nextMessage
+      });
     } finally {
       setBusyKey('');
     }
@@ -312,8 +424,17 @@ export function useProfilePage(navigate) {
             }
           : currentState.summary
       }));
+      toast.info({
+        title: 'Yadda saxlanan elan silindi',
+        message: 'Secdiyiniz qeyd yadda saxlananlar bolmesinden cixarildi.'
+      });
     } catch (error) {
-      setFeedback(error?.message || 'Saved item silinmədi.');
+      const nextMessage = error?.message || 'Yadda saxlanan qeydi silmek mumkun olmadi.';
+      setFeedback(nextMessage);
+      toast.error({
+        title: 'Qeyd silinmedi',
+        message: nextMessage
+      });
     } finally {
       setBusyKey('');
     }
@@ -350,7 +471,12 @@ export function useProfilePage(navigate) {
           : currentState.summary
       }));
     } catch (error) {
-      setFeedback(error?.message || 'Message status yenilənmədi.');
+      const nextMessage = error?.message || 'Mesaj statusunu yenilemek mumkun olmadi.';
+      setFeedback(nextMessage);
+      toast.error({
+        title: 'Mesaj yenilenmedi',
+        message: nextMessage
+      });
     } finally {
       setBusyKey('');
     }
@@ -378,7 +504,12 @@ export function useProfilePage(navigate) {
         ))
       }));
     } catch (error) {
-      setFeedback(error?.message || 'Notification status yenilənmədi.');
+      const nextMessage = error?.message || 'Bildiris statusunu yenilemek mumkun olmadi.';
+      setFeedback(nextMessage);
+      toast.error({
+        title: 'Bildiris yenilenmedi',
+        message: nextMessage
+      });
     } finally {
       setBusyKey('');
     }
@@ -398,11 +529,14 @@ export function useProfilePage(navigate) {
     messages: pageState.messages,
     stats,
     settingsForm,
+    countries,
+    isCountriesLoading,
     isLoading,
     pageError,
     feedback,
     busyKey,
     setSettingsFieldValue,
+    setSettingsCountryValue,
     submitSettings,
     toggleListingStatus,
     cycleProposalStatus,

@@ -1,11 +1,8 @@
 import { homeEndpoints, buildFeaturedTalentSaveEndpoint } from '../../../shared/api/endpoints.js';
 import { httpClient } from '../../../shared/api/httpClient.js';
+import { resolveApiAssetUrl } from '../../../shared/api/mediaAssets.js';
 import { extractCollection } from '../../../shared/lib/response/extractCollection.js';
 import { extractEntity } from '../../../shared/lib/response/extractEntity.js';
-import { fallbackHomeContent } from '../data/fallbackHomeContent.js';
-import { getHomeCategoryTabs, getHomePricingPlans, getHomeTalentCollection, getAdminSnapshot } from '../../admin/services/adminService.js';
-
-const demoSavedTalentIds = new Set(['talent-2']);
 
 function mapCategoryLabel(item) {
   if (typeof item === 'string') {
@@ -27,6 +24,8 @@ function normalizeTalent(item = {}) {
   return {
     ...item,
     id: item.id || item._id || `${item.name || 'talent'}-${item.title || ''}`,
+    avatar: resolveApiAssetUrl(item.avatar || item.avatarUrl || item.imageUrl || ''),
+    banner: resolveApiAssetUrl(item.banner || item.coverImageUrl || ''),
     hourlyRate: Number(item.hourlyRate ?? item.price ?? item.rate ?? 0),
     reviews: Number(item.reviews ?? item.reviewCount ?? 0),
     rating: Number(item.rating ?? item.averageRating ?? 0),
@@ -34,91 +33,24 @@ function normalizeTalent(item = {}) {
   };
 }
 
-function getBudgetRange(budget) {
-  if (!budget || budget === 'all') {
-    return null;
-  }
-
-  if (budget === 'under-50') {
-    return { max: 49.99 };
-  }
-
-  if (budget === '50-80') {
-    return { min: 50, max: 80 };
-  }
-
-  if (budget === '80-plus') {
-    return { min: 80.01 };
-  }
-
-  return null;
-}
-
-function applyFallbackTalentQuery({
-  category,
-  search,
-  budget,
-  sort = 'rating',
-  page = 1,
-  limit = 6
-} = {}) {
-  const normalizedSearch = String(search || '').trim().toLowerCase();
-  const budgetRange = getBudgetRange(budget);
-  let talents = fallbackHomeContent.talents.map((item) => ({
-    ...item,
-    isSaved: demoSavedTalentIds.has(item.id)
-  }));
-
-  if (category && category !== 'All') {
-    talents = talents.filter((talent) => talent.category === category);
-  }
-
-  if (normalizedSearch) {
-    talents = talents.filter((talent) => [
-      talent.name,
-      talent.title,
-      talent.category,
-      talent.location,
-      ...(talent.tools || [])
-    ]
-      .join(' ')
-      .toLowerCase()
-      .includes(normalizedSearch));
-  }
-
-  if (budgetRange) {
-    talents = talents.filter((talent) => {
-      const rate = Number(talent.hourlyRate || 0);
-      if (budgetRange.min !== undefined && rate < budgetRange.min) {
-        return false;
-      }
-      if (budgetRange.max !== undefined && rate > budgetRange.max) {
-        return false;
-      }
-      return true;
-    });
-  }
-
-  const sorters = {
-    rating: (left, right) => Number(right.rating || 0) - Number(left.rating || 0),
-    reviews: (left, right) => Number(right.reviews || 0) - Number(left.reviews || 0),
-    'price-low': (left, right) => Number(left.hourlyRate || 0) - Number(right.hourlyRate || 0),
-    'price-high': (left, right) => Number(right.hourlyRate || 0) - Number(left.hourlyRate || 0)
-  };
-
-  talents = [...talents].sort(sorters[sort] || sorters.rating);
-
-  const safePage = Math.max(1, Number(page || 1));
-  const safeLimit = Math.max(1, Number(limit || 6));
-  const startIndex = (safePage - 1) * safeLimit;
-  const items = talents.slice(startIndex, startIndex + safeLimit);
-
+function normalizeLiveJob(item = {}) {
   return {
-    items,
-    total: talents.length,
-    page: safePage,
-    limit: safeLimit,
-    hasMore: startIndex + safeLimit < talents.length
+    id: item.id || item._id || `${item.title || 'job'}-${item.postedAt || ''}`,
+    slug: item.slug || '',
+    title: item.title || 'Open role',
+    category: item.category || 'General',
+    budget: item.budget || '$0',
+    budgetType: item.budgetType || 'Fixed Price',
+    timeline: item.timeline || 'Flexible timeline',
+    summary: item.summary || '',
+    postedAt: item.postedAt || '',
+    coverImageUrl: resolveApiAssetUrl(item.coverImageUrl || item.cover || item.imageUrl || ''),
+    ownerName: item.ownerName || item.clientName || 'Platform member',
+    ownerLocation: item.ownerLocation || item.location || 'Remote',
+    ownerAvatarUrl: resolveApiAssetUrl(item.ownerAvatarUrl || item.avatarUrl || item.avatar || ''),
+    ownerVerified: Boolean(item.ownerVerified || item.isVerified),
+    ownerRating: Number(item.ownerRating ?? item.rating ?? 0) || 0,
+    ownerReviewCount: Number(item.ownerReviewCount ?? item.reviewCount ?? item.reviews ?? 0) || 0
   };
 }
 
@@ -139,137 +71,48 @@ function normalizeTalentResponse(payload, params = {}) {
 }
 
 export async function fetchPopularCategories() {
-  try {
-    return extractCollection(await httpClient.get(homeEndpoints.popularCategories));
-  } catch {
-    const adminCategories = getAdminSnapshot().categories.filter((item) => item.status === 'active').map((item) => item.name);
-    return adminCategories.length ? adminCategories.slice(0, 3) : fallbackHomeContent.popular;
-  }
+  return extractCollection(await httpClient.get(homeEndpoints.popularCategories)).map(mapCategoryLabel);
 }
 
 export async function fetchServiceOverview() {
-  try {
-    return extractCollection(await httpClient.get(homeEndpoints.categoryOverview));
-  } catch {
-    return fallbackHomeContent.services;
-  }
+  return extractCollection(await httpClient.get(homeEndpoints.categoryOverview));
 }
 
 export async function fetchFeaturedTestimonials() {
-  try {
-    return extractCollection(await httpClient.get(homeEndpoints.featuredTestimonials));
-  } catch {
-    return fallbackHomeContent.testimonials;
-  }
+  return extractCollection(await httpClient.get(homeEndpoints.featuredTestimonials));
+}
+
+export async function fetchLiveJobs(params = {}) {
+  const query = { limit: params.limit ?? 4 };
+  return extractCollection(await httpClient.get(homeEndpoints.liveJobs, { query })).map(normalizeLiveJob);
 }
 
 export async function fetchFeaturedFreelancerCategories() {
-  try {
-    const payload = await httpClient.get(homeEndpoints.featuredFreelancerCategories);
-    const categories = extractCollection(payload).map(mapCategoryLabel);
-    return categories.length ? categories : (getHomeCategoryTabs().length ? getHomeCategoryTabs() : fallbackHomeContent.tabs);
-  } catch {
-    const tabs = getHomeCategoryTabs();
-    return tabs.length ? tabs : fallbackHomeContent.tabs;
-  }
+  const payload = await httpClient.get(homeEndpoints.featuredFreelancerCategories);
+  return extractCollection(payload).map(mapCategoryLabel);
 }
 
 export async function fetchFeaturedFreelancers(params = {}) {
-  try {
-    const payload = await httpClient.get(homeEndpoints.featuredFreelancers, { query: params });
-    return normalizeTalentResponse(payload, params);
-  } catch {
-    const adminTalent = getHomeTalentCollection();
-    if (adminTalent.length) {
-      const mergedFallback = { ...fallbackHomeContent, talents: adminTalent };
-      const normalizedSearch = String(params.search || '').trim().toLowerCase();
-      const budgetRange = getBudgetRange(params.budget);
-      let talents = mergedFallback.talents.map((item) => ({ ...item, isSaved: demoSavedTalentIds.has(item.id) }));
-
-      if (params.category && params.category !== 'All') {
-        talents = talents.filter((talent) => talent.category === params.category);
-      }
-
-      if (normalizedSearch) {
-        talents = talents.filter((talent) => [
-          talent.name,
-          talent.title,
-          talent.category,
-          talent.location,
-          ...(talent.tools || [])
-        ].join(' ').toLowerCase().includes(normalizedSearch));
-      }
-
-      if (budgetRange) {
-        talents = talents.filter((talent) => {
-          const rate = Number(talent.hourlyRate || 0);
-          if (budgetRange.min !== undefined && rate < budgetRange.min) return false;
-          if (budgetRange.max !== undefined && rate > budgetRange.max) return false;
-          return true;
-        });
-      }
-
-      const sorters = {
-        rating: (left, right) => Number(right.rating || 0) - Number(left.rating || 0),
-        reviews: (left, right) => Number(right.reviews || 0) - Number(left.reviews || 0),
-        'price-low': (left, right) => Number(left.hourlyRate || 0) - Number(right.hourlyRate || 0),
-        'price-high': (left, right) => Number(right.hourlyRate || 0) - Number(left.hourlyRate || 0)
-      };
-
-      talents = [...talents].sort(sorters[params.sort] || sorters.rating);
-      const safePage = Math.max(1, Number(params.page || 1));
-      const safeLimit = Math.max(1, Number(params.limit || 6));
-      const startIndex = (safePage - 1) * safeLimit;
-      const items = talents.slice(startIndex, startIndex + safeLimit);
-
-      return {
-        items,
-        total: talents.length,
-        page: safePage,
-        limit: safeLimit,
-        hasMore: startIndex + safeLimit < talents.length
-      };
-    }
-
-    return applyFallbackTalentQuery(params);
-  }
+  const payload = await httpClient.get(homeEndpoints.featuredFreelancers, { query: params });
+  return normalizeTalentResponse(payload, params);
 }
 
 export async function toggleFeaturedTalentSavedStatus(talentId, isSaved) {
-  try {
-    const payload = await httpClient.patch(buildFeaturedTalentSaveEndpoint(talentId), { isSaved });
-    const entity = extractEntity(payload, ['item', 'data', 'result']) || {};
-    return {
-      id: entity.id || entity._id || talentId,
-      isSaved: entity.isSaved ?? isSaved
-    };
-  } catch {
-    if (isSaved) {
-      demoSavedTalentIds.add(talentId);
-    } else {
-      demoSavedTalentIds.delete(talentId);
-    }
+  const payload = await httpClient.patch(buildFeaturedTalentSaveEndpoint(talentId), { isSaved });
+  const entity = extractEntity(payload, ['item', 'data', 'result']) || {};
 
-    return { id: talentId, isSaved };
-  }
+  return {
+    id: entity.id || entity._id || talentId,
+    isSaved: entity.isSaved ?? isSaved
+  };
 }
 
 export async function fetchPricingPlans(params = {}) {
-  try {
-    const payload = await httpClient.get(homeEndpoints.pricingPlans, { query: params });
-    return extractCollection(payload).map(normalizePlan);
-  } catch {
-    const plans = getHomePricingPlans();
-    return (plans.length ? plans : fallbackHomeContent.plans).map(normalizePlan);
-  }
+  const payload = await httpClient.get(homeEndpoints.pricingPlans, { query: params });
+  return extractCollection(payload).map(normalizePlan);
 }
 
 export async function fetchLatestBlogs(params = {}) {
   const query = { limit: params.limit ?? 3 };
-
-  try {
-    return extractCollection(await httpClient.get(homeEndpoints.latestBlogs, { query }));
-  } catch {
-    return fallbackHomeContent.blogs.slice(0, query.limit);
-  }
+  return extractCollection(await httpClient.get(homeEndpoints.latestBlogs, { query }));
 }

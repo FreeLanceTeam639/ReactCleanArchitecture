@@ -1,5 +1,5 @@
 import { API_BASE_URL } from '../api/endpoints.js';
-import { getAccessToken, isDemoAuthenticatedSession } from '../lib/storage/authStorage.js';
+import { getAccessToken } from '../lib/storage/authStorage.js';
 
 function buildWorkspaceSocketUrl() {
   const configuredUrl = import.meta.env.VITE_WORKSPACE_SOCKET_URL;
@@ -15,7 +15,7 @@ function buildWorkspaceSocketUrl() {
 }
 
 export function createWorkspaceSocketSubscription(onEvent) {
-  if (typeof window === 'undefined' || typeof onEvent !== 'function' || isDemoAuthenticatedSession()) {
+  if (typeof window === 'undefined' || typeof onEvent !== 'function') {
     return () => {};
   }
 

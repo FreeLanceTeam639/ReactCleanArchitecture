@@ -1,7 +1,9 @@
-import { LoaderCircle, ShieldCheck, Sparkles, WandSparkles } from 'lucide-react';
+import { ArrowUpRight, LoaderCircle, ShieldCheck, Sparkles, WandSparkles } from 'lucide-react';
+import { resolveApiAssetUrl } from '../../shared/api/mediaAssets.js';
 import { AUTHENTICATED_NAVIGATION_LINKS } from '../../shared/constants/navigationLinks.js';
 import { ROUTES } from '../../shared/constants/routes.js';
 import MarketplaceHeader from '../../shared/ui/MarketplaceHeader.jsx';
+import WorkspaceTaskMediaField from '../../features/workspace/components/WorkspaceTaskMediaField.jsx';
 import { usePostTaskPage } from '../../features/workspace/hooks/usePostTaskPage.js';
 
 function VerificationStatusBadge({ status = 'Unverified' }) {
@@ -17,20 +19,65 @@ function VerificationStatusBadge({ status = 'Unverified' }) {
   return <span className={className}>{status}</span>;
 }
 
+function getPlanDurationLabel(planKey) {
+  const normalizedPlanKey = String(planKey || 'free').toLowerCase();
+
+  if (normalizedPlanKey === 'starter') {
+    return 'Starter paketinde eyni vaxtda 5 aktiv is elani saxlanilir ve 30 gunden bir yenilenir.';
+  }
+
+  if (normalizedPlanKey === 'growth') {
+    return 'Boyume paketinde limitsiz aktiv is elani var ve vaxt mehdudiyyeti yoxdur.';
+  }
+
+  return 'Pulsuz paketde yalniz 1 aktiv is elani paylasmaq olur ve her elan 15 gun aktiv qalir.';
+}
+
+function getUpgradeLabel(planKey) {
+  return String(planKey || 'free').toLowerCase() === 'starter'
+    ? 'Upgrade to Growth'
+    : 'Upgrade to Starter';
+}
+
+function getUsageLabel(subscriptionOverview) {
+  if (!subscriptionOverview) {
+    return '';
+  }
+
+  const activeJobs = Number(subscriptionOverview.activePublishedJobs || 0);
+
+  if (subscriptionOverview.isUnlimited) {
+    return `${activeJobs} aktiv elan / limitsiz`;
+  }
+
+  return `${activeJobs}/${subscriptionOverview.maxActivePublishedJobs || 0} aktiv elan`;
+}
+
 export default function PostTaskPage({ navigate }) {
   const {
     meta,
     verificationOverview,
+    subscriptionOverview,
     form,
     feedback,
     busyKey,
     isLoading,
     error,
+    canPublishNow,
     setFieldValue,
+    openUpgradeFlow,
     submit
   } = usePostTaskPage(navigate);
 
   const canPostJobs = Boolean(verificationOverview?.isVerified);
+  const usageLabel = getUsageLabel(subscriptionOverview);
+  const currentPlanName = subscriptionOverview?.currentPlanName || 'Pulsuz';
+  const remainingPostsLabel = subscriptionOverview?.isUnlimited
+    ? 'Limitsiz qalir'
+    : `${Number(subscriptionOverview?.remainingPublishedJobs || 0)} elan yeri qalib`;
+  const upgradeLabel = getUpgradeLabel(subscriptionOverview?.currentPlanKey);
+  const previewCoverImage = resolveApiAssetUrl(form.imageUrls?.[0] || '');
+  const galleryCount = Array.isArray(form.imageUrls) ? form.imageUrls.length : 0;
 
   return (
     <div className="profileShell">
@@ -48,7 +95,7 @@ export default function PostTaskPage({ navigate }) {
           <div>
             <span className="profileEyebrow">Member Workflow</span>
             <h1>Create Task / Post Job</h1>
-            <p>Every member can post jobs after verification. Once approved, this form publishes directly to the backend.</p>
+            <p>Every member can post jobs after verification. Once approved, this form publishes directly to the backend and the result appears in My Orders & Jobs.</p>
           </div>
           <div className="workspaceHighlightCard cardLift">
             <WandSparkles size={18} />
@@ -122,10 +169,57 @@ export default function PostTaskPage({ navigate }) {
         ) : (
           <section className="workspaceSplitLayout singleTop">
             <article className="workspacePanel cardLift">
+              {subscriptionOverview ? (
+                <div className="workspacePreviewCard workspaceSubscriptionCard">
+                  <div className="workspacePanelHeader smallGap">
+                    <div>
+                      <span className="profileEyebrow">Subscription access</span>
+                      <h2>Posting limitiniz</h2>
+                    </div>
+                    <Sparkles size={18} />
+                  </div>
+
+                  <div className="workspacePreviewGrid workspaceMiniMetrics">
+                    <div>
+                      <span>Cari paket</span>
+                      <strong>{currentPlanName}</strong>
+                    </div>
+                    <div>
+                      <span>Istifade</span>
+                      <strong>{usageLabel}</strong>
+                    </div>
+                    <div>
+                      <span>Qaliq limit</span>
+                      <strong>{remainingPostsLabel}</strong>
+                    </div>
+                    <div>
+                      <span>Status</span>
+                      <strong>
+                        <span className={canPublishNow ? 'workspaceBadge active' : 'workspaceBadge blocked'}>
+                          {canPublishNow ? 'Publishing open' : 'Limit reached'}
+                        </span>
+                      </strong>
+                    </div>
+                  </div>
+
+                  <p className="workspaceSubscriptionHint">{getPlanDurationLabel(subscriptionOverview.currentPlanKey)}</p>
+
+                  {!canPublishNow ? (
+                    <div className="workspaceSubscriptionActions">
+                      <span className="workspaceBadge blocked">Yeni elan ucun upgrade lazimdir</span>
+                      <button type="button" className="btn primary interactive workspaceButtonStretch" onClick={openUpgradeFlow}>
+                        {upgradeLabel}
+                        <ArrowUpRight size={16} />
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+
               <form className="workspaceForm" onSubmit={(event) => submit(event, 'publish')}>
                 <label className="profileField fullWidth">
                   <span>Task title</span>
-                  <input value={form.title} onChange={(event) => setFieldValue('title', event.target.value)} placeholder="Need a polished marketplace dashboard UI" />
+                  <input value={form.title} onChange={(event) => setFieldValue('title', event.target.value)} placeholder="Enter task title" />
                 </label>
 
                 <label className="profileField">
@@ -144,7 +238,7 @@ export default function PostTaskPage({ navigate }) {
 
                 <label className="profileField">
                   <span>Budget</span>
-                  <input value={form.budget} onChange={(event) => setFieldValue('budget', event.target.value)} placeholder="1200" />
+                  <input value={form.budget} onChange={(event) => setFieldValue('budget', event.target.value)} placeholder="Enter budget" />
                 </label>
 
                 <label className="profileField">
@@ -156,7 +250,7 @@ export default function PostTaskPage({ navigate }) {
 
                 <label className="profileField fullWidth">
                   <span>Required skills</span>
-                  <input value={form.skills} onChange={(event) => setFieldValue('skills', event.target.value)} placeholder="React, Tailwind, REST API" />
+                  <input value={form.skills} onChange={(event) => setFieldValue('skills', event.target.value)} placeholder="Enter required skills" />
                 </label>
 
                 <label className="profileField fullWidth">
@@ -164,13 +258,25 @@ export default function PostTaskPage({ navigate }) {
                   <textarea rows="7" value={form.description} onChange={(event) => setFieldValue('description', event.target.value)} placeholder="Describe deliverables, deadlines and communication expectations." />
                 </label>
 
+                <WorkspaceTaskMediaField
+                  label="Task visuals"
+                  value={form.imageUrls}
+                  onChange={(nextImages) => setFieldValue('imageUrls', nextImages)}
+                />
+
                 <div className="workspaceFormActions fullWidth">
                   <button type="button" className="btn ghost interactive" onClick={(event) => submit(event, 'draft')} disabled={busyKey === 'draft'}>
                     {busyKey === 'draft' ? 'Saving...' : 'Save draft'}
                   </button>
-                  <button type="submit" className="btn primary interactive" disabled={busyKey === 'publish'}>
-                    {busyKey === 'publish' ? 'Publishing...' : 'Publish task'}
-                  </button>
+                  {canPublishNow ? (
+                    <button type="submit" className="btn primary interactive" disabled={busyKey === 'publish'}>
+                      {busyKey === 'publish' ? 'Publishing...' : 'Publish task'}
+                    </button>
+                  ) : (
+                    <button type="button" className="btn primary interactive" onClick={openUpgradeFlow}>
+                      {upgradeLabel}
+                    </button>
+                  )}
                 </div>
               </form>
               {feedback ? <div className="profileFeedbackBanner">{feedback}</div> : null}
@@ -185,6 +291,17 @@ export default function PostTaskPage({ navigate }) {
                 <Sparkles size={18} />
               </div>
               <div className="workspacePreviewCard">
+                {previewCoverImage ? (
+                  <div className="workspaceTaskSnapshotMedia">
+                    <img src={previewCoverImage} alt="Task cover preview" className="workspaceTaskSnapshotImage" />
+                    <span className="workspaceTaskSnapshotBadge">Cover image</span>
+                  </div>
+                ) : (
+                  <div className="workspaceTaskSnapshotPlaceholder">
+                    <strong>Image gallery not added yet</strong>
+                    <p>Upload visuals and the first image will become the public cover on task cards and the detail page.</p>
+                  </div>
+                )}
                 <strong>{form.title || 'Task title preview'}</strong>
                 <p>{form.description || 'Your task description will appear here. Clear structure increases conversion.'}</p>
                 <div className="workspacePreviewGrid">
@@ -192,6 +309,7 @@ export default function PostTaskPage({ navigate }) {
                   <div><span>Budget</span><strong>{form.budgetType} • ${form.budget || 0}</strong></div>
                   <div><span>Timeline</span><strong>{form.duration}</strong></div>
                   <div><span>Skills</span><strong>{form.skills || '-'}</strong></div>
+                  <div><span>Gallery</span><strong>{galleryCount ? `${galleryCount} sekil` : 'Sekil yoxdur'}</strong></div>
                 </div>
                 <div className="profileSkillRow">
                   {meta.suggestedSkills.map((item) => (

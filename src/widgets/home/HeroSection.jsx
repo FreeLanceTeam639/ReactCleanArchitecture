@@ -1,5 +1,7 @@
 import { Search, Sparkles, TrendingUp } from 'lucide-react';
 import { ROUTES } from '../../shared/constants/routes.js';
+import { useAuthSessionState } from '../../shared/hooks/useAuthSessionState.js';
+import { useI18n } from '../../shared/i18n/I18nProvider.jsx';
 import { navigateWithScroll } from '../../shared/lib/navigation/navigateWithScroll.js';
 
 export default function HeroSection({
@@ -13,15 +15,22 @@ export default function HeroSection({
   onCategoryPick,
   isLoading
 }) {
+  const { t } = useI18n();
+  const authSession = useAuthSessionState();
+  const isAuthenticated = Boolean(authSession);
+  const secondaryAction = isAuthenticated
+    ? { label: t('Open profile'), route: ROUTES.profile }
+    : { label: t('Member sign in'), route: ROUTES.login };
+
   return (
     <section className="hero wrap" id="home">
       <div className="heroText fadeUp">
-        <p className="eyebrow">Premium freelance marketplace</p>
+        <p className="eyebrow">{t('Verified digital marketplace')}</p>
         <h1>
-          Build faster with <span>specialists</span> already matched to your goals.
+          {t('Build faster with')} <span>{t('specialists')}</span> {t('already matched to your goals.')}
         </h1>
         <p>
-          Search verified freelancers, compare portfolios and move from brief to delivery with a cleaner workflow.
+          {t('Search verified members, compare portfolios and move from brief to delivery with a cleaner workflow.')}
         </p>
 
         <div className="heroSearchShell cardLift">
@@ -30,8 +39,8 @@ export default function HeroSection({
             <input
               value={searchQuery}
               onChange={(event) => onSearchChange(event.target.value)}
-              placeholder="Search by skill, role or category"
-              aria-label="Search talent"
+              placeholder={t('Search by skill, focus or category')}
+              aria-label={t('Search members')}
             />
           </div>
           <button
@@ -42,7 +51,7 @@ export default function HeroSection({
               talentsSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }}
           >
-            Find matches
+            {t('Find matches')}
           </button>
         </div>
 
@@ -61,14 +70,14 @@ export default function HeroSection({
 
         <div className="row heroActionRow">
           <a href="#talents" className="btn primary interactive">
-            Explore talent
+            {t('Explore members')}
           </a>
           <a
-            href={ROUTES.login}
+            href={secondaryAction.route}
             className="btn soft interactive"
-            onClick={(event) => navigateWithScroll(event, ROUTES.login, navigate)}
+            onClick={(event) => navigateWithScroll(event, secondaryAction.route, navigate)}
           >
-            Client sign in
+            {secondaryAction.label}
           </a>
         </div>
 
@@ -76,7 +85,7 @@ export default function HeroSection({
           {trustIndicators.map((item) => (
             <span key={item} className="heroTrustItem">
               <Sparkles size={15} />
-              {item}
+              {t(item)}
             </span>
           ))}
         </div>
@@ -86,16 +95,16 @@ export default function HeroSection({
         <div className="heroDashboard cardLift displayFloat">
           <div className="heroDashboardTop">
             <div>
-              <span className="heroKicker">Live dashboard preview</span>
-              <h3>{activeTalentCategory === 'All' ? 'Top marketplace overview' : activeTalentCategory}</h3>
+              <span className="heroKicker">{t('Live dashboard preview')}</span>
+              <h3>{activeTalentCategory === 'All' ? t('Top marketplace overview') : activeTalentCategory}</h3>
             </div>
-            <span className="heroSignal">● Online</span>
+            <span className="heroSignal">o {t('Online')}</span>
           </div>
 
           <div className="heroDashboardGrid">
             {(heroHighlights || []).map((item) => (
               <article key={item.label} className="heroMetricCard">
-                <span>{item.label}</span>
+                <span>{t(item.label)}</span>
                 <strong>{isLoading ? '...' : item.value}</strong>
               </article>
             ))}
@@ -103,24 +112,24 @@ export default function HeroSection({
 
           <div className="heroSpotlight">
             <div>
-              <p className="heroSpotlightLabel">Talent pipeline</p>
-              <strong>Matched profiles in minutes</strong>
-              <span>Shortlist, compare rates and move directly into project scope.</span>
+              <p className="heroSpotlightLabel">{t('Member pipeline')}</p>
+              <strong>{t('Matched profiles in minutes')}</strong>
+              <span>{t('Shortlist, compare rates and move directly into project scope.')}</span>
             </div>
             <div className="heroSpotlightBadge">
               <TrendingUp size={18} />
-              24h avg. hire cycle
+              {t('Live activity')}
             </div>
           </div>
 
           <div className="heroMiniCards">
             <div className="heroMiniCard">
-              <span>Best for</span>
-              <strong>Design, AI, product builds</strong>
+              <span>{t('Categories')}</span>
+              <strong>{isLoading ? t('Loading categories...') : `${popularCategories.length || 0} ${t('categories online')}`}</strong>
             </div>
             <div className="heroMiniCard accent">
-              <span>Marketplace health</span>
-              <strong>980+ briefs this week</strong>
+              <span>{t('Live jobs')}</span>
+              <strong>{isLoading ? t('Loading job posts...') : `${heroHighlights[2]?.value || 0} ${t('job posts live')}`}</strong>
             </div>
           </div>
         </div>

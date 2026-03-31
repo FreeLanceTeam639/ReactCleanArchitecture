@@ -37,12 +37,12 @@ export default function AdminDashboardPage({ navigate, pathname = ROUTES.admin }
       {error ? <div className="adminNotice error">{error}</div> : null}
 
       <section className="adminStatsGrid sixCols">
-        <DashboardStatCard icon={Users} label="Total Users" value={overview.totals.users} hint="Platformada qeydiyyatdan keÃ§É™n hesablar" />
-        <DashboardStatCard icon={ShieldCheck} label="Verified Users" value={overview.totals.verifiedUsers} hint="Job post etmÉ™yÉ™ icazÉ™li hesablar" />
-        <DashboardStatCard icon={ShieldCheck} label="Verification Queue" value={overview.totals.pendingVerification} hint="HazÄ±rda review gÃ¶zlÉ™yÉ™n ticket-lÉ™r" />
-        <DashboardStatCard icon={BriefcaseBusiness} label="Job Posts" value={overview.totals.jobs} hint="Saytda gÃ¶rÃ¼nÉ™n vÉ™ ya idarÉ™ olunan elanlar" />
-        <DashboardStatCard icon={FolderKanban} label="Categories" value={overview.totals.activeCategories} hint="HazÄ±rda aktiv kateqoriya sayÄ±" />
-        <DashboardStatCard icon={ImageIcon} label="Media Items" value={overview.totals.mediaItems || 0} hint="Task vÉ™ listing ÅŸÉ™killÉ™ri" />
+        <DashboardStatCard icon={Users} label="Total Users" value={overview.totals.users} hint="Accounts registered on the platform" />
+        <DashboardStatCard icon={ShieldCheck} label="Verified Users" value={overview.totals.verifiedUsers} hint="Accounts allowed to post jobs" />
+        <DashboardStatCard icon={ShieldCheck} label="Verification Queue" value={overview.totals.pendingVerification} hint="Tickets waiting for review" />
+        <DashboardStatCard icon={BriefcaseBusiness} label="Job Posts" value={overview.totals.jobs} hint="Visible and managed job posts" />
+        <DashboardStatCard icon={FolderKanban} label="Categories" value={overview.totals.activeCategories} hint="Active category count" />
+        <DashboardStatCard icon={ImageIcon} label="Media Items" value={overview.totals.mediaItems || 0} hint="Task and listing images" />
       </section>
 
       <section className="adminTwoColumnGrid">
@@ -58,7 +58,7 @@ export default function AdminDashboardPage({ navigate, pathname = ROUTES.admin }
           {isLoading ? (
             <div className="adminEmptyState compact">
               <strong>Dashboard loading...</strong>
-              <p>Ä°darÉ™etmÉ™ gÃ¶stÉ™ricilÉ™ri yÃ¼klÉ™nir.</p>
+              <p>Admin metrics are loading.</p>
             </div>
           ) : overview.recentJobs.length ? (
             <div className="adminSimpleStack">
@@ -68,7 +68,7 @@ export default function AdminDashboardPage({ navigate, pathname = ROUTES.admin }
                     {job.coverImageUrl ? <img src={job.coverImageUrl} alt={job.title} className="adminListThumb" /> : <div className="adminListThumb placeholder">JOB</div>}
                     <div>
                       <strong>{job.title}</strong>
-                      <p>{job.categoryName} • {job.ownerName}</p>
+                      <p>{job.categoryName} - {job.ownerName}</p>
                     </div>
                   </div>
                   <div className="adminSimpleRowMeta">
@@ -81,7 +81,7 @@ export default function AdminDashboardPage({ navigate, pathname = ROUTES.admin }
           ) : (
             <div className="adminEmptyState compact">
               <strong>No recent jobs</strong>
-              <p>Æn son job activity burada gÃ¶rÃ¼nÉ™cÉ™k.</p>
+              <p>Latest job activity will appear here.</p>
             </div>
           )}
         </article>
@@ -98,7 +98,7 @@ export default function AdminDashboardPage({ navigate, pathname = ROUTES.admin }
           {isLoading ? (
             <div className="adminEmptyState compact">
               <strong>Users loading...</strong>
-              <p>Yeni qeydiyyatlar hazÄ±rlanÄ±r.</p>
+              <p>New registrations are loading.</p>
             </div>
           ) : overview.recentUsers.length ? (
             <div className="adminSimpleStack">
@@ -122,7 +122,7 @@ export default function AdminDashboardPage({ navigate, pathname = ROUTES.admin }
           ) : (
             <div className="adminEmptyState compact">
               <strong>No recent users</strong>
-              <p>Yeni hesablar burada gÃ¶rÃ¼nÉ™cÉ™k.</p>
+              <p>New accounts will appear here.</p>
             </div>
           )}
         </article>

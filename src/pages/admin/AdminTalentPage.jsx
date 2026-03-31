@@ -9,7 +9,6 @@ import AdminStatusBadge from '../../shared/ui/admin/AdminStatusBadge.jsx';
 import AdminToolbar from '../../shared/ui/admin/AdminToolbar.jsx';
 import AdminImageField from '../../shared/ui/admin/AdminImageField.jsx';
 import AdminActionIconButton from '../../shared/ui/admin/AdminActionIconButton.jsx';
-import { getAdminCategoryOptions } from '../../features/admin/services/adminService.js';
 
 function buildTalentFormState(item) {
   return {
@@ -37,6 +36,7 @@ export default function AdminTalentPage({ navigate, pathname = ROUTES.adminTalen
     setPage,
     items,
     meta,
+    categoryOptions,
     isLoading,
     error,
     feedback,
@@ -46,8 +46,6 @@ export default function AdminTalentPage({ navigate, pathname = ROUTES.adminTalen
     toggleTalentFeatured,
     deleteTalent
   } = useAdminTalentPage();
-
-  const categories = getAdminCategoryOptions();
   const [editingTalent, setEditingTalent] = useState(null);
   const [formState, setFormState] = useState(buildTalentFormState(null));
   const [featureTarget, setFeatureTarget] = useState(null);
@@ -93,17 +91,20 @@ export default function AdminTalentPage({ navigate, pathname = ROUTES.adminTalen
   };
 
   const handleSave = async () => {
-    const selectedCategory = categories.find((item) => item.id === formState.categoryId);
+    const selectedCategory = categoryOptions.find((item) => item.id === formState.categoryId);
     const payload = {
       ...formState,
       rating: Number(formState.rating),
       categoryName: selectedCategory?.name || ''
     };
 
-    if (editingTalent?.mode === 'create') {
-      await createTalent(payload);
-    } else {
-      await saveTalent(editingTalent.id, payload);
+    const savedTalent =
+      editingTalent?.mode === 'create'
+        ? await createTalent(payload)
+        : await saveTalent(editingTalent.id, payload);
+
+    if (!savedTalent) {
+      return;
     }
 
     setEditingTalent(null);
@@ -217,7 +218,7 @@ export default function AdminTalentPage({ navigate, pathname = ROUTES.adminTalen
                 <span>Category</span>
                 <select value={formState.categoryId} onChange={(event) => setFormState((current) => ({ ...current, categoryId: event.target.value }))}>
                   <option value="">Select category</option>
-                  {categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                  {categoryOptions.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
                 </select>
               </label>
               <label>
@@ -250,8 +251,11 @@ export default function AdminTalentPage({ navigate, pathname = ROUTES.adminTalen
           description={featureTarget.featured ? 'Talent artıq featured bölməsində görünməyəcək.' : 'Talent featured siyahısına əlavə olunacaq.'}
           confirmLabel={featureTarget.featured ? 'Remove' : 'Feature'}
           onConfirm={async () => {
-            await toggleTalentFeatured(featureTarget);
-            setFeatureTarget(null);
+            const updatedTalent = await toggleTalentFeatured(featureTarget);
+
+            if (updatedTalent) {
+              setFeatureTarget(null);
+            }
           }}
           onClose={() => setFeatureTarget(null)}
           tone={featureTarget.featured ? 'danger' : 'primary'}
@@ -264,8 +268,11 @@ export default function AdminTalentPage({ navigate, pathname = ROUTES.adminTalen
           description={`Talent status ${statusTarget.status === 'active' ? 'inactive' : 'active'} olacaq.`}
           confirmLabel={statusTarget.status === 'active' ? 'Deactivate' : 'Activate'}
           onConfirm={async () => {
-            await toggleTalentStatus(statusTarget);
-            setStatusTarget(null);
+            const updatedTalent = await toggleTalentStatus(statusTarget);
+
+            if (updatedTalent) {
+              setStatusTarget(null);
+            }
           }}
           onClose={() => setStatusTarget(null)}
           tone={statusTarget.status === 'active' ? 'danger' : 'primary'}
@@ -278,8 +285,11 @@ export default function AdminTalentPage({ navigate, pathname = ROUTES.adminTalen
           description="Freelancer kartı admin siyahısından silinəcək."
           confirmLabel="Delete"
           onConfirm={async () => {
-            await deleteTalent(deleteTarget.id);
-            setDeleteTarget(null);
+            const deletedTalent = await deleteTalent(deleteTarget.id);
+
+            if (deletedTalent) {
+              setDeleteTarget(null);
+            }
           }}
           onClose={() => setDeleteTarget(null)}
         />

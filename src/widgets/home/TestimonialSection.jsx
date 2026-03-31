@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useI18n } from '../../shared/i18n/I18nProvider.jsx';
 
 export default function TestimonialSection({
   testimonials,
@@ -8,6 +9,7 @@ export default function TestimonialSection({
   onPrevious,
   onNext
 }) {
+  const { t } = useI18n();
   return (
     <section className="section wrap testimonial cardLift">
       <div className="testImage">
@@ -17,14 +19,14 @@ export default function TestimonialSection({
       <div className="testContent">
         <div className="testimonialTopBar">
           <div>
-            <h2>We Love Our Client Feedback</h2>
+            <h2>{t('We Love Our Client Feedback')}</h2>
             <span className="role">{activeTestimonial?.metric}</span>
           </div>
           <div className="testimonialControls">
-            <button type="button" className="testimonialArrow interactive" onClick={onPrevious} aria-label="Previous testimonial">
+            <button type="button" className="testimonialArrow interactive" onClick={onPrevious} aria-label={t('Previous testimonial')}>
               <ChevronLeft size={18} />
             </button>
-            <button type="button" className="testimonialArrow interactive" onClick={onNext} aria-label="Next testimonial">
+            <button type="button" className="testimonialArrow interactive" onClick={onNext} aria-label={t('Next testimonial')}>
               <ChevronRight size={18} />
             </button>
           </div>
@@ -42,7 +44,7 @@ export default function TestimonialSection({
               type="button"
               className={index === activeIndex ? 'testimonialDot active interactive' : 'testimonialDot interactive'}
               onClick={() => onDotClick(index)}
-              aria-label={`Go to testimonial ${index + 1}`}
+              aria-label={t(`Go to testimonial ${index + 1}`)}
             />
           ))}
         </div>

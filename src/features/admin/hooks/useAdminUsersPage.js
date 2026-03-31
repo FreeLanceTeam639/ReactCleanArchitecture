@@ -1,5 +1,14 @@
 import { useEffect, useState } from 'react';
-import { deleteAdminUser, fetchAdminUserById, fetchAdminUsers, updateAdminUser, updateAdminUserStatus } from '../services/adminService.js';
+import {
+  deleteAdminUser,
+  fetchAdminUserById,
+  fetchAdminUsers,
+  updateAdminUser,
+  updateAdminUserPassword,
+  updateAdminUserStatus
+} from '../services/adminService.js';
+import { emitToastEvent } from '../../../shared/ui/toast/toastBus.js';
+import { runAdminMutation } from './adminMutation.js';
 
 export function useAdminUsersPage() {
   const [search, setSearch] = useState('');
@@ -22,6 +31,7 @@ export function useAdminUsersPage() {
 
       try {
         const response = await fetchAdminUsers({ search, role, status, verificationStatus, page, pageSize: 8 });
+
         if (!isCancelled) {
           setItems(response.items);
           setMeta(response.meta);
@@ -80,21 +90,54 @@ export function useAdminUsersPage() {
     setFeedback,
     refresh,
     getUserById: fetchAdminUserById,
-    saveUser: async (id, values) => {
-      await updateAdminUser(id, values);
-      setFeedback('User məlumatları yeniləndi.');
-      await refresh();
+    saveUser: async (id, values) => runAdminMutation({
+      action: () => updateAdminUser(id, values),
+      setError,
+      setFeedback,
+      successMessage: 'User məlumatları yeniləndi.',
+      errorMessage: 'User məlumatlarını yeniləmək mümkün olmadı.',
+      afterSuccess: refresh
+    }),
+    changeUserPassword: async (id, values) => {
+      try {
+        const response = await updateAdminUserPassword(id, values);
+        setFeedback('User sifresi yenilendi.');
+        emitToastEvent({
+          tone: 'success',
+          title: 'Sifre yenilendi',
+          message: 'Secdiyiniz user ucun yeni sifre yadda saxlandi.'
+        });
+        return response;
+      } catch (error) {
+        const nextMessage = error?.message || 'User sifresini yenilemek mumkun olmadi.';
+        setError(nextMessage);
+        emitToastEvent({
+          tone: 'error',
+          title: 'Sifre yenilenmedi',
+          message: nextMessage
+        });
+        return null;
+      }
     },
     toggleUserStatus: async (item) => {
       const nextStatus = item.status === 'blocked' ? 'active' : 'blocked';
-      await updateAdminUserStatus(item.id, nextStatus);
-      setFeedback(`User status ${nextStatus} edildi.`);
-      await refresh();
+
+      return runAdminMutation({
+        action: () => updateAdminUserStatus(item.id, nextStatus),
+        setError,
+        setFeedback,
+        successMessage: `User status ${nextStatus} edildi.`,
+        errorMessage: 'User statusunu dəyişdirmək mümkün olmadı.',
+        afterSuccess: refresh
+      });
     },
-    deleteUser: async (id) => {
-      await deleteAdminUser(id);
-      setFeedback('User silindi.');
-      await refresh();
-    }
+    deleteUser: async (id) => runAdminMutation({
+      action: () => deleteAdminUser(id),
+      setError,
+      setFeedback,
+      successMessage: 'User silindi.',
+      errorMessage: 'User silmək mümkün olmadı.',
+      afterSuccess: refresh
+    })
   };
 }

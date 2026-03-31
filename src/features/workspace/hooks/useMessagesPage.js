@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { hasAuthenticatedSession, isDemoAuthenticatedSession } from '../../../shared/lib/storage/authStorage.js';
+import { hasAuthenticatedSession } from '../../../shared/lib/storage/authStorage.js';
 import { ROUTES } from '../../../shared/constants/routes.js';
+import { useToast } from '../../../shared/hooks/useToast.js';
+import { consumePendingConversationFocusId } from '../../../shared/lib/storage/workspaceConversationState.js';
 import { createWorkspaceSocketSubscription } from '../../../shared/realtime/workspaceSocket.js';
 import {
   fetchConversationIndex,
@@ -10,6 +12,7 @@ import {
 } from '../services/workspaceService.js';
 
 export function useMessagesPage(navigate) {
+  const toast = useToast();
   const [filters, setFilters] = useState({ search: '', status: 'all' });
   const [conversations, setConversations] = useState([]);
   const [thread, setThread] = useState([]);
@@ -66,7 +69,9 @@ export function useMessagesPage(navigate) {
     setIsLoading(true);
     setError('');
 
-    loadConversations()
+    const preferredConversationId = consumePendingConversationFocusId();
+
+    loadConversations(preferredConversationId)
       .then(({ activeConversationId: nextActiveConversationId }) => {
         if (cancelled) {
           return;
@@ -118,7 +123,7 @@ export function useMessagesPage(navigate) {
   }, [activeConversationId, loadThread]);
 
   useEffect(() => {
-    if (!hasAuthenticatedSession() || isDemoAuthenticatedSession()) {
+    if (!hasAuthenticatedSession()) {
       return () => {};
     }
 
@@ -179,6 +184,11 @@ export function useMessagesPage(navigate) {
 
       await loadConversations(activeConversationId);
       setDraftMessage('');
+    } catch (nextError) {
+      toast.error({
+        title: 'Mesaj gonderilmedi',
+        message: nextError?.message || 'Mesaji gondermek mumkun olmadi.'
+      });
     } finally {
       setBusyKey('');
     }

@@ -190,12 +190,15 @@ export default function AdminVerificationPage({ navigate, pathname = ROUTES.admi
                 type="button"
                 className={`btn ${reviewTarget.status === 'Approved' ? 'primary' : 'danger'} interactive`}
                 onClick={async () => {
-                  await reviewTicket(reviewTarget.ticket.id, {
+                  const updatedTicket = await reviewTicket(reviewTarget.ticket.id, {
                     status: reviewTarget.status,
                     adminNote
                   });
-                  setReviewTarget(null);
-                  setAdminNote('');
+
+                  if (updatedTicket) {
+                    setReviewTarget(null);
+                    setAdminNote('');
+                  }
                 }}
               >
                 Confirm {reviewTarget.status}

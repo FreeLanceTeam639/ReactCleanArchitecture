@@ -1,21 +1,29 @@
 import { ROUTES } from '../../shared/constants/routes.js';
+import { useAuthSessionState } from '../../shared/hooks/useAuthSessionState.js';
+import { useI18n } from '../../shared/i18n/I18nProvider.jsx';
 import { navigateWithScroll } from '../../shared/lib/navigation/navigateWithScroll.js';
 
 export default function CtaSection({ navigate }) {
+  const { t } = useI18n();
+  const isAuthenticated = Boolean(useAuthSessionState());
+  const action = isAuthenticated
+    ? { label: t('Open profile'), route: ROUTES.profile }
+    : { label: t('Get Started Now'), route: ROUTES.login };
+
   return (
     <section className="cta">
       <div className="wrap ctaRow cardLift" id="cta">
         <div>
-          <p className="eyebrow">Get Started</p>
-          <h2>Join and get a unique opportunity</h2>
-          <p>Connect with skilled professionals, optimize collaborations, and unlock success.</p>
+          <p className="eyebrow">{t('Get Started')}</p>
+          <h2>{t('Join and get a unique opportunity')}</h2>
+          <p>{t('Connect with skilled professionals, optimize collaborations, and unlock success.')}</p>
         </div>
         <a
-          href={ROUTES.login}
+          href={action.route}
           className="btn primary interactive"
-          onClick={(event) => navigateWithScroll(event, ROUTES.login, navigate)}
+          onClick={(event) => navigateWithScroll(event, action.route, navigate)}
         >
-          Get Started Now
+          {action.label}
         </a>
       </div>
     </section>

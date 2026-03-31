@@ -76,10 +76,13 @@ export default function AdminPricingPage({ navigate, pathname = ROUTES.adminPric
       status: formState.status
     };
 
-    if (editingPackage?.mode === 'create') {
-      await createPricing(payload);
-    } else {
-      await savePricing(editingPackage.id, payload);
+    const savedPackage =
+      editingPackage?.mode === 'create'
+        ? await createPricing(payload)
+        : await savePricing(editingPackage.id, payload);
+
+    if (!savedPackage) {
+      return;
     }
 
     setEditingPackage(null);
@@ -201,8 +204,11 @@ export default function AdminPricingPage({ navigate, pathname = ROUTES.adminPric
           description="Pricing paketi admin siyahısından silinəcək."
           confirmLabel="Delete"
           onConfirm={async () => {
-            await deletePricing(deleteTarget.id);
-            setDeleteTarget(null);
+            const deletedPackage = await deletePricing(deleteTarget.id);
+
+            if (deletedPackage) {
+              setDeleteTarget(null);
+            }
           }}
           onClose={() => setDeleteTarget(null)}
         />

@@ -1,4 +1,5 @@
 import {
+  API_BASE_URL,
   API_ENDPOINTS,
   buildAdminVerificationTicketEndpoint,
   buildAdminCategoryIconEndpoint,
@@ -14,76 +15,155 @@ import {
   buildAdminTalentAvatarEndpoint,
   buildAdminTalentStatusEndpoint,
   buildAdminUserAvatarEndpoint,
+  buildAdminUserPasswordEndpoint,
   buildAdminUserStatusEndpoint
 } from '../../../shared/api/endpoints.js';
 import { httpClient } from '../../../shared/api/httpClient.js';
+import { extractCollection } from '../../../shared/lib/response/extractCollection.js';
 import { extractEntity } from '../../../shared/lib/response/extractEntity.js';
-import { STORAGE_KEYS } from '../../../shared/constants/storageKeys.js';
-import { fallbackAdminContent } from '../data/fallbackAdminContent.js';
 
-function clone(value) {
-  return JSON.parse(JSON.stringify(value));
-}
+const adminRuntimeCache = {
+  categoryOptions: []
+};
+const supportedImageMimeTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
-function safeStorageGet(key) {
+const apiOrigin = (() => {
   try {
-    return typeof window !== 'undefined' ? window.localStorage.getItem(key) : null;
+    const fallbackOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
+    return new URL(API_BASE_URL, fallbackOrigin).origin;
   } catch {
-    return null;
+    return '';
   }
+})();
+
+function sanitizeUrl(value) {
+  return typeof value === 'string' ? value.trim() : '';
 }
 
-function safeStorageSet(key, value) {
+function isDataUrl(value) {
+  return /^data:/i.test(sanitizeUrl(value));
+}
+
+function isAbsoluteUrl(value) {
+  return /^https?:\/\//i.test(sanitizeUrl(value));
+}
+
+function resolveApiAssetUrl(value) {
+  const trimmedValue = sanitizeUrl(value);
+
+  if (!trimmedValue || isDataUrl(trimmedValue) || isAbsoluteUrl(trimmedValue)) {
+    return trimmedValue;
+  }
+
+  if (trimmedValue.startsWith('/')) {
+    return apiOrigin ? `${apiOrigin}${trimmedValue}` : trimmedValue;
+  }
+
+  return trimmedValue;
+}
+
+function stripApiOrigin(value) {
+  const trimmedValue = sanitizeUrl(value);
+
+  if (!trimmedValue || isDataUrl(trimmedValue) || !apiOrigin) {
+    return trimmedValue;
+  }
+
   try {
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(key, value);
+    const parsedUrl = new URL(trimmedValue);
+
+    if (parsedUrl.origin === apiOrigin && parsedUrl.pathname.startsWith('/api/')) {
+      return `${parsedUrl.pathname}${parsedUrl.search}`;
     }
   } catch {
-    // ignore storage errors in demo mode
+    return trimmedValue;
+  }
+
+  return trimmedValue;
+}
+
+function getFileExtension(contentType) {
+  switch (contentType.toLowerCase()) {
+    case 'image/jpeg':
+      return 'jpg';
+    case 'image/webp':
+      return 'webp';
+    case 'image/png':
+    default:
+      return 'png';
   }
 }
 
-function createDefaultStore() {
-  return {
-    users: clone(fallbackAdminContent.users),
-    verificationTickets: clone(fallbackAdminContent.verificationTickets || []),
-    categories: clone(fallbackAdminContent.categories),
-    jobs: clone(fallbackAdminContent.jobs),
-    talent: clone(fallbackAdminContent.talent),
-    pricing: clone(fallbackAdminContent.pricing)
+function dataUrlToFile(dataUrl, fileNamePrefix = 'image') {
+  const trimmedValue = sanitizeUrl(dataUrl);
+  const [metadata, encodedData] = trimmedValue.split(',');
+
+  if (!metadata || !encodedData) {
+    throw new Error('Image preview data is invalid.');
+  }
+
+  const mimeType = metadata.match(/data:(.*?);base64/i)?.[1] || 'image/png';
+
+  if (!supportedImageMimeTypes.has(mimeType.toLowerCase())) {
+    throw new Error('Only JPG, PNG and WEBP images can be uploaded.');
+  }
+
+  const binary = window.atob(encodedData);
+  const bytes = new Uint8Array(binary.length);
+
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+
+  return new File([bytes], `${fileNamePrefix}.${getFileExtension(mimeType)}`, { type: mimeType });
+}
+
+async function uploadAdminImage(dataUrl, fileNamePrefix = 'image') {
+  const formData = new FormData();
+  formData.append('file', dataUrlToFile(dataUrl, fileNamePrefix));
+
+  const payload = await httpClient.post(API_ENDPOINTS.media.uploadImage, formData);
+  const entity = extractEntity(payload, ['data', 'item', 'result']) || payload;
+
+  return sanitizeUrl(pickFirst(entity.url, entity.path, entity.imageUrl, ''));
+}
+
+function createAssetResolver() {
+  const cache = new Map();
+
+  return async (value, fileNamePrefix = 'image') => {
+    const trimmedValue = sanitizeUrl(value);
+
+    if (!trimmedValue) {
+      return '';
+    }
+
+    if (cache.has(trimmedValue)) {
+      return cache.get(trimmedValue);
+    }
+
+    const resolvedValue = isDataUrl(trimmedValue)
+      ? await uploadAdminImage(trimmedValue, fileNamePrefix)
+      : stripApiOrigin(trimmedValue);
+
+    cache.set(trimmedValue, resolvedValue);
+    return resolvedValue;
   };
 }
 
-function loadPersistedStore() {
-  const rawValue = safeStorageGet(STORAGE_KEYS.adminContent);
-
-  if (!rawValue) {
-    return createDefaultStore();
+async function prepareMediaItems(items = [], fileNamePrefix, resolveAssetValue) {
+  if (!Array.isArray(items)) {
+    return [];
   }
 
-  try {
-    const parsed = JSON.parse(rawValue);
-    return {
-      ...createDefaultStore(),
-      ...parsed,
-      users: Array.isArray(parsed?.users) ? parsed.users : clone(fallbackAdminContent.users),
-      verificationTickets: Array.isArray(parsed?.verificationTickets)
-        ? parsed.verificationTickets
-        : clone(fallbackAdminContent.verificationTickets || []),
-      categories: Array.isArray(parsed?.categories) ? parsed.categories : clone(fallbackAdminContent.categories),
-      jobs: Array.isArray(parsed?.jobs) ? parsed.jobs : clone(fallbackAdminContent.jobs),
-      talent: Array.isArray(parsed?.talent) ? parsed.talent : clone(fallbackAdminContent.talent),
-      pricing: Array.isArray(parsed?.pricing) ? parsed.pricing : clone(fallbackAdminContent.pricing)
-    };
-  } catch {
-    return createDefaultStore();
-  }
-}
+  const preparedItems = await Promise.all(
+    items.map(async (item, index) => ({
+      ...item,
+      url: await resolveAssetValue(item?.url, `${fileNamePrefix}-${index + 1}`)
+    }))
+  );
 
-const adminStore = loadPersistedStore();
-
-function persistStore() {
-  safeStorageSet(STORAGE_KEYS.adminContent, JSON.stringify(adminStore));
+  return preparedItems.filter((item) => item.url);
 }
 
 function pickFirst(...values) {
@@ -92,6 +172,16 @@ function pickFirst(...values) {
 
 function toLower(value) {
   return String(value || '').trim().toLowerCase();
+}
+
+function resolveCollection(payload, preferredKeys = []) {
+  const entity = extractEntity(payload, preferredKeys);
+
+  if (Array.isArray(entity)) {
+    return entity;
+  }
+
+  return extractCollection(entity || payload);
 }
 
 function normalizeMeta(meta = {}, fallbackLength = 0, page = 1, pageSize = 10) {
@@ -107,21 +197,29 @@ function normalizeMeta(meta = {}, fallbackLength = 0, page = 1, pageSize = 10) {
   };
 }
 
-function buildListResponse(items, params = {}) {
-  const page = Math.max(1, Number(params.page || 1));
-  const pageSize = Math.max(1, Number(params.pageSize || 10));
-  const start = (page - 1) * pageSize;
-  const pagedItems = items.slice(start, start + pageSize);
+function normalizePositiveInteger(value, fallbackValue, maximumValue = Number.MAX_SAFE_INTEGER) {
+  const numericValue = Number(value);
 
-  return {
-    items: pagedItems,
-    meta: {
-      page,
-      pageSize,
-      total: items.length,
-      totalPages: Math.max(1, Math.ceil(items.length / pageSize))
-    }
-  };
+  if (!Number.isFinite(numericValue) || numericValue <= 0) {
+    return fallbackValue;
+  }
+
+  return Math.min(Math.trunc(numericValue), maximumValue);
+}
+
+function normalizeTextFilter(value) {
+  const trimmedValue = typeof value === 'string' ? value.trim() : value;
+  return trimmedValue === '' ? undefined : trimmedValue;
+}
+
+function normalizeSelectFilter(value) {
+  const normalizedValue = String(value || '').trim();
+
+  if (!normalizedValue || normalizedValue.toLowerCase() === 'all') {
+    return undefined;
+  }
+
+  return normalizedValue;
 }
 
 function formatCurrency(amount) {
@@ -143,7 +241,7 @@ function buildInitials(value = '') {
 }
 
 function normalizeMediaItem(item = {}, fallbackSortOrder = 1) {
-  const url = pickFirst(item.url, item.imageUrl, item.src, '');
+  const url = resolveApiAssetUrl(pickFirst(item.url, item.imageUrl, item.src, ''));
 
   return {
     id: pickFirst(item.id, item._id, createId('med')),
@@ -168,7 +266,7 @@ function normalizeMediaList(items = [], coverImageUrl = '') {
 
   return result
     .sort((left, right) => Number(left.sortOrder || 0) - Number(right.sortOrder || 0))
-    .map((item, index) => ({ ...item, sortOrder: index + 1, isPrimary: index === 0 ? Boolean(item.isPrimary) : Boolean(item.isPrimary) }));
+    .map((item, index) => ({ ...item, sortOrder: index + 1 }));
 }
 
 function getPrimaryMediaUrl(media = [], fallbackCover = '') {
@@ -178,22 +276,64 @@ function getPrimaryMediaUrl(media = [], fallbackCover = '') {
 
 function normalizeUser(item = {}) {
   const fullName = pickFirst(item.fullName, item.name, `${item.firstName || ''} ${item.lastName || ''}`.trim(), 'Unknown user');
+  const resolvedRole = toLower(pickFirst(item.role, item.primaryRole, 'client'));
+  const normalizedRole = resolvedRole === 'member' ? 'client' : resolvedRole;
 
   return {
     id: pickFirst(item.id, item._id, createId('usr')),
     fullName,
     email: pickFirst(item.email, 'unknown@example.com'),
     username: pickFirst(item.username, item.userName, fullName.toLowerCase().replace(/[^a-z0-9]+/g, ''), ''),
-    role: toLower(pickFirst(item.role, 'member')),
+    role: normalizedRole,
     status: toLower(pickFirst(item.status, 'active')),
     phone: pickFirst(item.phone, item.phoneNumber, ''),
     country: pickFirst(item.country, item.location, ''),
     bio: pickFirst(item.bio, item.description, ''),
-    avatarUrl: pickFirst(item.avatarUrl, item.avatar, item.imageUrl, ''),
+    avatarUrl: resolveApiAssetUrl(pickFirst(item.avatarUrl, item.avatar, item.imageUrl, '')),
     initials: pickFirst(item.initials, buildInitials(fullName), 'US'),
     registeredAt: pickFirst(item.registeredAt, item.createdAt, new Date().toISOString()),
     isVerified: Boolean(pickFirst(item.isVerified, false)),
     verificationStatus: toLower(pickFirst(item.verificationStatus, item.verification, item.isVerified ? 'verified' : 'unverified'))
+  };
+}
+
+function normalizeUserTaskStats(item = {}) {
+  return {
+    total: Number(pickFirst(item.total, 0)) || 0,
+    active: Number(pickFirst(item.active, 0)) || 0,
+    pending: Number(pickFirst(item.pending, 0)) || 0,
+    closed: Number(pickFirst(item.closed, 0)) || 0
+  };
+}
+
+function normalizeUserTask(item = {}) {
+  return {
+    id: pickFirst(item.id, item._id, createId('task')),
+    title: pickFirst(item.title, 'Untitled task'),
+    description: pickFirst(item.description, ''),
+    categoryName: pickFirst(item.categoryName, item.category, 'General'),
+    budget: Number(pickFirst(item.budget, item.amount, 0)) || 0,
+    status: toLower(pickFirst(item.status, 'pending')),
+    visibility: toLower(pickFirst(item.visibility, 'visible')),
+    coverImageUrl: resolveApiAssetUrl(pickFirst(item.coverImageUrl, item.cover, item.imageUrl, '')),
+    createdAt: pickFirst(item.createdAt, new Date().toISOString()),
+    updatedAt: pickFirst(item.updatedAt, '')
+  };
+}
+
+function normalizeAdminUserDetail(item = {}) {
+  const base = normalizeUser(item);
+
+  return {
+    ...base,
+    hasAdminAccess: Boolean(pickFirst(item.hasAdminAccess, base.role === 'admin')),
+    canPostJobs: Boolean(pickFirst(item.canPostJobs, item.isVerified, false)),
+    updatedAt: pickFirst(item.updatedAt, ''),
+    verificationRequestedAt: pickFirst(item.verificationRequestedAt, ''),
+    verificationReviewedAt: pickFirst(item.verificationReviewedAt, ''),
+    verificationNote: pickFirst(item.verificationNote, ''),
+    taskStats: normalizeUserTaskStats(item.taskStats || {}),
+    tasks: resolveCollection(item.tasks || []).map(normalizeUserTask)
   };
 }
 
@@ -203,13 +343,13 @@ function normalizeCategory(item = {}) {
     name: pickFirst(item.name, item.title, 'Category'),
     slug: pickFirst(item.slug, item.name ? item.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') : 'category'),
     status: toLower(pickFirst(item.status, 'active')),
-    iconUrl: pickFirst(item.iconUrl, item.imageUrl, item.image, '')
+    iconUrl: resolveApiAssetUrl(pickFirst(item.iconUrl, item.imageUrl, item.image, ''))
   };
 }
 
 function normalizeJob(item = {}) {
   const media = normalizeMediaList(item.media, pickFirst(item.coverImageUrl, item.cover, item.imageUrl, ''));
-  const coverImageUrl = pickFirst(item.coverImageUrl, item.cover, getPrimaryMediaUrl(media, item.imageUrl), '');
+  const coverImageUrl = resolveApiAssetUrl(pickFirst(item.coverImageUrl, item.cover, getPrimaryMediaUrl(media, item.imageUrl), ''));
 
   return {
     id: pickFirst(item.id, item._id, createId('job')),
@@ -238,7 +378,7 @@ function normalizeTalent(item = {}) {
     categoryId: pickFirst(item.categoryId, ''),
     categoryName: pickFirst(item.categoryName, item.category, ''),
     rating: Number(pickFirst(item.rating, 0)) || 0,
-    imageUrl: pickFirst(item.imageUrl, item.avatar, ''),
+    imageUrl: resolveApiAssetUrl(pickFirst(item.imageUrl, item.avatar, '')),
     status: toLower(pickFirst(item.status, 'active')),
     featured: Boolean(pickFirst(item.featured, false)),
     bio: pickFirst(item.bio, item.description, '')
@@ -272,6 +412,34 @@ function normalizeVerificationTicket(item = {}) {
   };
 }
 
+function normalizeAuditLog(item = {}) {
+  const detailsJson = pickFirst(item.detailsJson, item.details, item.payload, '');
+  const rawSuccess = pickFirst(item.isSuccessful, item.success, item.isSuccess, false);
+
+  return {
+    id: pickFirst(item.id, item._id, createId('audit')),
+    userId: pickFirst(item.userId, ''),
+    actorType: pickFirst(item.actorType, 'Anonim'),
+    actorName: pickFirst(item.actorName, item.fullName, item.name, 'Unknown actor'),
+    actorEmail: pickFirst(item.actorEmail, item.email, ''),
+    actorRoles: pickFirst(item.actorRoles, ''),
+    category: pickFirst(item.category, 'API'),
+    actionName: pickFirst(item.actionName, item.action, 'Request'),
+    messageAz: pickFirst(item.messageAz, item.message, 'No message'),
+    detailsJson: typeof detailsJson === 'string' ? detailsJson : JSON.stringify(detailsJson),
+    httpMethod: pickFirst(item.httpMethod, item.method, 'GET'),
+    path: pickFirst(item.path, item.url, ''),
+    queryString: pickFirst(item.queryString, ''),
+    ipAddress: pickFirst(item.ipAddress, ''),
+    userAgent: pickFirst(item.userAgent, ''),
+    traceId: pickFirst(item.traceId, ''),
+    source: pickFirst(item.source, 'HTTP'),
+    statusCode: Number(pickFirst(item.statusCode, 0)) || 0,
+    isSuccessful: Boolean(rawSuccess),
+    occurredAt: pickFirst(item.occurredAt, item.createdAt, new Date().toISOString())
+  };
+}
+
 function normalizeOverviewResponse(payload) {
   const root = extractEntity(payload, ['data', 'result', 'payload']) || {};
   const totals = root.totals || {};
@@ -287,700 +455,298 @@ function normalizeOverviewResponse(payload) {
       activePackages: Number(pickFirst(totals.activePackages, root.activePackages, 0)),
       mediaItems: Number(pickFirst(totals.mediaItems, root.mediaItems, 0))
     },
-    recentJobs: Array.isArray(root.recentJobs) ? root.recentJobs.map(normalizeJob) : [],
-    recentUsers: Array.isArray(root.recentUsers) ? root.recentUsers.map(normalizeUser) : []
+    recentJobs: resolveCollection(root.recentJobs || []).map(normalizeJob),
+    recentUsers: resolveCollection(root.recentUsers || []).map(normalizeUser)
   };
 }
 
-function normalizeListPayload(payload, mapper, params) {
+function normalizeListPayload(payload, mapper, params = {}) {
   const root = extractEntity(payload, ['data', 'result', 'payload']) || payload || {};
-  const items = Array.isArray(root) ? root : Array.isArray(root.data) ? root.data : Array.isArray(root.items) ? root.items : [];
-  const meta = normalizeMeta(root.meta || {}, items.length, params.page, params.pageSize);
+  const items = resolveCollection(extractEntity(root, ['items', 'data']) || root).map(mapper);
+  const meta = normalizeMeta(extractEntity(root, ['meta', 'pagination']) || root.meta || {}, items.length, params.page, params.pageSize);
 
   return {
-    items: items.map(mapper),
+    items,
     meta
   };
 }
 
-function filterCollection(items, params = {}, searchKeys = []) {
-  const search = toLower(params.search);
-  let result = [...items];
-
-  if (search) {
-    result = result.filter((item) => searchKeys.some((key) => String(item[key] || '').toLowerCase().includes(search)));
-  }
-
-  return result;
-}
-
-function sortByDateDesc(left, right, key) {
-  return new Date(right[key]).getTime() - new Date(left[key]).getTime();
-}
-
-function buildFallbackOverview() {
-  const users = adminStore.users.map(normalizeUser);
-  const jobs = adminStore.jobs.map(normalizeJob);
-  const categories = adminStore.categories.map(normalizeCategory);
-  const talent = adminStore.talent.map(normalizeTalent);
-  const pricing = adminStore.pricing.map(normalizePricing);
-  const mediaItems = jobs.reduce((sum, item) => sum + item.media.length, 0);
-
-  return {
-    totals: {
-      users: users.length,
-      verifiedUsers: users.filter((item) => item.isVerified).length,
-      pendingVerification: users.filter((item) => item.verificationStatus === 'pending').length,
-      jobs: jobs.length,
-      activeCategories: categories.filter((item) => item.status === 'active').length,
-      featuredTalent: talent.filter((item) => item.featured).length,
-      activePackages: pricing.filter((item) => item.status === 'active').length,
-      mediaItems
-    },
-    recentJobs: [...jobs].sort((a, b) => sortByDateDesc(a, b, 'createdAt')).slice(0, 5),
-    recentUsers: [...users].sort((a, b) => sortByDateDesc(a, b, 'registeredAt')).slice(0, 5)
-  };
-}
-
-function fallbackUsers(params = {}) {
-  let items = adminStore.users.map(normalizeUser);
-  items = filterCollection(items, params, ['fullName', 'email', 'username', 'country']);
-
-  const role = toLower(params.role || 'all');
-  const status = toLower(params.status || 'all');
-  const verificationStatus = toLower(params.verificationStatus || 'all');
-
-  if (role !== 'all') {
-    items = items.filter((item) => item.role === role);
-  }
-
-  if (status !== 'all') {
-    items = items.filter((item) => item.status === status);
-  }
-
-  if (verificationStatus !== 'all') {
-    items = items.filter((item) => item.verificationStatus === verificationStatus);
-  }
-
-  items = [...items].sort((a, b) => sortByDateDesc(a, b, 'registeredAt'));
-  return buildListResponse(items, params);
-}
-
-function fallbackJobs(params = {}) {
-  let items = adminStore.jobs.map(normalizeJob);
-  items = filterCollection(items, params, ['title', 'categoryName', 'ownerName', 'description']);
-
-  const categoryId = toLower(params.categoryId || 'all');
-  const status = toLower(params.status || 'all');
-  const visibility = toLower(params.visibility || 'all');
-
-  if (categoryId !== 'all') {
-    items = items.filter((item) => toLower(item.categoryId) === categoryId || toLower(item.categoryName) === categoryId);
-  }
-
-  if (status !== 'all') {
-    items = items.filter((item) => item.status === status);
-  }
-
-  if (visibility !== 'all') {
-    items = items.filter((item) => item.visibility === visibility);
-  }
-
-  items = [...items].sort((a, b) => sortByDateDesc(a, b, 'createdAt'));
-  return buildListResponse(items, params);
-}
-
-function fallbackCategories(params = {}) {
-  let items = adminStore.categories.map(normalizeCategory);
-  items = filterCollection(items, params, ['name', 'slug']);
-
-  const status = toLower(params.status || 'all');
-  if (status !== 'all') {
-    items = items.filter((item) => item.status === status);
-  }
-
-  items = [...items].sort((left, right) => left.name.localeCompare(right.name));
-  return buildListResponse(items, params);
-}
-
-function fallbackTalent(params = {}) {
-  let items = adminStore.talent.map(normalizeTalent);
-  items = filterCollection(items, params, ['name', 'title', 'skill', 'categoryName']);
-
-  const status = toLower(params.status || 'all');
-  const featured = toLower(params.featured || 'all');
-
-  if (status !== 'all') {
-    items = items.filter((item) => item.status === status);
-  }
-
-  if (featured !== 'all') {
-    const isFeatured = featured === 'featured';
-    items = items.filter((item) => item.featured === isFeatured);
-  }
-
-  items = [...items].sort((left, right) => right.rating - left.rating);
-  return buildListResponse(items, params);
-}
-
-function fallbackPricing(params = {}) {
-  let items = adminStore.pricing.map(normalizePricing);
-  items = filterCollection(items, params, ['name', 'badge']);
-
-  const status = toLower(params.status || 'all');
-  if (status !== 'all') {
-    items = items.filter((item) => item.status === status);
-  }
-
-  items = [...items].sort((left, right) => left.price - right.price);
-  return buildListResponse(items, params);
-}
-
-function fallbackVerificationTickets(params = {}) {
-  let items = (adminStore.verificationTickets || []).map(normalizeVerificationTicket);
-  const search = toLower(params.search);
-  const status = toLower(params.status || 'all');
-
-  if (search) {
-    items = items.filter((item) => `${item.fullName} ${item.email} ${item.subject} ${item.message}`.toLowerCase().includes(search));
-  }
-
-  if (status !== 'all') {
-    items = items.filter((item) => item.status === status);
-  }
-
-  return [...items].sort((left, right) => sortByDateDesc(left, right, 'createdAt'));
-}
-
-function upsertById(collection, item, mapper) {
-  const normalized = mapper(item);
-  const index = collection.findIndex((entry) => entry.id === normalized.id);
-
-  if (index >= 0) {
-    collection[index] = { ...collection[index], ...normalized };
-  } else {
-    collection.unshift(normalized);
-  }
-
-  persistStore();
-  return normalized;
-}
-
-function removeById(collection, id) {
-  const index = collection.findIndex((entry) => entry.id === id);
-  if (index >= 0) {
-    collection.splice(index, 1);
-    persistStore();
-  }
-}
-
-function getById(collection, id, mapper) {
-  const found = collection.find((item) => item.id === id);
-  return found ? mapper(found) : null;
-}
-
-function withCategoryName(values = {}) {
-  const categories = adminStore.categories.map(normalizeCategory);
-  const category = categories.find((item) => item.id === values.categoryId) || categories.find((item) => item.name === values.categoryName);
-
-  return {
-    ...values,
-    categoryName: values.categoryName || category?.name || 'General'
-  };
-}
-
-function setPrimaryMedia(items = [], mediaId) {
-  return items.map((item, index) => ({
-    ...item,
-    isPrimary: item.id === mediaId,
-    sortOrder: index + 1
-  }));
-}
-
-export function getAdminSnapshot() {
-  return {
-    users: adminStore.users.map(normalizeUser),
-    categories: adminStore.categories.map(normalizeCategory),
-    jobs: adminStore.jobs.map(normalizeJob),
-    talent: adminStore.talent.map(normalizeTalent),
-    pricing: adminStore.pricing.map(normalizePricing)
-  };
+function syncCategoryOptions(items = []) {
+  adminRuntimeCache.categoryOptions = items.filter((item) => item.status === 'active');
 }
 
 export function getAdminCategoryOptions() {
-  return adminStore.categories.map(normalizeCategory).filter((item) => item.status === 'active');
+  return adminRuntimeCache.categoryOptions;
 }
 
 export function getPricingSummary(items = []) {
   return items.map((item) => ({ ...item, formattedPrice: formatCurrency(item.price) }));
 }
 
-export function getHomeCategoryTabs() {
-  const activeNames = adminStore.categories
-    .map(normalizeCategory)
-    .filter((item) => item.status === 'active')
-    .map((item) => item.name);
-
-  return ['All', ...Array.from(new Set(activeNames))];
-}
-
-export function getHomePricingPlans() {
-  return adminStore.pricing
-    .map(normalizePricing)
-    .filter((item) => item.status === 'active')
-    .map((item, index) => ({
-      name: item.name,
-      description: item.badge ? `${item.badge} package for growing marketplace teams.` : 'Flexible plan for marketplace growth.',
-      monthly: item.price,
-      yearly: item.price * 10,
-      features: item.features,
-      badge: item.badge,
-      isFeatured: index === 1
-    }));
-}
-
-export function getHomeTalentCollection() {
-  return adminStore.talent
-    .map(normalizeTalent)
-    .filter((item) => item.status === 'active')
-    .map((item, index) => ({
-      id: item.id,
-      name: item.name,
-      title: item.title,
-      location: 'Remote',
-      rating: item.rating,
-      reviews: 18 + index * 7,
-      price: 45 + index * 8,
-      hourlyRate: 45 + index * 8,
-      icon: '✨',
-      label: item.skill,
-      category: item.categoryName || item.skill,
-      avatar: item.imageUrl,
-      banner: item.imageUrl,
-      duration: `${6 + index} Days`,
-      tools: [item.skill, item.categoryName || 'Marketplace', 'Delivery'],
-      badge: item.featured ? 'Featured Talent' : item.skill,
-      featured: item.featured,
-      availability: 'Available now',
-      completedProjects: 12 + index * 4,
-      bio: item.bio
-    }));
-}
-
 export async function fetchAdminOverview() {
-  try {
-    const payload = await httpClient.get(API_ENDPOINTS.admin.dashboardOverview);
-    return normalizeOverviewResponse(payload);
-  } catch {
-    return buildFallbackOverview();
-  }
+  const payload = await httpClient.get(API_ENDPOINTS.admin.dashboardOverview);
+  return normalizeOverviewResponse(payload);
 }
 
 export async function fetchAdminUsers(params = {}) {
-  try {
-    const payload = await httpClient.get(API_ENDPOINTS.admin.users, { query: params });
-    const response = normalizeListPayload(payload, normalizeUser, { page: 1, pageSize: 1000 });
-    return buildListResponse(
-      response.items
-        .filter((item) => {
-          const search = toLower(params.search);
-          const role = toLower(params.role || 'all');
-          const status = toLower(params.status || 'all');
-          const verificationStatus = toLower(params.verificationStatus || 'all');
-
-          const matchesSearch = !search || `${item.fullName} ${item.email} ${item.username} ${item.country}`.toLowerCase().includes(search);
-          const matchesRole = role === 'all' || item.role === role;
-          const matchesStatus = status === 'all' || item.status === status;
-          const matchesVerification = verificationStatus === 'all' || item.verificationStatus === verificationStatus;
-
-          return matchesSearch && matchesRole && matchesStatus && matchesVerification;
-        })
-        .sort((left, right) => sortByDateDesc(left, right, 'registeredAt')),
-      params
-    );
-  } catch {
-    return fallbackUsers(params);
-  }
+  const payload = await httpClient.get(API_ENDPOINTS.admin.users, { query: params });
+  return normalizeListPayload(payload, normalizeUser, params);
 }
 
 export async function fetchAdminUserById(id) {
-  try {
-    const payload = await httpClient.get(buildAdminResourceEndpoint(API_ENDPOINTS.admin.users, id));
-    return normalizeUser(extractEntity(payload, ['data', 'item', 'result']) || {});
-  } catch {
-    return getById(adminStore.users, id, normalizeUser);
-  }
+  const payload = await httpClient.get(buildAdminResourceEndpoint(API_ENDPOINTS.admin.users, id));
+  return normalizeAdminUserDetail(extractEntity(payload, ['data', 'item', 'result']) || payload);
 }
 
 export async function updateAdminUser(id, values) {
-  try {
-    const payload = await httpClient.put(buildAdminResourceEndpoint(API_ENDPOINTS.admin.users, id), values);
-    return normalizeUser(extractEntity(payload, ['data', 'item', 'result']) || values);
-  } catch {
-    return upsertById(adminStore.users, { ...getById(adminStore.users, id, normalizeUser), ...values, id }, normalizeUser);
-  }
+  const resolveAssetValue = createAssetResolver();
+  const payload = await httpClient.put(buildAdminResourceEndpoint(API_ENDPOINTS.admin.users, id), {
+    ...values,
+    avatarUrl: await resolveAssetValue(values?.avatarUrl, `user-${id}-avatar`)
+  });
+  return normalizeUser(extractEntity(payload, ['data', 'item', 'result']) || payload);
 }
 
 export async function updateAdminUserAvatar(id, avatarUrl) {
-  try {
-    const payload = await httpClient.patch(buildAdminUserAvatarEndpoint(id), { avatarUrl });
-    return normalizeUser(extractEntity(payload, ['data', 'item', 'result']) || { id, avatarUrl });
-  } catch {
-    return upsertById(adminStore.users, { ...getById(adminStore.users, id, normalizeUser), avatarUrl }, normalizeUser);
-  }
+  const resolveAssetValue = createAssetResolver();
+  const payload = await httpClient.patch(buildAdminUserAvatarEndpoint(id), {
+    avatarUrl: await resolveAssetValue(avatarUrl, `user-${id}-avatar`)
+  });
+  return normalizeUser(extractEntity(payload, ['data', 'item', 'result']) || payload);
 }
 
 export async function updateAdminUserStatus(id, status) {
-  try {
-    const payload = await httpClient.patch(buildAdminUserStatusEndpoint(id), { status });
-    return normalizeUser(extractEntity(payload, ['data', 'item', 'result']) || { id, status });
-  } catch {
-    return upsertById(adminStore.users, { ...getById(adminStore.users, id, normalizeUser), status }, normalizeUser);
-  }
+  const payload = await httpClient.patch(buildAdminUserStatusEndpoint(id), { status });
+  return normalizeUser(extractEntity(payload, ['data', 'item', 'result']) || payload);
+}
+
+export async function updateAdminUserPassword(id, values) {
+  return httpClient.patch(buildAdminUserPasswordEndpoint(id), values);
 }
 
 export async function deleteAdminUser(id) {
-  try {
-    await httpClient.delete(buildAdminResourceEndpoint(API_ENDPOINTS.admin.users, id));
-  } catch {
-    removeById(adminStore.users, id);
-  }
-
-  return { success: true };
+  await httpClient.delete(buildAdminResourceEndpoint(API_ENDPOINTS.admin.users, id));
+  return { success: true, id };
 }
 
 export async function fetchAdminVerificationTickets(params = {}) {
-  try {
-    const payload = await httpClient.get(API_ENDPOINTS.admin.verificationTickets, { query: params });
-    const items = extractEntity(payload, ['data', 'items', 'result']) || payload;
-    return (Array.isArray(items) ? items : [])
-      .map(normalizeVerificationTicket)
-      .filter((item) => {
-        const search = toLower(params.search);
-        const status = toLower(params.status || 'all');
-
-        const matchesSearch = !search || `${item.fullName} ${item.email} ${item.subject} ${item.message}`.toLowerCase().includes(search);
-        const matchesStatus = status === 'all' || item.status === status;
-
-        return matchesSearch && matchesStatus;
-      })
-      .sort((left, right) => sortByDateDesc(left, right, 'createdAt'));
-  } catch {
-    return fallbackVerificationTickets(params);
-  }
+  const payload = await httpClient.get(API_ENDPOINTS.admin.verificationTickets, { query: params });
+  return resolveCollection(extractEntity(payload, ['data', 'items', 'result']) || payload).map(normalizeVerificationTicket);
 }
 
 export async function reviewAdminVerificationTicket(ticketId, values) {
-  try {
-    const payload = await httpClient.patch(buildAdminVerificationTicketEndpoint(ticketId), values);
-    return normalizeVerificationTicket(extractEntity(payload, ['data', 'item', 'result']) || payload);
-  } catch {
-    const nextStatus = toLower(values.status || 'pending');
-    adminStore.verificationTickets = (adminStore.verificationTickets || []).map((item) => (
-      item.id === ticketId
-        ? {
-            ...item,
-            status: nextStatus,
-            adminNote: values.adminNote || item.adminNote,
-            reviewedAt: new Date().toISOString()
-          }
-        : item
-    ));
+  const payload = await httpClient.patch(buildAdminVerificationTicketEndpoint(ticketId), values);
+  return normalizeVerificationTicket(extractEntity(payload, ['data', 'item', 'result']) || payload);
+}
 
-    const reviewedTicket = (adminStore.verificationTickets || []).find((item) => item.id === ticketId);
+export async function fetchAdminAuditLogs(params = {}) {
+  const query = {
+    ...params,
+    actorType: params.actorType === 'all' ? undefined : params.actorType,
+    category: params.category === 'all' ? undefined : params.category,
+    isSuccessful:
+      params.result === 'all' || params.result === undefined
+        ? undefined
+        : params.result === 'success'
+          ? true
+          : false
+  };
 
-    if (reviewedTicket?.userId) {
-      adminStore.users = adminStore.users.map((user) => (
-        user.id === reviewedTicket.userId
-          ? {
-              ...user,
-              isVerified: nextStatus === 'approved',
-              verificationStatus: nextStatus === 'approved' ? 'verified' : nextStatus === 'rejected' ? 'rejected' : user.verificationStatus
-            }
-          : user
-      ));
-    }
+  delete query.result;
 
-    persistStore();
-    return normalizeVerificationTicket(reviewedTicket || { id: ticketId, ...values });
-  }
+  const payload = await httpClient.get(API_ENDPOINTS.admin.auditLogs, { query });
+  return resolveCollection(extractEntity(payload, ['data', 'items', 'result']) || payload).map(normalizeAuditLog);
 }
 
 export async function fetchAdminJobs(params = {}) {
-  try {
-    const payload = await httpClient.get(API_ENDPOINTS.admin.jobs, { query: params });
-    return normalizeListPayload(payload, normalizeJob, params);
-  } catch {
-    return fallbackJobs(params);
-  }
+  const query = {
+    ...params,
+    search: normalizeTextFilter(params.search),
+    categoryId: normalizeSelectFilter(params.categoryId),
+    status: params.status || undefined,
+    page: normalizePositiveInteger(params.page, 1),
+    pageSize: normalizePositiveInteger(params.pageSize, 10, 100)
+  };
+  const payload = await httpClient.get(API_ENDPOINTS.admin.jobs, { query });
+  return normalizeListPayload(payload, normalizeJob, query);
 }
 
 export async function fetchAdminJobById(id) {
-  try {
-    const payload = await httpClient.get(buildAdminResourceEndpoint(API_ENDPOINTS.admin.jobs, id));
-    return normalizeJob(extractEntity(payload, ['data', 'item', 'result']) || {});
-  } catch {
-    return getById(adminStore.jobs, id, normalizeJob);
-  }
+  const payload = await httpClient.get(buildAdminResourceEndpoint(API_ENDPOINTS.admin.jobs, id));
+  return normalizeJob(extractEntity(payload, ['data', 'item', 'result']) || payload);
 }
 
 export async function updateAdminJob(id, values) {
-  const nextValues = withCategoryName(values);
-
-  try {
-    const payload = await httpClient.put(buildAdminResourceEndpoint(API_ENDPOINTS.admin.jobs, id), nextValues);
-    return normalizeJob(extractEntity(payload, ['data', 'item', 'result']) || nextValues);
-  } catch {
-    return upsertById(adminStore.jobs, { ...getById(adminStore.jobs, id, normalizeJob), ...nextValues, id }, normalizeJob);
-  }
+  const resolveAssetValue = createAssetResolver();
+  const media = await prepareMediaItems(values?.media, `job-${id}-media`, resolveAssetValue);
+  const payload = await httpClient.put(buildAdminResourceEndpoint(API_ENDPOINTS.admin.jobs, id), {
+    ...values,
+    coverImageUrl: await resolveAssetValue(values?.coverImageUrl || media[0]?.url, `job-${id}-cover`),
+    media
+  });
+  return normalizeJob(extractEntity(payload, ['data', 'item', 'result']) || payload);
 }
 
 export async function updateAdminJobStatus(id, status) {
-  try {
-    const payload = await httpClient.patch(buildAdminJobStatusEndpoint(id), { status });
-    return normalizeJob(extractEntity(payload, ['data', 'item', 'result']) || { id, status });
-  } catch {
-    return upsertById(adminStore.jobs, { ...getById(adminStore.jobs, id, normalizeJob), status }, normalizeJob);
-  }
+  const payload = await httpClient.patch(buildAdminJobStatusEndpoint(id), { status });
+  return normalizeJob(extractEntity(payload, ['data', 'item', 'result']) || payload);
 }
 
 export async function updateAdminJobVisibility(id, visibility) {
-  try {
-    const payload = await httpClient.patch(buildAdminJobVisibilityEndpoint(id), { visibility });
-    return normalizeJob(extractEntity(payload, ['data', 'item', 'result']) || { id, visibility });
-  } catch {
-    return upsertById(adminStore.jobs, { ...getById(adminStore.jobs, id, normalizeJob), visibility }, normalizeJob);
-  }
+  const payload = await httpClient.patch(buildAdminJobVisibilityEndpoint(id), { visibility });
+  return normalizeJob(extractEntity(payload, ['data', 'item', 'result']) || payload);
 }
 
 export async function addAdminJobMedia(id, mediaItem) {
-  try {
-    const payload = await httpClient.post(buildAdminJobMediaEndpoint(id), mediaItem);
-    return normalizeJob(extractEntity(payload, ['data', 'item', 'result']) || { id });
-  } catch {
-    const currentJob = getById(adminStore.jobs, id, normalizeJob);
-    const nextMedia = normalizeMediaList([...(currentJob?.media || []), mediaItem], currentJob?.coverImageUrl);
-    return upsertById(adminStore.jobs, {
-      ...currentJob,
-      media: nextMedia,
-      coverImageUrl: getPrimaryMediaUrl(nextMedia, currentJob?.coverImageUrl)
-    }, normalizeJob);
-  }
+  const resolveAssetValue = createAssetResolver();
+  const payload = await httpClient.post(buildAdminJobMediaEndpoint(id), {
+    ...mediaItem,
+    url: await resolveAssetValue(mediaItem?.url, `job-${id}-media`)
+  });
+  return normalizeJob(extractEntity(payload, ['data', 'item', 'result']) || payload);
 }
 
 export async function removeAdminJobMedia(id, mediaId) {
-  try {
-    await httpClient.delete(buildAdminJobMediaItemEndpoint(id, mediaId));
-  } catch {
-    const currentJob = getById(adminStore.jobs, id, normalizeJob);
-    const nextMedia = normalizeMediaList((currentJob?.media || []).filter((item) => item.id !== mediaId), '');
-    upsertById(adminStore.jobs, {
-      ...currentJob,
-      media: nextMedia,
-      coverImageUrl: getPrimaryMediaUrl(nextMedia, '')
-    }, normalizeJob);
-  }
+  await httpClient.delete(buildAdminJobMediaItemEndpoint(id, mediaId));
+  return { success: true, id, mediaId };
 }
 
 export async function setAdminJobPrimaryMedia(id, mediaId) {
-  try {
-    const payload = await httpClient.patch(buildAdminJobMediaPrimaryEndpoint(id, mediaId), { mediaId });
-    return normalizeJob(extractEntity(payload, ['data', 'item', 'result']) || { id });
-  } catch {
-    const currentJob = getById(adminStore.jobs, id, normalizeJob);
-    const nextMedia = setPrimaryMedia(currentJob?.media || [], mediaId);
-    return upsertById(adminStore.jobs, {
-      ...currentJob,
-      media: nextMedia,
-      coverImageUrl: getPrimaryMediaUrl(nextMedia, currentJob?.coverImageUrl)
-    }, normalizeJob);
-  }
+  const payload = await httpClient.patch(buildAdminJobMediaPrimaryEndpoint(id, mediaId), { mediaId });
+  return normalizeJob(extractEntity(payload, ['data', 'item', 'result']) || payload);
 }
 
 export async function reorderAdminJobMedia(id, mediaIds = []) {
-  try {
-    const payload = await httpClient.patch(buildAdminJobMediaReorderEndpoint(id), { mediaIds });
-    return normalizeJob(extractEntity(payload, ['data', 'item', 'result']) || { id });
-  } catch {
-    const currentJob = getById(adminStore.jobs, id, normalizeJob);
-    const nextMedia = mediaIds
-      .map((mediaId, index) => {
-        const found = (currentJob?.media || []).find((item) => item.id === mediaId);
-        return found ? { ...found, sortOrder: index + 1, isPrimary: index === 0 ? found.isPrimary : false } : null;
-      })
-      .filter(Boolean);
-    return upsertById(adminStore.jobs, {
-      ...currentJob,
-      media: nextMedia,
-      coverImageUrl: getPrimaryMediaUrl(nextMedia, currentJob?.coverImageUrl)
-    }, normalizeJob);
-  }
+  const payload = await httpClient.patch(buildAdminJobMediaReorderEndpoint(id), { mediaIds });
+  return normalizeJob(extractEntity(payload, ['data', 'item', 'result']) || payload);
 }
 
 export async function deleteAdminJob(id) {
-  try {
-    await httpClient.delete(buildAdminResourceEndpoint(API_ENDPOINTS.admin.jobs, id));
-  } catch {
-    removeById(adminStore.jobs, id);
-  }
-
-  return { success: true };
+  await httpClient.delete(buildAdminResourceEndpoint(API_ENDPOINTS.admin.jobs, id));
+  return { success: true, id };
 }
 
 export async function fetchAdminCategories(params = {}) {
-  try {
-    const payload = await httpClient.get(API_ENDPOINTS.admin.categories, { query: params });
-    return normalizeListPayload(payload, normalizeCategory, params);
-  } catch {
-    return fallbackCategories(params);
-  }
+  const query = {
+    ...params,
+    search: normalizeTextFilter(params.search),
+    status: params.status || undefined,
+    page: normalizePositiveInteger(params.page, 1),
+    pageSize: normalizePositiveInteger(params.pageSize, 10, 100)
+  };
+  const payload = await httpClient.get(API_ENDPOINTS.admin.categories, { query });
+  const response = normalizeListPayload(payload, normalizeCategory, query);
+  syncCategoryOptions(response.items);
+  return response;
 }
 
 export async function createAdminCategory(values) {
-  try {
-    const payload = await httpClient.post(API_ENDPOINTS.admin.categories, values);
-    return normalizeCategory(extractEntity(payload, ['data', 'item', 'result']) || values);
-  } catch {
-    return upsertById(adminStore.categories, { ...values, id: createId('cat') }, normalizeCategory);
-  }
+  const resolveAssetValue = createAssetResolver();
+  const payload = await httpClient.post(API_ENDPOINTS.admin.categories, {
+    ...values,
+    iconUrl: await resolveAssetValue(values?.iconUrl, 'category-icon')
+  });
+  const category = normalizeCategory(extractEntity(payload, ['data', 'item', 'result']) || payload);
+  syncCategoryOptions([...adminRuntimeCache.categoryOptions.filter((item) => item.id !== category.id), category]);
+  return category;
 }
 
 export async function updateAdminCategory(id, values) {
-  try {
-    const payload = await httpClient.put(buildAdminResourceEndpoint(API_ENDPOINTS.admin.categories, id), values);
-    return normalizeCategory(extractEntity(payload, ['data', 'item', 'result']) || values);
-  } catch {
-    return upsertById(adminStore.categories, { ...getById(adminStore.categories, id, normalizeCategory), ...values, id }, normalizeCategory);
-  }
+  const resolveAssetValue = createAssetResolver();
+  const payload = await httpClient.put(buildAdminResourceEndpoint(API_ENDPOINTS.admin.categories, id), {
+    ...values,
+    iconUrl: await resolveAssetValue(values?.iconUrl, `category-${id}-icon`)
+  });
+  const category = normalizeCategory(extractEntity(payload, ['data', 'item', 'result']) || payload);
+  syncCategoryOptions([...adminRuntimeCache.categoryOptions.filter((item) => item.id !== category.id), category]);
+  return category;
 }
 
 export async function updateAdminCategoryIcon(id, iconUrl) {
-  try {
-    const payload = await httpClient.patch(buildAdminCategoryIconEndpoint(id), { iconUrl });
-    return normalizeCategory(extractEntity(payload, ['data', 'item', 'result']) || { id, iconUrl });
-  } catch {
-    return upsertById(adminStore.categories, { ...getById(adminStore.categories, id, normalizeCategory), iconUrl }, normalizeCategory);
-  }
+  const resolveAssetValue = createAssetResolver();
+  const payload = await httpClient.patch(buildAdminCategoryIconEndpoint(id), {
+    iconUrl: await resolveAssetValue(iconUrl, `category-${id}-icon`)
+  });
+  const category = normalizeCategory(extractEntity(payload, ['data', 'item', 'result']) || payload);
+  syncCategoryOptions([...adminRuntimeCache.categoryOptions.filter((item) => item.id !== category.id), category]);
+  return category;
 }
 
 export async function updateAdminCategoryStatus(id, status) {
-  try {
-    const payload = await httpClient.patch(buildAdminCategoryStatusEndpoint(id), { status });
-    return normalizeCategory(extractEntity(payload, ['data', 'item', 'result']) || { id, status });
-  } catch {
-    return upsertById(adminStore.categories, { ...getById(adminStore.categories, id, normalizeCategory), status }, normalizeCategory);
-  }
+  const payload = await httpClient.patch(buildAdminCategoryStatusEndpoint(id), { status });
+  const category = normalizeCategory(extractEntity(payload, ['data', 'item', 'result']) || payload);
+  syncCategoryOptions([...adminRuntimeCache.categoryOptions.filter((item) => item.id !== category.id), category]);
+  return category;
 }
 
 export async function deleteAdminCategory(id) {
-  try {
-    await httpClient.delete(buildAdminResourceEndpoint(API_ENDPOINTS.admin.categories, id));
-  } catch {
-    removeById(adminStore.categories, id);
-  }
-
-  return { success: true };
+  await httpClient.delete(buildAdminResourceEndpoint(API_ENDPOINTS.admin.categories, id));
+  syncCategoryOptions(adminRuntimeCache.categoryOptions.filter((item) => item.id !== id));
+  return { success: true, id };
 }
 
 export async function fetchAdminTalent(params = {}) {
-  try {
-    const payload = await httpClient.get(API_ENDPOINTS.admin.talent, { query: params });
-    return normalizeListPayload(payload, normalizeTalent, params);
-  } catch {
-    return fallbackTalent(params);
-  }
+  const payload = await httpClient.get(API_ENDPOINTS.admin.talent, { query: params });
+  return normalizeListPayload(payload, normalizeTalent, params);
 }
 
 export async function createAdminTalent(values) {
-  try {
-    const payload = await httpClient.post(API_ENDPOINTS.admin.talent, values);
-    return normalizeTalent(extractEntity(payload, ['data', 'item', 'result']) || values);
-  } catch {
-    return upsertById(adminStore.talent, { ...values, id: createId('tal') }, normalizeTalent);
-  }
+  const resolveAssetValue = createAssetResolver();
+  const payload = await httpClient.post(API_ENDPOINTS.admin.talent, {
+    ...values,
+    imageUrl: await resolveAssetValue(values?.imageUrl, 'talent-avatar')
+  });
+  return normalizeTalent(extractEntity(payload, ['data', 'item', 'result']) || payload);
 }
 
 export async function updateAdminTalent(id, values) {
-  const nextValues = withCategoryName(values);
-
-  try {
-    const payload = await httpClient.put(buildAdminResourceEndpoint(API_ENDPOINTS.admin.talent, id), nextValues);
-    return normalizeTalent(extractEntity(payload, ['data', 'item', 'result']) || nextValues);
-  } catch {
-    return upsertById(adminStore.talent, { ...getById(adminStore.talent, id, normalizeTalent), ...nextValues, id }, normalizeTalent);
-  }
+  const resolveAssetValue = createAssetResolver();
+  const payload = await httpClient.put(buildAdminResourceEndpoint(API_ENDPOINTS.admin.talent, id), {
+    ...values,
+    imageUrl: await resolveAssetValue(values?.imageUrl, `talent-${id}-avatar`)
+  });
+  return normalizeTalent(extractEntity(payload, ['data', 'item', 'result']) || payload);
 }
 
 export async function updateAdminTalentStatus(id, status) {
-  try {
-    const payload = await httpClient.patch(buildAdminTalentStatusEndpoint(id), { status });
-    return normalizeTalent(extractEntity(payload, ['data', 'item', 'result']) || { id, status });
-  } catch {
-    return upsertById(adminStore.talent, { ...getById(adminStore.talent, id, normalizeTalent), status }, normalizeTalent);
-  }
+  const payload = await httpClient.patch(buildAdminTalentStatusEndpoint(id), { status });
+  return normalizeTalent(extractEntity(payload, ['data', 'item', 'result']) || payload);
 }
 
 export async function updateAdminTalentFeatured(id, featured) {
-  try {
-    const payload = await httpClient.patch(buildAdminFeaturedEndpoint(id), { featured });
-    return normalizeTalent(extractEntity(payload, ['data', 'item', 'result']) || { id, featured });
-  } catch {
-    return upsertById(adminStore.talent, { ...getById(adminStore.talent, id, normalizeTalent), featured }, normalizeTalent);
-  }
+  const payload = await httpClient.patch(buildAdminFeaturedEndpoint(id), { featured });
+  return normalizeTalent(extractEntity(payload, ['data', 'item', 'result']) || payload);
 }
 
 export async function updateAdminTalentAvatar(id, imageUrl) {
-  try {
-    const payload = await httpClient.patch(buildAdminTalentAvatarEndpoint(id), { imageUrl });
-    return normalizeTalent(extractEntity(payload, ['data', 'item', 'result']) || { id, imageUrl });
-  } catch {
-    return upsertById(adminStore.talent, { ...getById(adminStore.talent, id, normalizeTalent), imageUrl }, normalizeTalent);
-  }
+  const resolveAssetValue = createAssetResolver();
+  const payload = await httpClient.patch(buildAdminTalentAvatarEndpoint(id), {
+    imageUrl: await resolveAssetValue(imageUrl, `talent-${id}-avatar`)
+  });
+  return normalizeTalent(extractEntity(payload, ['data', 'item', 'result']) || payload);
 }
 
 export async function deleteAdminTalent(id) {
-  try {
-    await httpClient.delete(buildAdminResourceEndpoint(API_ENDPOINTS.admin.talent, id));
-  } catch {
-    removeById(adminStore.talent, id);
-  }
-
-  return { success: true };
+  await httpClient.delete(buildAdminResourceEndpoint(API_ENDPOINTS.admin.talent, id));
+  return { success: true, id };
 }
 
 export async function fetchAdminPricing(params = {}) {
-  try {
-    const payload = await httpClient.get(API_ENDPOINTS.admin.pricing, { query: params });
-    return normalizeListPayload(payload, normalizePricing, params);
-  } catch {
-    return fallbackPricing(params);
-  }
+  const payload = await httpClient.get(API_ENDPOINTS.admin.pricing, { query: params });
+  return normalizeListPayload(payload, normalizePricing, params);
 }
 
 export async function createAdminPricing(values) {
-  try {
-    const payload = await httpClient.post(API_ENDPOINTS.admin.pricing, values);
-    return normalizePricing(extractEntity(payload, ['data', 'item', 'result']) || values);
-  } catch {
-    return upsertById(adminStore.pricing, { ...values, id: createId('pkg') }, normalizePricing);
-  }
+  const payload = await httpClient.post(API_ENDPOINTS.admin.pricing, values);
+  return normalizePricing(extractEntity(payload, ['data', 'item', 'result']) || payload);
 }
 
 export async function updateAdminPricing(id, values) {
-  try {
-    const payload = await httpClient.put(buildAdminResourceEndpoint(API_ENDPOINTS.admin.pricing, id), values);
-    return normalizePricing(extractEntity(payload, ['data', 'item', 'result']) || values);
-  } catch {
-    return upsertById(adminStore.pricing, { ...getById(adminStore.pricing, id, normalizePricing), ...values, id }, normalizePricing);
-  }
+  const payload = await httpClient.put(buildAdminResourceEndpoint(API_ENDPOINTS.admin.pricing, id), values);
+  return normalizePricing(extractEntity(payload, ['data', 'item', 'result']) || payload);
 }
 
 export async function deleteAdminPricing(id) {
-  try {
-    await httpClient.delete(buildAdminResourceEndpoint(API_ENDPOINTS.admin.pricing, id));
-  } catch {
-    removeById(adminStore.pricing, id);
-  }
-
-  return { success: true };
+  await httpClient.delete(buildAdminResourceEndpoint(API_ENDPOINTS.admin.pricing, id));
+  return { success: true, id };
 }

@@ -8,7 +8,7 @@ function renderStars(rating) {
 
   return Array.from({ length: 5 }, (_, index) => (
     <span key={`${safeRating}-${index}`} className={index < fullStars ? 'star active' : 'star'}>
-      ★
+      *
     </span>
   ));
 }
@@ -78,7 +78,7 @@ export default function FreelancerProfileCard({ talent, navigate, isSaved = fals
           {avatar ? (
             <img src={avatar} alt={name} className="freelancerAvatar" />
           ) : (
-            <div className="freelancerAvatar freelancerAvatarFallback">{initials || 'FR'}</div>
+            <div className="freelancerAvatar freelancerAvatarFallback">{initials || 'MB'}</div>
           )}
         </div>
       </div>
@@ -98,7 +98,7 @@ export default function FreelancerProfileCard({ talent, navigate, isSaved = fals
                 </span>
               ))}
             </div>
-            <small>Tools</small>
+            <small>Focus</small>
           </div>
         </div>
 
@@ -117,7 +117,7 @@ export default function FreelancerProfileCard({ talent, navigate, isSaved = fals
             <div className="freelancerStatValue">
               <strong>{duration || '8 Days'}</strong>
             </div>
-            <span>duration</span>
+            <span>delivery</span>
           </div>
 
           <div className="freelancerDivider" />
@@ -142,7 +142,7 @@ export default function FreelancerProfileCard({ talent, navigate, isSaved = fals
 
         {(badge || featured) && (
           <div className="freelancerBadgeRow">
-            <span className="freelancerFeaturedBadge">{badge || 'Featured Talent'}</span>
+            <span className="freelancerFeaturedBadge">{badge || 'Featured Member'}</span>
           </div>
         )}
 
@@ -154,7 +154,7 @@ export default function FreelancerProfileCard({ talent, navigate, isSaved = fals
             handleNavigate();
           }}
         >
-          View task details
+          View profile details
         </button>
       </div>
     </article>

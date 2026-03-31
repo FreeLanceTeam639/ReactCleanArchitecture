@@ -1,21 +1,27 @@
 import { useEffect, useMemo, useState } from 'react';
-import { defaultTalentCategory, fallbackHomeContent } from '../data/fallbackHomeContent.js';
 import {
   fetchFeaturedFreelancerCategories,
   fetchFeaturedFreelancers,
-  fetchFeaturedTestimonials,
-  fetchLatestBlogs,
+  fetchLiveJobs,
   fetchPopularCategories,
   fetchPricingPlans,
-  fetchServiceOverview,
   toggleFeaturedTalentSavedStatus
 } from '../services/homeContentService.js';
 
 const DEFAULT_LIMIT = 6;
+const DEFAULT_TALENT_CATEGORY = 'All';
+const EMPTY_HOME_DATA = {
+  popular: [],
+  services: [],
+  jobs: [],
+  tabs: [],
+  talents: [],
+  plans: []
+};
 
 export function useHomePageData() {
-  const [homeData, setHomeData] = useState(fallbackHomeContent);
-  const [activeTalentCategory, setActiveTalentCategory] = useState(defaultTalentCategory);
+  const [homeData, setHomeData] = useState(EMPTY_HOME_DATA);
+  const [activeTalentCategory, setActiveTalentCategory] = useState(DEFAULT_TALENT_CATEGORY);
   const [notice, setNotice] = useState('');
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isTalentLoading, setIsTalentLoading] = useState(false);
@@ -24,8 +30,7 @@ export function useHomePageData() {
   const [budgetFilter, setBudgetFilter] = useState('all');
   const [sortOrder, setSortOrder] = useState('rating');
   const [savedTalentIds, setSavedTalentIds] = useState([]);
-  const [talentMeta, setTalentMeta] = useState({ total: fallbackHomeContent.talents.length, hasMore: false, page: 1, limit: DEFAULT_LIMIT });
-  const [activeTestimonialIndex, setActiveTestimonialIndex] = useState(0);
+  const [talentMeta, setTalentMeta] = useState({ total: 0, hasMore: false, page: 1, limit: DEFAULT_LIMIT });
 
   useEffect(() => {
     let isCancelled = false;
@@ -35,45 +40,36 @@ export function useHomePageData() {
 
       const results = await Promise.allSettled([
         fetchPopularCategories(),
-        fetchServiceOverview(),
-        fetchFeaturedTestimonials(),
+        fetchLiveJobs({ limit: 4 }),
         fetchFeaturedFreelancerCategories(),
-        fetchPricingPlans({ billingPeriod }),
-        fetchLatestBlogs({ limit: 3 })
+        fetchPricingPlans({ billingPeriod })
       ]);
 
       if (isCancelled) {
         return;
       }
 
-      const [popular, services, testimonials, tabs, plans, blogs] = results;
-      const nextTabs = tabs.status === 'fulfilled' && tabs.value.length ? tabs.value : fallbackHomeContent.tabs;
+      const [popular, jobs, tabs, plans] = results;
+      const nextTabs = tabs.status === 'fulfilled' ? tabs.value : [];
 
-      setHomeData((currentState) => ({
-        ...currentState,
-        popular: popular.status === 'fulfilled' && popular.value.length ? popular.value : fallbackHomeContent.popular,
-        services: services.status === 'fulfilled' && services.value.length ? services.value : fallbackHomeContent.services,
-        testimonials:
-          testimonials.status === 'fulfilled' && testimonials.value.length
-            ? testimonials.value
-            : fallbackHomeContent.testimonials,
+      setHomeData({
+        popular: popular.status === 'fulfilled' ? popular.value : [],
+        services: [],
+        jobs: jobs.status === 'fulfilled' ? jobs.value : [],
         tabs: nextTabs,
-        plans: plans.status === 'fulfilled' && plans.value.length ? plans.value : fallbackHomeContent.plans,
-        blogs: blogs.status === 'fulfilled' && blogs.value.length ? blogs.value : fallbackHomeContent.blogs
-      }));
+        talents: [],
+        plans: plans.status === 'fulfilled' ? plans.value : []
+      });
 
       setActiveTalentCategory((currentCategory) => (
-        nextTabs.includes(currentCategory) ? currentCategory : nextTabs[0] || defaultTalentCategory
+        nextTabs.includes(currentCategory) ? currentCategory : (nextTabs[0] || DEFAULT_TALENT_CATEGORY)
       ));
 
-      if (results.some((result) => result.status === 'rejected')) {
-        setNotice('Endpointlər əlavə olunub. Backend hazır olmayanda ana səhifə mock cavabla işləyir.');
-      }
-
-      if (results.some((result) => result.status === 'rejected')) {
-        setNotice('Some sections are currently showing preview content while new updates sync in.');
-      }
-
+      setNotice(
+        results.some((result) => result.status === 'rejected')
+          ? 'A few sections are taking longer than usual. The rest of the marketplace is ready to use.'
+          : ''
+      );
       setIsInitialLoading(false);
     }
 
@@ -94,12 +90,13 @@ export function useHomePageData() {
         if (!isCancelled) {
           setHomeData((currentState) => ({
             ...currentState,
-            plans: plans.length ? plans : fallbackHomeContent.plans
+            plans
           }));
         }
-      } catch {
+      } catch (error) {
         if (!isCancelled) {
-          setHomeData((currentState) => ({ ...currentState, plans: fallbackHomeContent.plans }));
+          setHomeData((currentState) => ({ ...currentState, plans: [] }));
+          setNotice(error?.message || 'Pricing plans are syncing. You can continue browsing the marketplace.');
         }
       }
     }
@@ -119,7 +116,7 @@ export function useHomePageData() {
 
       try {
         const response = await fetchFeaturedFreelancers({
-          category: activeTalentCategory,
+          category: activeTalentCategory !== DEFAULT_TALENT_CATEGORY ? activeTalentCategory : undefined,
           search: searchQuery,
           budget: budgetFilter,
           sort: sortOrder,
@@ -140,28 +137,20 @@ export function useHomePageData() {
           });
           setSavedTalentIds((response.items || []).filter((item) => item.isSaved).map((item) => item.id));
         }
-      } catch {
+      } catch (error) {
         if (!isCancelled) {
-          const fallbackResponse = await fetchFeaturedFreelancers({
-            category: activeTalentCategory,
-            search: searchQuery,
-            budget: budgetFilter,
-            sort: sortOrder,
-            page,
-            limit: DEFAULT_LIMIT
-          });
-
           setHomeData((currentState) => ({
             ...currentState,
-            talents: append ? [...(currentState.talents || []), ...fallbackResponse.items] : fallbackResponse.items
+            talents: append ? currentState.talents || [] : []
           }));
           setTalentMeta({
-            total: fallbackResponse.total,
-            hasMore: fallbackResponse.hasMore,
-            page: fallbackResponse.page,
-            limit: fallbackResponse.limit
+            total: 0,
+            hasMore: false,
+            page: 1,
+            limit: DEFAULT_LIMIT
           });
-          setSavedTalentIds((fallbackResponse.items || []).filter((item) => item.isSaved).map((item) => item.id));
+          setSavedTalentIds([]);
+          setNotice(error?.message || 'Member discovery is refreshing. Please try again in a moment.');
         }
       } finally {
         if (!isCancelled) {
@@ -186,7 +175,7 @@ export function useHomePageData() {
 
     try {
       const response = await fetchFeaturedFreelancers({
-        category: activeTalentCategory,
+        category: activeTalentCategory !== DEFAULT_TALENT_CATEGORY ? activeTalentCategory : undefined,
         search: searchQuery,
         budget: budgetFilter,
         sort: sortOrder,
@@ -213,6 +202,8 @@ export function useHomePageData() {
         });
         return Array.from(nextIds);
       });
+    } catch (error) {
+      setNotice(error?.message || 'More profiles could not be loaded right now.');
     } finally {
       setIsTalentLoading(false);
     }
@@ -222,55 +213,47 @@ export function useHomePageData() {
     setSearchQuery('');
     setBudgetFilter('all');
     setSortOrder('rating');
-    setActiveTalentCategory(defaultTalentCategory);
+    setActiveTalentCategory(homeData.tabs[0] || DEFAULT_TALENT_CATEGORY);
   };
 
   const toggleSavedTalent = async (talentId) => {
-    const nextSaved = !savedTalentIds.includes(talentId);
-    const result = await toggleFeaturedTalentSavedStatus(talentId, nextSaved);
+    try {
+      const nextSaved = !savedTalentIds.includes(talentId);
+      const result = await toggleFeaturedTalentSavedStatus(talentId, nextSaved);
 
-    setSavedTalentIds((currentState) => {
-      const nextSet = new Set(currentState);
+      setSavedTalentIds((currentState) => {
+        const nextSet = new Set(currentState);
 
-      if (result.isSaved) {
-        nextSet.add(talentId);
-      } else {
-        nextSet.delete(talentId);
-      }
+        if (result.isSaved) {
+          nextSet.add(talentId);
+        } else {
+          nextSet.delete(talentId);
+        }
 
-      return Array.from(nextSet);
-    });
+        return Array.from(nextSet);
+      });
 
-    setHomeData((currentState) => ({
-      ...currentState,
-      talents: (currentState.talents || []).map((talent) => (
-        talent.id === talentId
-          ? {
-              ...talent,
-              isSaved: result.isSaved
-            }
-          : talent
-      ))
-    }));
-  };
-
-  const goToNextTestimonial = () => {
-    setActiveTestimonialIndex((currentState) => (
-      homeData.testimonials.length ? (currentState + 1) % homeData.testimonials.length : 0
-    ));
-  };
-
-  const goToPreviousTestimonial = () => {
-    setActiveTestimonialIndex((currentState) => (
-      homeData.testimonials.length ? (currentState - 1 + homeData.testimonials.length) % homeData.testimonials.length : 0
-    ));
+      setHomeData((currentState) => ({
+        ...currentState,
+        talents: (currentState.talents || []).map((talent) => (
+          talent.id === talentId
+            ? {
+                ...talent,
+                isSaved: result.isSaved
+              }
+            : talent
+        ))
+      }));
+    } catch (error) {
+      setNotice(error?.message || 'Saved state could not be updated.');
+    }
   };
 
   const heroHighlights = useMemo(() => [
-    { label: 'Verified specialists', value: '12k+' },
-    { label: 'Briefs posted', value: '980+' },
-    { label: 'Avg. reply time', value: '2h' }
-  ], []);
+    { label: 'Featured talent', value: String(talentMeta.total || homeData.talents.length || 0) },
+    { label: 'Categories live', value: String(homeData.tabs.length || homeData.popular.length || 0) },
+    { label: 'Live job posts', value: String(homeData.jobs.length || 0) }
+  ], [homeData.jobs.length, homeData.popular.length, homeData.tabs.length, homeData.talents.length, talentMeta.total]);
 
   const trustIndicators = useMemo(() => [
     'Verified profiles',
@@ -301,11 +284,6 @@ export function useHomePageData() {
     loadMoreTalents,
     resetTalentFilters,
     heroHighlights,
-    trustIndicators,
-    activeTestimonial: homeData.testimonials[activeTestimonialIndex] || homeData.testimonials[0],
-    activeTestimonialIndex,
-    setActiveTestimonialIndex,
-    goToNextTestimonial,
-    goToPreviousTestimonial
+    trustIndicators
   };
 }

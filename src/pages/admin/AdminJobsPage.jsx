@@ -93,12 +93,16 @@ export default function AdminJobsPage({ navigate, pathname = ROUTES.adminJobs })
   const handleSave = async () => {
     const selectedCategory = categoryOptions.find((item) => item.id === formState.categoryId);
 
-    await saveJob(editingJob.id, {
+    const updatedJob = await saveJob(editingJob.id, {
       ...formState,
       budget: Number(formState.budget),
       categoryName: selectedCategory?.name || editingJob.categoryName,
       tags: formState.tagsText.split(',').map((item) => item.trim()).filter(Boolean)
     });
+
+    if (!updatedJob) {
+      return;
+    }
 
     setEditingJob(null);
   };
@@ -303,8 +307,11 @@ export default function AdminJobsPage({ navigate, pathname = ROUTES.adminJobs })
           description={`Bu job ${visibilityTarget.visibility === 'hidden' ? 'public siyahıda görünəcək' : 'public siyahıdan gizlədiləcək'}.`}
           confirmLabel={visibilityTarget.visibility === 'hidden' ? 'Show' : 'Hide'}
           onConfirm={async () => {
-            await toggleVisibility(visibilityTarget);
-            setVisibilityTarget(null);
+            const updatedJob = await toggleVisibility(visibilityTarget);
+
+            if (updatedJob) {
+              setVisibilityTarget(null);
+            }
           }}
           onClose={() => setVisibilityTarget(null)}
           tone={visibilityTarget.visibility === 'hidden' ? 'primary' : 'danger'}
@@ -317,8 +324,11 @@ export default function AdminJobsPage({ navigate, pathname = ROUTES.adminJobs })
           description="Bu əməliyyat job-u admin siyahısından siləcək."
           confirmLabel="Delete"
           onConfirm={async () => {
-            await deleteJob(deleteTarget.id);
-            setDeleteTarget(null);
+            const deletedJob = await deleteJob(deleteTarget.id);
+
+            if (deletedJob) {
+              setDeleteTarget(null);
+            }
           }}
           onClose={() => setDeleteTarget(null)}
         />

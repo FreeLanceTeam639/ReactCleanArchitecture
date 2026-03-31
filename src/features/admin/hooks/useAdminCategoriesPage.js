@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react';
-import { createAdminCategory, deleteAdminCategory, fetchAdminCategories, updateAdminCategory, updateAdminCategoryStatus } from '../services/adminService.js';
+import {
+  createAdminCategory,
+  deleteAdminCategory,
+  fetchAdminCategories,
+  updateAdminCategory,
+  updateAdminCategoryStatus
+} from '../services/adminService.js';
+import { runAdminMutation } from './adminMutation.js';
 
 export function useAdminCategoriesPage() {
   const [search, setSearch] = useState('');
@@ -19,6 +26,7 @@ export function useAdminCategoriesPage() {
 
       try {
         const response = await fetchAdminCategories({ search, status, page, pageSize: 8 });
+
         if (!isCancelled) {
           setItems(response.items);
           setMeta(response.meta);
@@ -66,26 +74,41 @@ export function useAdminCategoriesPage() {
     feedback,
     setFeedback,
     refresh,
-    createCategory: async (values) => {
-      await createAdminCategory(values);
-      setFeedback('Yeni category əlavə olundu.');
-      await refresh();
-    },
-    saveCategory: async (id, values) => {
-      await updateAdminCategory(id, values);
-      setFeedback('Category yeniləndi.');
-      await refresh();
-    },
+    createCategory: async (values) => runAdminMutation({
+      action: () => createAdminCategory(values),
+      setError,
+      setFeedback,
+      successMessage: 'Yeni category əlavə olundu.',
+      errorMessage: 'Category yaratmaq mümkün olmadı.',
+      afterSuccess: refresh
+    }),
+    saveCategory: async (id, values) => runAdminMutation({
+      action: () => updateAdminCategory(id, values),
+      setError,
+      setFeedback,
+      successMessage: 'Category yeniləndi.',
+      errorMessage: 'Category yeniləmək mümkün olmadı.',
+      afterSuccess: refresh
+    }),
     toggleCategoryStatus: async (item) => {
       const nextStatus = item.status === 'active' ? 'inactive' : 'active';
-      await updateAdminCategoryStatus(item.id, nextStatus);
-      setFeedback(`Category ${nextStatus} edildi.`);
-      await refresh();
+
+      return runAdminMutation({
+        action: () => updateAdminCategoryStatus(item.id, nextStatus),
+        setError,
+        setFeedback,
+        successMessage: `Category ${nextStatus} edildi.`,
+        errorMessage: 'Category statusunu dəyişdirmək mümkün olmadı.',
+        afterSuccess: refresh
+      });
     },
-    deleteCategory: async (id) => {
-      await deleteAdminCategory(id);
-      setFeedback('Category silindi.');
-      await refresh();
-    }
+    deleteCategory: async (id) => runAdminMutation({
+      action: () => deleteAdminCategory(id),
+      setError,
+      setFeedback,
+      successMessage: 'Category silindi.',
+      errorMessage: 'Category silmək mümkün olmadı.',
+      afterSuccess: refresh
+    })
   };
 }

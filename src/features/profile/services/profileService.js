@@ -7,21 +7,9 @@ import {
   buildProfileSavedItemEndpoint
 } from '../../../shared/api/endpoints.js';
 import { httpClient } from '../../../shared/api/httpClient.js';
-import { STORAGE_KEYS } from '../../../shared/constants/storageKeys.js';
-import { isDemoAuthenticatedSession } from '../../../shared/lib/storage/authStorage.js';
+import { ensureUploadedImage, resolveApiAssetUrl, stripApiOriginFromAssetUrl } from '../../../shared/api/mediaAssets.js';
 import { extractCollection } from '../../../shared/lib/response/extractCollection.js';
 import { extractEntity } from '../../../shared/lib/response/extractEntity.js';
-import {
-  buildMockListings,
-  buildMockMessages,
-  buildMockNotifications,
-  buildMockProfile,
-  buildMockProposals,
-  buildMockReviews,
-  buildMockSavedItems,
-  buildMockSummary,
-  buildMockTasks
-} from '../../auth/data/mockUsers.js';
 
 function pickFirst(...values) {
   return values.find((value) => value !== undefined && value !== null && value !== '');
@@ -52,37 +40,14 @@ function toStringArray(value) {
   return [];
 }
 
-function readProfileDraft() {
-  try {
-    const rawValue = localStorage.getItem(STORAGE_KEYS.profileDraft);
-    return rawValue ? JSON.parse(rawValue) : {};
-  } catch {
-    return {};
-  }
-}
-
-function saveProfileDraft(value) {
-  try {
-    localStorage.setItem(STORAGE_KEYS.profileDraft, JSON.stringify(value));
-  } catch {
-    // ignore storage write errors
-  }
-}
-
-function resolveDemo(factory) {
-  if (!isDemoAuthenticatedSession()) {
-    return null;
-  }
-
-  return factory();
-}
-
 export function normalizeProfile(payload) {
   const entity = extractEntity(payload, ['profile', 'user', 'data']) || {};
   const fullName = pickFirst(entity.fullName, entity.name, `${entity.firstName || ''} ${entity.lastName || ''}`.trim(), 'Account');
   const verificationStatus = String(pickFirst(entity.verificationStatus, 'Unverified'));
   const isVerified = Boolean(pickFirst(entity.isVerified, false));
   const canPostJobs = Boolean(pickFirst(entity.canPostJobs, isVerified));
+  const rawLocation = pickFirst(entity.location, '');
+  const country = pickFirst(entity.country, rawLocation === 'Location not specified' ? '' : rawLocation, '');
 
   return {
     id: pickFirst(entity.id, entity._id, entity.userId, ''),
@@ -91,14 +56,17 @@ export function normalizeProfile(payload) {
     email: pickFirst(entity.email, ''),
     profession: pickFirst(entity.profession, entity.title, entity.role, 'Member'),
     headline: pickFirst(entity.headline, entity.profession, entity.title, ''),
-    location: pickFirst(entity.location, entity.country, 'Location not specified'),
+    country,
+    location: pickFirst(entity.location, country, 'Location not specified'),
+    phoneNumber: pickFirst(entity.phoneNumber, entity.phone, ''),
     memberSince: pickFirst(entity.memberSince, entity.createdAt?.slice?.(0, 4), '-'),
     badge: pickFirst(entity.badge, entity.level, isVerified ? 'Verified Member' : 'Member'),
     bio: pickFirst(entity.bio, entity.description, ''),
     availability: pickFirst(entity.availability, entity.status, 'Available'),
     hourlyRate: pickFirst(entity.hourlyRate, entity.rate, entity.pricePerHour, ''),
     avatarInitials: pickFirst(entity.avatarInitials, deriveInitials(fullName), 'AC'),
-    avatarUrl: pickFirst(entity.avatarUrl, entity.avatar, entity.imageUrl, ''),
+    avatarUrl: resolveApiAssetUrl(pickFirst(entity.avatarUrl, entity.avatar, entity.imageUrl, '')),
+    bannerUrl: resolveApiAssetUrl(pickFirst(entity.bannerUrl, entity.banner, '')),
     completionRate: Number(pickFirst(entity.completionRate, entity.responseRate, 0)) || 0,
     responseTime: pickFirst(entity.responseTime, entity.avgResponseTime, '-'),
     skills: toStringArray(entity.skills),
@@ -209,100 +177,74 @@ function getCollection(payload, preferredKeys = []) {
 }
 
 export async function fetchCurrentUserProfile() {
-  const demoProfile = resolveDemo(() => buildMockProfile(readProfileDraft()));
-  if (demoProfile) return demoProfile;
   return normalizeProfile(await httpClient.get(API_ENDPOINTS.profile.me));
 }
 
 export async function updateCurrentUserProfile(payload) {
-  const demoProfile = resolveDemo(() => {
-    const nextDraft = { ...readProfileDraft(), ...payload };
-    saveProfileDraft(nextDraft);
-    return buildMockProfile(nextDraft);
-  });
-  if (demoProfile) return demoProfile;
-  return normalizeProfile(await httpClient.patch(API_ENDPOINTS.profile.update, payload));
+  const uploadedAvatarUrl = await ensureUploadedImage(payload?.avatarUrl, 'profile-avatar');
+  const uploadedBannerUrl = await ensureUploadedImage(payload?.bannerUrl, 'profile-banner');
+  const nextPayload = {
+    ...payload,
+    avatarUrl: stripApiOriginFromAssetUrl(uploadedAvatarUrl),
+    bannerUrl: stripApiOriginFromAssetUrl(uploadedBannerUrl)
+  };
+
+  return normalizeProfile(await httpClient.patch(API_ENDPOINTS.profile.update, nextPayload));
 }
 
 export async function fetchProfileSummary() {
-  const demoSummary = resolveDemo(buildMockSummary);
-  if (demoSummary) return demoSummary;
   return normalizeSummary(await httpClient.get(API_ENDPOINTS.profile.summary));
 }
 
 export async function fetchProfileTasks() {
-  const demoTasks = resolveDemo(buildMockTasks);
-  if (demoTasks) return demoTasks;
   return getCollection(await httpClient.get(API_ENDPOINTS.profile.tasks), ['tasks', 'items']).map(normalizeTask);
 }
 
 export async function fetchProfileListings() {
-  const demoListings = resolveDemo(buildMockListings);
-  if (demoListings) return demoListings;
   return getCollection(await httpClient.get(API_ENDPOINTS.profile.listings), ['listings', 'items']).map(normalizeListing);
 }
 
 export async function updateProfileListingStatus(listingId, status) {
-  const demoListing = resolveDemo(() => ({ id: listingId, status }));
-  if (demoListing) return normalizeListing(demoListing);
   const payload = await httpClient.patch(buildProfileListingStatusEndpoint(listingId), { status });
-  return normalizeListing(payload || { id: listingId, status });
+  return normalizeListing(extractEntity(payload, ['data', 'item', 'result']) || { id: listingId, status });
 }
 
 export async function fetchProfileProposals() {
-  const demoProposals = resolveDemo(buildMockProposals);
-  if (demoProposals) return demoProposals;
   return getCollection(await httpClient.get(API_ENDPOINTS.profile.proposals), ['proposals', 'items']).map(normalizeProposal);
 }
 
 export async function updateProfileProposalStatus(proposalId, status) {
-  const demoProposal = resolveDemo(() => ({ id: proposalId, status }));
-  if (demoProposal) return normalizeProposal(demoProposal);
   const payload = await httpClient.patch(buildProfileProposalStatusEndpoint(proposalId), { status });
-  return normalizeProposal(payload || { id: proposalId, status });
+  return normalizeProposal(extractEntity(payload, ['data', 'item', 'result']) || { id: proposalId, status });
 }
 
 export async function fetchProfileReviews() {
-  const demoReviews = resolveDemo(buildMockReviews);
-  if (demoReviews) return demoReviews;
   return getCollection(await httpClient.get(API_ENDPOINTS.profile.reviews), ['reviews', 'items']).map(normalizeReview);
 }
 
 export async function fetchSavedItems() {
-  const demoSaved = resolveDemo(buildMockSavedItems);
-  if (demoSaved) return demoSaved;
   return getCollection(await httpClient.get(API_ENDPOINTS.profile.saved), ['saved', 'savedItems', 'items']).map(normalizeSavedItem);
 }
 
 export async function removeSavedItem(savedItemId) {
-  const demoSaved = resolveDemo(() => savedItemId);
-  if (demoSaved) return demoSaved;
   await httpClient.delete(buildProfileSavedItemEndpoint(savedItemId));
   return savedItemId;
 }
 
 export async function fetchNotifications() {
-  const demoNotifications = resolveDemo(buildMockNotifications);
-  if (demoNotifications) return demoNotifications;
   return getCollection(await httpClient.get(API_ENDPOINTS.profile.notifications), ['notifications', 'items']).map(normalizeNotification);
 }
 
 export async function markNotificationAsRead(notificationId) {
-  const demoNotification = resolveDemo(() => ({ id: notificationId, isRead: true }));
-  if (demoNotification) return normalizeNotification(demoNotification);
   const payload = await httpClient.patch(buildProfileNotificationReadEndpoint(notificationId), { isRead: true });
-  return normalizeNotification(payload || { id: notificationId, isRead: true });
+  return normalizeNotification(extractEntity(payload, ['data', 'item', 'result']) || { id: notificationId, isRead: true });
 }
 
 export async function fetchMessages() {
-  const demoMessages = resolveDemo(buildMockMessages);
-  if (demoMessages) return demoMessages;
   return getCollection(await httpClient.get(API_ENDPOINTS.profile.messages), ['messages', 'items']).map(normalizeMessage);
 }
 
 export async function markMessageAsRead(messageId) {
-  const demoMessage = resolveDemo(() => ({ id: messageId, isRead: true }));
-  if (demoMessage) return normalizeMessage(demoMessage);
   const payload = await httpClient.patch(buildProfileMessageReadEndpoint(messageId), { isRead: true });
-  return normalizeMessage(payload || { id: messageId, isRead: true });
+  return normalizeMessage(extractEntity(payload, ['data', 'item', 'result']) || { id: messageId, isRead: true });
 }

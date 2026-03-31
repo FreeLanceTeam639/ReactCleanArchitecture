@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { fetchAdminVerificationTickets, reviewAdminVerificationTicket } from '../services/adminService.js';
+import { runAdminMutation } from './adminMutation.js';
 
 export function useAdminVerificationPage() {
   const [search, setSearch] = useState('');
@@ -18,6 +19,7 @@ export function useAdminVerificationPage() {
 
       try {
         const response = await fetchAdminVerificationTickets({ search, status });
+
         if (!isCancelled) {
           setItems(response);
         }
@@ -46,9 +48,19 @@ export function useAdminVerificationPage() {
   }), [items]);
 
   const reviewTicket = async (ticketId, values) => {
-    const updatedTicket = await reviewAdminVerificationTicket(ticketId, values);
+    const updatedTicket = await runAdminMutation({
+      action: () => reviewAdminVerificationTicket(ticketId, values),
+      setError,
+      setFeedback,
+      successMessage: `Verification ticket ${values.status.toLowerCase()} successfully.`,
+      errorMessage: 'Verification ticket could not be reviewed.'
+    });
+
+    if (!updatedTicket) {
+      return null;
+    }
+
     setItems((current) => current.map((item) => (item.id === ticketId ? { ...item, ...updatedTicket } : item)));
-    setFeedback(`Verification ticket ${values.status.toLowerCase()} successfully.`);
     return updatedTicket;
   };
 

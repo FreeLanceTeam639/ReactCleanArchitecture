@@ -1,0 +1,122 @@
+@media (min-width: 981px) {
+  .detailHeaderRow.searchOpen {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .detailHeaderRow.searchOpen .detailHeaderPanel {
+    display: none;
+  }
+
+  .detailHeaderRow.searchOpen .detailHeaderActions {
+    grid-column: 2;
+    width: 100%;
+    justify-self: stretch;
+    justify-content: stretch;
+  }
+
+  .detailHeaderRow.searchOpen .detailSearchShell,
+  .detailHeaderRow.searchOpen .detailSearchShell.open {
+    width: 100%;
+    min-width: 0;
+    min-height: 52px;
+    padding: 8px 12px;
+    gap: 12px;
+    border-color: rgba(255, 90, 20, 0.22);
+    background: rgba(255, 255, 255, 0.99);
+    box-shadow: 0 18px 40px rgba(18, 38, 63, 0.08);
+  }
+
+  .detailHeaderRow.searchOpen .detailSearchActivator {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    background: rgba(255, 90, 20, 0.1);
+    color: var(--accent);
+  }
+
+  .detailHeaderRow.searchOpen .detailSearchClose {
+    display: inline-flex;
+  }
+}
+
+.detailHeaderPanel.menuLayout .detailHeaderNav,
+.detailHeaderPanel.menuLayout .detailHeaderPanelUtility,
+.detailHeaderPanel.menuLayout .detailHeaderPanelActions {
+  display: grid;
+}
+
+.detailHeaderPanel.menuLayout .detailHeaderNav {
+  gap: 12px;
+}
+
+.detailHeaderPanel.menuLayout .detailHeaderNav a {
+  display: flex;
+  align-items: center;
+  min-height: 50px;
+  padding: 0 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 90, 20, 0.1);
+  background: #fffaf7;
+  color: var(--text);
+}
+
+.detailHeaderPanel.menuLayout .detailHeaderPanelUtility {
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(22, 34, 57, 0.08);
+}
+
+.detailHeaderPanel.menuLayout .detailHeaderPanelActions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.detailHeaderPanelLanguage,
+.detailHeaderActions.menuLayout,
+.detailHeaderActions.menuLayout .detailSearchShell {
+  min-width: 0;
+}
+
+.detailHeaderPanelLanguage {
+  width: 100%;
+}
+
+.detailHeaderPanelLanguage.languageSwitcher {
+  width: 100%;
+  justify-content: center;
+}
+
+.detailHeaderActions.menuLayout {
+  width: auto;
+  justify-self: end;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.detailHeaderActions.menuLayout .detailSearchShell.open {
+  width: clamp(280px, 40vw, 460px);
+}
+
+.detailHeaderPanel.menuLayout .detailHeaderPanelActions > * {
+  width: 100%;
+}
+
+.detailHeaderPanel.menuLayout .detailHeaderPanelActions .detailHeaderLink,
+.detailHeaderPanel.menuLayout .detailHeaderPanelActions .detailHeaderRegister,
+.detailHeaderPanel.menuLayout .detailHeaderPanelActions .detailHeaderActionButton,
+.detailHeaderPanel.menuLayout .detailHeaderPanelActions .detailHeaderProfileButton,
+.detailHeaderPanel.menuLayout .detailHeaderPanelActions .detailHeaderLogout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50px;
+  min-width: 0;
+  padding-inline: 16px;
+}
+
+.detailHeaderPanel.menuLayout .detailHeaderPanelActions .detailHeaderLink {
+  border: 1px solid rgba(255, 90, 20, 0.1);
+  border-radius: 16px;
+  background: #fffaf7;
+}

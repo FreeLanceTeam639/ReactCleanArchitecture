@@ -1,15 +1,8 @@
-import { ArrowDown, ArrowUp, ImagePlus, Link2, Star, Trash2 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { ArrowDown, ArrowUp, Link2, Star, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import AudioUploadCard from '../../../components/ui/audio-upload-card.jsx';
+import { fileToOptimizedDataUrl, getImageUploadLimitInMb } from '../../lib/media/imageUpload.js';
 import AdminActionIconButton from './AdminActionIconButton.jsx';
-
-function readFileAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error('File oxuna bilmədi.'));
-    reader.readAsDataURL(file);
-  });
-}
 
 function createMediaItem(url, index = 0) {
   return {
@@ -39,7 +32,6 @@ function normalizeItems(items = []) {
 
 export default function AdminMediaGalleryField({ label = 'Media gallery', items = [], onChange }) {
   const [draftUrl, setDraftUrl] = useState('');
-  const inputRef = useRef(null);
   const mediaItems = normalizeItems(items);
 
   const commit = (nextItems) => {
@@ -58,16 +50,15 @@ export default function AdminMediaGalleryField({ label = 'Media gallery', items 
     setDraftUrl('');
   };
 
-  const handleFileSelection = async (event) => {
-    const files = Array.from(event.target.files || []);
+  const handleFileSelection = async (files) => {
+    const selectedFiles = Array.from(files || []);
 
-    if (!files.length) {
+    if (!selectedFiles.length) {
       return;
     }
 
-    const dataUrls = await Promise.all(files.map((file) => readFileAsDataUrl(file)));
+    const dataUrls = await Promise.all(selectedFiles.map((file) => fileToOptimizedDataUrl(file)));
     commit([...mediaItems, ...dataUrls.map((url, index) => createMediaItem(url, mediaItems.length + index))]);
-    event.target.value = '';
   };
 
   const handleRemove = (mediaId) => commit(mediaItems.filter((item) => item.id !== mediaId));
@@ -97,7 +88,7 @@ export default function AdminMediaGalleryField({ label = 'Media gallery', items 
       <div className="adminMediaFieldHeader">
         <div>
           <span>{label}</span>
-          <p className="adminFieldHint">Task və listing şəkilləri üçün upload-ready gallery sahəsi.</p>
+          <p className="adminFieldHint">Task and listing images support JPG, PNG and WEBP uploads.</p>
         </div>
       </div>
 
@@ -108,11 +99,20 @@ export default function AdminMediaGalleryField({ label = 'Media gallery', items 
         </label>
         <div className="adminImageFieldActions">
           <button type="button" className="adminSecondaryButton interactive" onClick={handleAddUrl}>Add URL</button>
-          <button type="button" className="adminSecondaryButton interactive" onClick={() => inputRef.current?.click()}>
-            <ImagePlus size={15} /> Upload images
-          </button>
         </div>
-        <input ref={inputRef} className="adminHiddenFileInput" type="file" accept="image/*" multiple onChange={handleFileSelection} />
+
+        <AudioUploadCard
+          className="adminUploadCard fullSpan"
+          title={mediaItems.length ? 'Qalereyaya yeni sekiller elave et' : 'Media gallery sekillerini yukle'}
+          description="Drag & drop et veya sekilleri sec. Ilk sekil primary qala biler, sonra sirani rahat deyise bilersiniz."
+          accept="image/png,image/jpeg,image/webp"
+          multiple
+          selectedCount={mediaItems.length}
+          fileTypeLabel="image"
+          buttonLabel="Sekilleri sec"
+          helperItems={['JPG, PNG, WEBP', `Max ${getImageUploadLimitInMb()} MB`, 'Primary sekli sonra deyise bilersiniz']}
+          onFilesSelected={handleFileSelection}
+        />
       </div>
 
       {mediaItems.length ? (
@@ -135,7 +135,7 @@ export default function AdminMediaGalleryField({ label = 'Media gallery', items 
       ) : (
         <div className="adminEmptyState compact">
           <strong>No media attached</strong>
-          <p>URL əlavə et və ya lokal fayldan preview yüklə.</p>
+          <p>Add a URL or upload a supported image file.</p>
         </div>
       )}
     </div>

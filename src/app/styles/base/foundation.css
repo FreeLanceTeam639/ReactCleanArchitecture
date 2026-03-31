@@ -1,0 +1,108 @@
+﻿:root {
+  --bg: #f6f5f3;
+  --auth-bg: #f4f4f4;
+  --text: #1e1b18;
+  --muted: #726c65;
+  --line: #e8e1d9;
+  --card: #ffffff;
+  --accent: #ff5a14;
+  --accent-dark: #e34b08;
+  --accent-soft: #ffe8de;
+  --soft-2: #f1ebe5;
+  --shadow-soft: 0 18px 36px rgba(33, 21, 14, 0.08);
+  --shadow-hover: 0 22px 44px rgba(255, 90, 20, 0.16);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: "Manrope", "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(255, 118, 56, 0.18), transparent 24%),
+    radial-gradient(circle at top right, rgba(13, 110, 253, 0.08), transparent 26%),
+    var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+.brandLabel,
+.eyebrow {
+  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+}
+
+a { color: inherit; text-decoration: none; }
+button { font: inherit; cursor: pointer; }
+input { font: inherit; }
+.wrap { width: min(1180px, calc(100% - 32px)); margin: 0 auto; }
+.wrapLarge { width: min(1220px, calc(100% - 32px)); margin: 0 auto; }
+.detailHeaderFrame { width: min(1380px, calc(100% - 32px)); margin: 0 auto; }
+
+.interactive,
+.btn,
+.bill,
+.tab,
+.menu,
+.authSubmit,
+.passwordToggle,
+.textButton,
+.inlineLink,
+.socials span,
+.cardLift {
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
+@media (hover: hover) {
+  .interactive:hover,
+  .btn:hover,
+  .bill:hover,
+  .tab:hover,
+  .menu:hover,
+  .authSubmit:hover,
+  .passwordToggle:hover,
+  .textButton:hover,
+  .inlineLink:hover,
+  .socials span:hover {
+    transform: translateY(-2px);
+  }
+  .cardLift:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-hover);
+  }
+}
+
+.interactive:active,
+.btn:active,
+.bill:active,
+.tab:active,
+.menu:active,
+.authSubmit:active,
+.passwordToggle:active,
+.textButton:active,
+.inlineLink:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+.fadeUp {
+  animation: fadeUp 0.7s ease both;
+}
+.delayOne {
+  animation-delay: 0.12s;
+}
+.displayFloat {
+  animation: floaty 4.4s ease-in-out infinite;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+

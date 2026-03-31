@@ -7,17 +7,21 @@ import {
   ChevronDown,
   Clock3,
   Eye,
-  Globe,
   Heart,
-  Mail,
-  MapPin,
-  Phone,
+  Images,
   ShoppingBag,
   Star
 } from 'lucide-react';
-import { fetchTaskDetailBySlug } from '../../features/task-detail/services/taskDetailService.js';
-import { getTaskSlugFromPathname, ROUTES } from '../../shared/constants/routes.js';
-import { navigateWithScroll } from '../../shared/lib/navigation/navigateWithScroll.js';
+import {
+  fetchTaskDetailBySlug,
+  hireTaskService,
+  startTaskConversation
+} from '../../features/task-detail/services/taskDetailService.js';
+import { fetchWalletSummary } from '../../features/workspace/services/workspaceService.js';
+import { buildTaskDetailRoute, getTaskSlugFromPathname, ROUTES } from '../../shared/constants/routes.js';
+import { useToast } from '../../shared/hooks/useToast.js';
+import { getAuthenticatedUser, hasAuthenticatedSession } from '../../shared/lib/storage/authStorage.js';
+import { setPendingConversationFocusId } from '../../shared/lib/storage/workspaceConversationState.js';
 import HomeFooter from '../../widgets/home/HomeFooter.jsx';
 import TaskDetailHeader from '../../widgets/task-detail/TaskDetailHeader.jsx';
 
@@ -27,6 +31,19 @@ const transitionUp = {
   animate: { opacity: 1, y: 0 },
   transition: { duration: 0.45, ease: 'easeOut' }
 };
+
+function parseMoneyValue(value) {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  const normalizedValue = String(value || '')
+    .replace(/[^0-9.,-]/g, '')
+    .replace(/,/g, '');
+  const numericValue = Number(normalizedValue);
+
+  return Number.isFinite(numericValue) ? numericValue : 0;
+}
 
 function renderStars(score) {
   const safeScore = Math.round(Number(score || 0));
@@ -43,7 +60,11 @@ function renderStars(score) {
 
 export default function TaskDetailPage({ navigate, pathname }) {
   const slug = getTaskSlugFromPathname(pathname);
+  const toast = useToast();
   const [detail, setDetail] = useState(null);
+  const [error, setError] = useState('');
+  const [isOpeningChat, setIsOpeningChat] = useState(false);
+  const [isHiringTask, setIsHiringTask] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState('');
   const [openFaq, setOpenFaq] = useState(0);
   const [activeImage, setActiveImage] = useState('');
@@ -52,13 +73,21 @@ export default function TaskDetailPage({ navigate, pathname }) {
     let isCancelled = false;
 
     async function loadDetail() {
-      const payload = await fetchTaskDetailBySlug(slug);
+      try {
+        const payload = await fetchTaskDetailBySlug(slug);
 
-      if (!isCancelled) {
-        setDetail(payload);
-        setSelectedPackage(payload.packages[1]?.key || payload.packages[0]?.key || '');
-        setActiveImage(payload.gallery?.[0] || '');
-        setOpenFaq(0);
+        if (!isCancelled) {
+          setDetail(payload);
+          setError('');
+          setSelectedPackage(payload.packages[1]?.key || payload.packages[0]?.key || '');
+          setActiveImage(payload.gallery?.[0] || '');
+          setOpenFaq(0);
+        }
+      } catch (nextError) {
+        if (!isCancelled) {
+          setDetail(null);
+          setError(nextError?.message || 'Task detail could not be loaded.');
+        }
       }
     }
 
@@ -74,13 +103,156 @@ export default function TaskDetailPage({ navigate, pathname }) {
       <div className="detailPageShell">
         <TaskDetailHeader navigate={navigate} />
         <main className="wrap detailPage fadeUp">
-          <section className="detailTitleCard">Loading task detail...</section>
+          <section className="detailTitleCard">{error || 'Loading task detail...'}</section>
+        </main>
+      </div>
+    );
+  }
+
+  if (!detail.packages.length || !detail.gallery.length) {
+    return (
+      <div className="detailPageShell">
+        <TaskDetailHeader navigate={navigate} />
+        <main className="wrap detailPage fadeUp">
+          <section className="detailTitleCard">
+            Task detail is currently unavailable.
+          </section>
         </main>
       </div>
     );
   }
 
   const selectedPackageData = detail.packages.find((item) => item.key === selectedPackage) || detail.packages[0];
+  const selectedOwnerTask =
+    detail.ownerTasks.find((item) => item.slug === detail.slug) ||
+    detail.ownerTasks[0] ||
+    null;
+  const authenticatedUser = getAuthenticatedUser()?.user || null;
+  const authenticatedUserId = authenticatedUser?.id || authenticatedUser?.userId || '';
+  const isOwnTask = Boolean(authenticatedUserId && detail.ownerUserId && authenticatedUserId === detail.ownerUserId);
+  const isJobBrief = detail.detailType === 'job-brief';
+  const hasMultiplePackages = detail.packages.length > 1;
+  const faqEyebrow = isJobBrief ? 'Project questions' : 'Frequently asked questions';
+  const faqHeading = isJobBrief
+    ? 'Everything you may want to confirm before replying to this brief'
+    : 'Everything you may want to know before starting';
+  const reviewHeading = isJobBrief
+    ? detail.reviewSectionTitle
+    : `1 client review (${detail.rating} overall rating)`;
+  const chatButtonLabel = isOpeningChat
+    ? 'Opening chat...'
+    : isOwnTask
+      ? 'Bu sizin elaninizdir'
+      : 'Open chat';
+  const hireButtonLabel = isHiringTask
+    ? 'Creating order...'
+    : isOwnTask
+      ? 'Bu sizin elaninizdir'
+      : detail.primaryActionLabel;
+  const selectedTaskPanelLabel = selectedOwnerTask
+    ? 'Project budget'
+    : selectedPackageData.name;
+  const selectedTaskPanelPrice = selectedOwnerTask?.budgetLabel || `$${selectedPackageData.price}`;
+  const selectedTaskPanelDescription = selectedOwnerTask?.summary || selectedPackageData.description;
+  const selectedTaskPanelTimeline = selectedOwnerTask?.timeline || selectedPackageData.delivery;
+  const selectedTaskPanelStatus = selectedOwnerTask
+    ? 'Scope can be refined in chat'
+    : selectedPackageData.revisions;
+  const selectedTaskFeatures = selectedOwnerTask
+    ? [
+        'Direct access to the job owner',
+        'Budget and scope alignment',
+        'Timeline clarification',
+        'Conversation-ready brief'
+      ]
+    : detail.included;
+
+  const resolveTaskActionErrorMessage = (message) => {
+    const normalizedMessage = String(message || '').toLowerCase();
+
+    if (
+      normalizedMessage.includes('your own profile') ||
+      normalizedMessage.includes('your own job post') ||
+      normalizedMessage.includes('yourself')
+    ) {
+      return 'Ozunuz ile conversation baslada bilmezsiniz.';
+    }
+
+    return message || 'Conversation baslatmaq mumkun olmadi.';
+  };
+
+  const handleTaskAction = async (action) => {
+    const isChatAction = action === 'chat';
+
+    if (!hasAuthenticatedSession()) {
+      navigate(ROUTES.login);
+      return;
+    }
+
+    if (isOwnTask) {
+      toast.info({
+        title: 'Mesaj gonderilmedi',
+        message: 'Oz elaniniz ucun conversation baslada bilmezsiniz.'
+      });
+      return;
+    }
+
+    if (!isChatAction) {
+      try {
+        const walletSummary = await fetchWalletSummary();
+        const availableBalance = parseMoneyValue(walletSummary?.availableBalance);
+        const requiredBalance = parseMoneyValue(selectedPackageData?.price);
+
+        if (availableBalance < requiredBalance) {
+          toast.error({
+            title: 'Balans kifayet etmir',
+            message: 'Bu xidmeti sifaris etmek ucun once wallet balansinizi artirin.'
+          });
+          navigate(ROUTES.wallet);
+          return;
+        }
+      } catch {
+        // If wallet summary could not be loaded, fall back to backend validation below.
+      }
+    }
+
+    if (isChatAction) {
+      setIsOpeningChat(true);
+    } else {
+      setIsHiringTask(true);
+    }
+
+    try {
+      const result = isChatAction
+        ? await startTaskConversation(detail.slug, selectedPackageData?.key, 'chat')
+        : await hireTaskService(detail.slug, selectedPackageData?.key);
+
+      if (result?.conversationId && isChatAction) {
+        setPendingConversationFocusId(result.conversationId);
+      }
+
+      const normalizedMessage = String(result?.message || '').toLowerCase();
+      const toastMethod = normalizedMessage.includes('artıq') ? toast.info : toast.success;
+
+      toastMethod({
+        title: isChatAction ? 'Chat hazirdir' : 'Sifaris hazirdir',
+        message: result?.message || (isChatAction ? 'Conversation ugurla acildi.' : 'Sifaris ugurla yaradildi.')
+      });
+
+      navigate(isChatAction ? ROUTES.messages : ROUTES.orders);
+    } catch (nextError) {
+      toast.error({
+        title: isChatAction ? 'Chat acilmadi' : 'Sifaris yaradilmadi',
+        message: resolveTaskActionErrorMessage(nextError?.message)
+      });
+    } finally {
+      if (isChatAction) {
+        setIsOpeningChat(false);
+      } else {
+        setIsHiringTask(false);
+      }
+    }
+  };
 
   return (
     <div className="detailPageShell">
@@ -95,11 +267,11 @@ export default function TaskDetailPage({ navigate, pathname }) {
               <span className="detailMetaInline detailMetaReview">
                 <span className="detailStars">{renderStars(detail.rating)}</span>
                 <strong>{detail.rating}/5.0</strong>
-                <span>{detail.reviews} reviews</span>
+                <span>{isJobBrief ? `${detail.reviews} owner reviews` : `${detail.reviews} reviews`}</span>
               </span>
               <span className="detailMetaInline">
                 <ShoppingBag size={16} />
-                {detail.sales} sales
+                {detail.sales} {isJobBrief ? 'open briefs' : 'sales'}
               </span>
               <span className="detailMetaInline">
                 <Eye size={16} />
@@ -118,6 +290,13 @@ export default function TaskDetailPage({ navigate, pathname }) {
             <motion.div className="detailVisualCard" {...transitionUp} transition={{ duration: 0.5, delay: 0.05 }}>
               <div className="detailMainVisualWrap">
                 <img src={activeImage} alt={detail.title} className="detailMainVisual" />
+                <div className="detailVisualMeta">
+                  <span className="detailVisualPill">{detail.category}</span>
+                  <span className="detailVisualPill dark">
+                    <Images size={15} />
+                    {detail.gallery.length} images
+                  </span>
+                </div>
               </div>
               <div className="detailThumbRow">
                 {detail.gallery.map((image, index) => (
@@ -166,8 +345,8 @@ export default function TaskDetailPage({ navigate, pathname }) {
             <motion.section className="detailContentCard" {...transitionUp} transition={{ duration: 0.5, delay: 0.16 }}>
               <div className="detailSectionHeading">
                 <div>
-                  <span className="eyebrow">Frequently asked questions</span>
-                  <h2>Everything you may want to know before starting</h2>
+                  <span className="eyebrow">{faqEyebrow}</span>
+                  <h2>{faqHeading}</h2>
                 </div>
               </div>
 
@@ -207,8 +386,8 @@ export default function TaskDetailPage({ navigate, pathname }) {
             <motion.section className="detailContentCard" {...transitionUp} transition={{ duration: 0.5, delay: 0.22 }}>
               <div className="detailSectionHeading detailReviewHeading">
                 <div>
-                  <span className="eyebrow">Client reviews</span>
-                  <h2>1 client review ({detail.rating} overall rating)</h2>
+                  <span className="eyebrow">{detail.reviewSectionEyebrow}</span>
+                  <h2>{reviewHeading}</h2>
                 </div>
               </div>
 
@@ -222,7 +401,7 @@ export default function TaskDetailPage({ navigate, pathname }) {
                     <strong>{detail.review.score}</strong>
                     <span>({detail.review.timeAgo})</span>
                   </div>
-                  <h3>Highly recommend</h3>
+                  <h3>{detail.reviewCardTitle}</h3>
                   <p>{detail.review.text}</p>
                 </div>
               </div>
@@ -232,22 +411,9 @@ export default function TaskDetailPage({ navigate, pathname }) {
           <motion.aside className="detailSidebarColumn" {...transitionUp} transition={{ duration: 0.5, delay: 0.1 }}>
             <div className="detailStickyStack">
               <div className="detailPackageCard">
-                <div className="detailPackageTabs">
-                  {detail.packages.map((item) => (
-                    <button
-                      type="button"
-                      key={item.key}
-                      className={selectedPackage === item.key ? 'detailPackageTab active' : 'detailPackageTab'}
-                      onClick={() => setSelectedPackage(item.key)}
-                    >
-                      {item.name}
-                    </button>
-                  ))}
-                </div>
-
                 <AnimatePresence mode="wait">
                   <motion.div
-                    key={selectedPackageData.key}
+                    key={selectedOwnerTask?.slug || selectedPackageData.key}
                     className="detailPackageBody"
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -259,28 +425,28 @@ export default function TaskDetailPage({ navigate, pathname }) {
                         <img src={detail.avatar} alt={detail.name} />
                       </div>
                       <div>
-                        <span className="detailPackageLabel">{selectedPackageData.name}</span>
-                        <h3>${selectedPackageData.price}</h3>
+                        <span className="detailPackageLabel">{selectedTaskPanelLabel}</span>
+                        <h3>{selectedTaskPanelPrice}</h3>
                       </div>
                     </div>
 
-                    <p className="detailPackageDescription">{selectedPackageData.description}</p>
+                    <p className="detailPackageDescription">{selectedTaskPanelDescription}</p>
 
                     <div className="detailInfoPill">
                       <Clock3 size={16} />
-                      <strong>Delivery time</strong>
-                      <span>{selectedPackageData.delivery}</span>
+                      <strong>Timeline</strong>
+                      <span>{selectedTaskPanelTimeline}</span>
                     </div>
 
                     <div className="detailInfoPill muted">
                       <BadgeCheck size={16} />
-                      <strong>{selectedPackageData.revisions}</strong>
+                      <strong>{selectedTaskPanelStatus}</strong>
                     </div>
 
                     <div className="detailFeatureBlock">
                       <h4>Features included</h4>
-                      {detail.included.map((feature) => (
-                        <div key={`${selectedPackageData.key}-${feature}`} className="detailIncludedRow">
+                      {selectedTaskFeatures.map((feature) => (
+                        <div key={`${selectedOwnerTask?.slug || selectedPackageData.key}-${feature}`} className="detailIncludedRow">
                           <Check size={15} />
                           <span>{feature}</span>
                         </div>
@@ -289,106 +455,82 @@ export default function TaskDetailPage({ navigate, pathname }) {
                   </motion.div>
                 </AnimatePresence>
 
-                <motion.button
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="button"
-                  className="btn primary full detailHireButton"
-                  onClick={() => navigate(ROUTES.login)}
-                >
-                  Hire me for a task
-                  <ArrowRight size={16} />
-                </motion.button>
-                <button type="button" className="btn soft full detailCompareButton">
-                  Compare packages
-                </button>
+                <div className="detailActionGroup">
+                  <motion.button
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="button"
+                    className="btn full detailOpenChatButton"
+                    onClick={() => handleTaskAction('chat')}
+                    disabled={isOpeningChat || isHiringTask}
+                  >
+                    {chatButtonLabel}
+                    <ArrowRight size={16} />
+                  </motion.button>
 
-                <div className="detailSellerStats">
-                  <div>
-                    <strong>{detail.sellerStats.sales}</strong>
-                    <span>No. of sales</span>
-                  </div>
-                  <div>
-                    <strong>{detail.sellerStats.ratingPercent}%</strong>
-                    <span>User rating</span>
-                  </div>
-                  <div>
-                    <strong>{detail.sellerStats.deliveryDays}</strong>
-                    <span>Delivery</span>
-                  </div>
+                  <motion.button
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="button"
+                    className="btn primary full detailHireButton"
+                    onClick={() => handleTaskAction('hire')}
+                    disabled={isOpeningChat || isHiringTask}
+                  >
+                    {hireButtonLabel}
+                    <ArrowRight size={16} />
+                  </motion.button>
                 </div>
+
               </div>
 
-              <div className="detailSellerCard">
-                <img src={detail.avatar} alt={detail.name} className="detailSellerPortrait" />
-                <div className="detailSellerBody">
-                  <div className="detailSellerTop">
-                    <div>
-                      <span className="detailSellerName">
-                        {detail.name} <BadgeCheck size={15} />
-                      </span>
-                      <h3>{detail.role}</h3>
-                    </div>
-                    <div className="detailSellerRating">
-                      <Star size={14} fill="currentColor" />
-                      <span>
-                        {detail.rating} ({detail.reviews} reviews)
-                      </span>
-                    </div>
-                  </div>
+              <div className="detailOwnerTasksCard">
+                <div className="detailOwnerTasksHeader">
+                  <span className="eyebrow">Task shortlist</span>
+                  <h3>Open another task detail</h3>
+                  <p>
+                    {detail.name} terefinden paylasilan tasklar burada yuxaridan asagi duzulub. Her hansina basanda
+                    hemin taskin detail sehifesi acilacaq.
+                  </p>
+                </div>
 
-                  <div className="detailSellerLines">
-                    <div>
-                      <span>
-                        <Clock3 size={16} />
-                        Hourly rate
-                      </span>
-                      <strong>${detail.hourlyRate}/hr</strong>
-                    </div>
-                    <div>
-                      <span>
-                        <MapPin size={16} />
-                        Location
-                      </span>
-                      <strong>{detail.location}</strong>
-                    </div>
-                    <div>
-                      <span>
-                        <Mail size={16} />
-                        Email
-                      </span>
-                      <strong>{detail.contact.email}</strong>
-                    </div>
-                    <div>
-                      <span>
-                        <Phone size={16} />
-                        Phone
-                      </span>
-                      <strong>{detail.contact.phone}</strong>
-                    </div>
-                    <div>
-                      <span>
-                        <Globe size={16} />
-                        Delivery
-                      </span>
-                      <strong>{detail.delivery}</strong>
-                    </div>
-                  </div>
+                <div className="detailOwnerTasksList">
+                  {detail.ownerTasks.map((task) => {
+                    const isSelected = detail.slug === task.slug;
 
-                  <div className="detailSkillRow">
-                    {detail.tools.map((tool) => (
-                      <span key={tool}>{tool}</span>
-                    ))}
-                    <span>{detail.category}</span>
-                  </div>
+                    return (
+                      <button
+                        type="button"
+                        key={task.slug || task.id}
+                        className={isSelected ? 'detailOwnerTaskItem active' : 'detailOwnerTaskItem'}
+                        onClick={() => {
+                          if (!task.slug || task.slug === detail.slug) {
+                            if (task.coverImageUrl) {
+                              setActiveImage(task.coverImageUrl);
+                            }
+                            return;
+                          }
 
-                  <a
-                    href={ROUTES.home}
-                    className="btn primary full"
-                    onClick={(event) => navigateWithScroll(event, ROUTES.home, navigate)}
-                  >
-                    View more profiles
-                  </a>
+                          navigate(buildTaskDetailRoute(task.slug));
+                        }}
+                      >
+                        <div className="detailOwnerTaskThumb">
+                          <img src={task.coverImageUrl || detail.avatar} alt={task.title} />
+                        </div>
+
+                        <div className="detailOwnerTaskContent">
+                          <span>{task.category || detail.category}</span>
+                          <strong>{task.title}</strong>
+                          <p>{task.summary}</p>
+                        </div>
+
+                        <div className="detailOwnerTaskMeta">
+                          <strong>{task.budgetLabel || '$0'}</strong>
+                          <span>{task.timeline || 'Flexible timeline'}</span>
+                          <em>{isSelected ? 'Current detail' : 'Open detail'}</em>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>

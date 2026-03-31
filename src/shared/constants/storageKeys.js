@@ -1,6 +1,7 @@
 export const STORAGE_KEYS = {
   authSession: 'freelanceaze_auth_session',
-  adminContent: 'freelanceaze_admin_content',
-  profileDraft: 'freelanceaze_profile_draft',
-  language: 'freelanceaze_language'
+  language: 'freelanceaze_language',
+  postLoginRedirect: 'freelanceaze_post_login_redirect',
+  billingPeriodPreference: 'freelanceaze_billing_period_preference',
+  billingCheckoutState: 'freelanceaze_billing_checkout_state'
 };

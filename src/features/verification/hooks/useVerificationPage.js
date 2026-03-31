@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ROUTES } from '../../../shared/constants/routes.js';
+import { useToast } from '../../../shared/hooks/useToast.js';
 import { hasAuthenticatedSession } from '../../../shared/lib/storage/authStorage.js';
 import { fetchVerificationOverview, submitVerificationTicket } from '../services/verificationService.js';
 
@@ -10,6 +11,7 @@ const initialForm = {
 };
 
 export function useVerificationPage(navigate) {
+  const toast = useToast();
   const [overview, setOverview] = useState(null);
   const [form, setForm] = useState(initialForm);
   const [isLoading, setIsLoading] = useState(true);
@@ -57,9 +59,19 @@ export function useVerificationPage(navigate) {
       const nextOverview = await submitVerificationTicket(form);
       setOverview(nextOverview);
       setForm(initialForm);
-      setFeedback('Verification request submitted successfully.');
+      const successMessage = 'Verification muracietiniz review ucun gonderildi.';
+      setFeedback(successMessage);
+      toast.success({
+        title: 'Verification gonderildi',
+        message: successMessage
+      });
     } catch (nextError) {
-      setFeedback(nextError?.message || 'Verification request could not be submitted.');
+      const nextMessage = nextError?.message || 'Verification muracietini gondermek mumkun olmadi.';
+      setFeedback(nextMessage);
+      toast.error({
+        title: 'Verification gonderilmedi',
+        message: nextMessage
+      });
     } finally {
       setBusyKey('');
     }

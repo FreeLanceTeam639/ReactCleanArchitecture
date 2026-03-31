@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { hasAuthenticatedSession } from '../../../shared/lib/storage/authStorage.js';
 import { ROUTES } from '../../../shared/constants/routes.js';
+import { useToast } from '../../../shared/hooks/useToast.js';
 import {
   fetchSecurityOverview,
   revokeSession,
@@ -9,6 +10,7 @@ import {
 } from '../services/workspaceService.js';
 
 export function useSecurityPage(navigate) {
+  const toast = useToast();
   const [settings, setSettings] = useState({ twoFactorEnabled: false, loginAlerts: false, sessionLock: false });
   const [sessions, setSessions] = useState([]);
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -43,9 +45,22 @@ export function useSecurityPage(navigate) {
   const toggleSetting = async (key) => {
     const nextValue = !settings[key];
     setBusyKey(`toggle:${key}`);
-    const updated = await updateSecurityOverview({ [key]: nextValue });
-    setSettings((current) => ({ ...current, ...updated }));
-    setBusyKey('');
+
+    try {
+      const updated = await updateSecurityOverview({ [key]: nextValue });
+      setSettings((current) => ({ ...current, ...updated }));
+      toast.success({
+        title: 'Tehlukesizlik ayari yenilendi',
+        message: 'Secdiyiniz tehlukesizlik ayari yadda saxlandi.'
+      });
+    } catch (nextError) {
+      toast.error({
+        title: 'Tehlukesizlik ayari yenilenmedi',
+        message: nextError?.message || 'Tehlukesizlik ayarini yenilemek mumkun olmadi.'
+      });
+    } finally {
+      setBusyKey('');
+    }
   };
 
   const setPasswordFieldValue = (key, value) => {
@@ -55,17 +70,49 @@ export function useSecurityPage(navigate) {
   const submitPassword = async (event) => {
     event.preventDefault();
     setBusyKey('password');
-    const response = await updatePassword(passwordForm);
-    setFeedback(response?.success ? 'Password update request sent.' : 'Password update simulated.');
-    setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    setBusyKey('');
+
+    try {
+      const response = await updatePassword(passwordForm);
+      const nextMessage = response?.success
+        ? 'Sifreniz ugurla yenilendi.'
+        : 'Sifre yenileme sorgusu qebul olundu.';
+
+      setFeedback(nextMessage);
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      toast.success({
+        title: 'Sifre yenilendi',
+        message: nextMessage
+      });
+    } catch (nextError) {
+      const nextMessage = nextError?.message || 'Sifreni yenilemek mumkun olmadi.';
+      setFeedback(nextMessage);
+      toast.error({
+        title: 'Sifre yenilenmedi',
+        message: nextMessage
+      });
+    } finally {
+      setBusyKey('');
+    }
   };
 
   const revokeOneSession = async (sessionId) => {
     setBusyKey(`session:${sessionId}`);
-    await revokeSession(sessionId);
-    await load();
-    setBusyKey('');
+
+    try {
+      await revokeSession(sessionId);
+      await load();
+      toast.success({
+        title: 'Sessiya baglandi',
+        message: 'Secdiyiniz sessiya sistemden cixarildi.'
+      });
+    } catch (nextError) {
+      toast.error({
+        title: 'Sessiya baglanmadi',
+        message: nextError?.message || 'Sessiyani baglamaq mumkun olmadi.'
+      });
+    } finally {
+      setBusyKey('');
+    }
   };
 
   return {

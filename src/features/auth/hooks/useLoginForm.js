@@ -1,7 +1,10 @@
 import { useState } from 'react';
-import { loginUser } from '../services/authService.js';
-import { saveAuthenticatedUser } from '../../../shared/lib/storage/authStorage.js';
 import { ROUTES } from '../../../shared/constants/routes.js';
+import { useI18n } from '../../../shared/i18n/I18nProvider.jsx';
+import { useToast } from '../../../shared/hooks/useToast.js';
+import { getPostLoginRedirect, saveAuthenticatedUser } from '../../../shared/lib/storage/authStorage.js';
+import { attachBillingCheckoutToUser, getBillingCheckoutState } from '../../../shared/lib/storage/billingCheckoutStorage.js';
+import { loginUser } from '../services/authService.js';
 
 const initialFormState = {
   emailOrUserName: '',
@@ -9,6 +12,8 @@ const initialFormState = {
 };
 
 export function useLoginForm(navigate) {
+  const { t } = useI18n();
+  const toast = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -23,9 +28,20 @@ export function useLoginForm(navigate) {
     setFeedback({ message: '', type: '' });
   };
 
-  const resolveLoginRoute = (session) => {
-    const roles = session?.user?.roles || [];
-    return roles.some((role) => String(role).toLowerCase() === 'admin') ? ROUTES.admin : ROUTES.profile;
+  const navigateWithFallback = (route) => {
+    if (typeof navigate === 'function') {
+      navigate(route, { replace: true });
+    }
+
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.setTimeout(() => {
+      if (window.location.pathname !== route) {
+        window.location.assign(route);
+      }
+    }, 24);
   };
 
   const submitLogin = async (event) => {
@@ -34,25 +50,46 @@ export function useLoginForm(navigate) {
     clearFeedback();
 
     try {
+      const redirectTarget = getPostLoginRedirect();
+      const shouldOpenBillingAfterLogin =
+        redirectTarget === ROUTES.billing &&
+        Boolean(getBillingCheckoutState());
       const session = await loginUser({
         emailOrUserName: form.emailOrUserName,
         password: form.password,
         rememberMe
       });
 
+      attachBillingCheckoutToUser(session?.user);
       saveAuthenticatedUser(session, rememberMe);
       setFeedback({
-        message: 'Giriş uğurludur. Profilə yönləndirilirsiniz...',
+        message: shouldOpenBillingAfterLogin
+          ? t('Login successful. Redirecting you to payment...')
+          : t('Login successful. Redirecting you to your profile...'),
         type: 'success'
       });
+      toast.success({
+        title: t('Login successful'),
+        message: shouldOpenBillingAfterLogin
+          ? t('You have signed in. Payment page is opening now.')
+          : t('You have signed in to your account.')
+      });
 
-      window.setTimeout(() => {
-        navigate(resolveLoginRoute(session));
-      }, 500);
+      if (shouldOpenBillingAfterLogin && typeof navigate === 'function') {
+        window.setTimeout(() => {
+          navigateWithFallback(ROUTES.billing);
+        }, 0);
+      }
     } catch (error) {
+      const nextMessage = error?.message || t('Unable to sign in right now.');
+
       setFeedback({
-        message: error.message || 'Login sorgusu uğursuz oldu.',
+        message: nextMessage,
         type: 'error'
+      });
+      toast.error({
+        title: t('Login failed'),
+        message: nextMessage
       });
     } finally {
       setIsSubmitting(false);

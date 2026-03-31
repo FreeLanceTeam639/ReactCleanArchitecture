@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react';
-import { createAdminPricing, deleteAdminPricing, fetchAdminPricing, getPricingSummary, updateAdminPricing } from '../services/adminService.js';
+import {
+  createAdminPricing,
+  deleteAdminPricing,
+  fetchAdminPricing,
+  getPricingSummary,
+  updateAdminPricing
+} from '../services/adminService.js';
+import { runAdminMutation } from './adminMutation.js';
 
 export function useAdminPricingPage() {
   const [search, setSearch] = useState('');
@@ -19,6 +26,7 @@ export function useAdminPricingPage() {
 
       try {
         const response = await fetchAdminPricing({ search, status, page, pageSize: 8 });
+
         if (!isCancelled) {
           setItems(getPricingSummary(response.items));
           setMeta(response.meta);
@@ -66,20 +74,29 @@ export function useAdminPricingPage() {
     feedback,
     setFeedback,
     refresh,
-    createPricing: async (values) => {
-      await createAdminPricing(values);
-      setFeedback('Package əlavə olundu.');
-      await refresh();
-    },
-    savePricing: async (id, values) => {
-      await updateAdminPricing(id, values);
-      setFeedback('Package yeniləndi.');
-      await refresh();
-    },
-    deletePricing: async (id) => {
-      await deleteAdminPricing(id);
-      setFeedback('Package silindi.');
-      await refresh();
-    }
+    createPricing: async (values) => runAdminMutation({
+      action: () => createAdminPricing(values),
+      setError,
+      setFeedback,
+      successMessage: 'Package əlavə olundu.',
+      errorMessage: 'Package yaratmaq mümkün olmadı.',
+      afterSuccess: refresh
+    }),
+    savePricing: async (id, values) => runAdminMutation({
+      action: () => updateAdminPricing(id, values),
+      setError,
+      setFeedback,
+      successMessage: 'Package yeniləndi.',
+      errorMessage: 'Package yeniləmək mümkün olmadı.',
+      afterSuccess: refresh
+    }),
+    deletePricing: async (id) => runAdminMutation({
+      action: () => deleteAdminPricing(id),
+      setError,
+      setFeedback,
+      successMessage: 'Package silindi.',
+      errorMessage: 'Package silmək mümkün olmadı.',
+      afterSuccess: refresh
+    })
   };
 }

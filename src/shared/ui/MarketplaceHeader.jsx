@@ -3,6 +3,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { logoutUser } from '../../features/auth/services/authService.js';
 import { fetchCurrentUserProfile } from '../../features/profile/services/profileService.js';
 import { ROUTES } from '../constants/routes.js';
+import { useAuthSessionState } from '../hooks/useAuthSessionState.js';
+import { useI18n } from '../i18n/I18nProvider.jsx';
 import { navigateWithScroll } from '../lib/navigation/navigateWithScroll.js';
 import { clearAuthenticatedUser, hasAuthenticatedSession } from '../lib/storage/authStorage.js';
 import BrandLogo from './BrandLogo.jsx';
@@ -27,10 +29,14 @@ export default function MarketplaceHeader({
   promoAction = { label: 'Learn more', route: ROUTES.home },
   brandHref = ROUTES.home,
   brandLabel = 'FreelanceAze',
-  actionButton = null
+  actionButton = null,
+  authenticatedLinks = []
 }) {
+  const { t } = useI18n();
+  const authSession = useAuthSessionState();
+  const isAuthenticated = Boolean(authSession);
   const [isOpen, setIsOpen] = useState(false);
-  const [authenticatedUser, setAuthenticatedUser] = useState(null);
+  const [authenticatedUser, setAuthenticatedUser] = useState(() => authSession?.user || null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
@@ -38,25 +44,28 @@ export default function MarketplaceHeader({
   const [isMenuLayout, setIsMenuLayout] = useState(false);
   const searchWrapRef = useRef(null);
   const searchInputRef = useRef(null);
+  const linksToRender = isAuthenticated && authenticatedLinks.length ? authenticatedLinks : links;
 
   const mappedLinks = useMemo(
     () =>
-      links.map((link) => ({
+      linksToRender.map((link) => ({
         ...link,
         href: link.href || link.route || ROUTES.home
       })),
-    [links]
+    [linksToRender]
   );
 
   useEffect(() => {
+    if (!authSession) {
+      setAuthenticatedUser(null);
+      return undefined;
+    }
+
+    setAuthenticatedUser((currentUser) => authSession.user || currentUser || null);
+
     let isCancelled = false;
 
     async function loadAuthenticatedUser() {
-      if (!hasAuthenticatedSession()) {
-        setAuthenticatedUser(null);
-        return;
-      }
-
       try {
         const profile = await fetchCurrentUserProfile();
 
@@ -64,8 +73,13 @@ export default function MarketplaceHeader({
           setAuthenticatedUser(profile);
         }
       } catch {
-        if (!isCancelled && !hasAuthenticatedSession()) {
-          setAuthenticatedUser(null);
+        if (!isCancelled) {
+          if (!hasAuthenticatedSession()) {
+            setAuthenticatedUser(null);
+            return;
+          }
+
+          setAuthenticatedUser((currentUser) => currentUser || authSession.user || null);
         }
       }
     }
@@ -75,7 +89,7 @@ export default function MarketplaceHeader({
     return () => {
       isCancelled = true;
     };
-  }, []);
+  }, [authSession]);
 
   useEffect(() => {
     function syncScrolledState() {
@@ -233,7 +247,7 @@ export default function MarketplaceHeader({
     isCompactLayout ? ' compact' : ''
   }`;
 
-  const authControls = authenticatedUser ? (
+  const authControls = isAuthenticated ? (
     <>
       {actionButton ? (
         <a
@@ -241,7 +255,7 @@ export default function MarketplaceHeader({
           className="btn primary interactive detailHeaderRegister detailHeaderActionButton"
           onClick={(event) => resolveLinkNavigation(event, actionButton, navigate, closeMenu)}
         >
-          {actionButton.label}
+          {t(actionButton.label)}
         </a>
       ) : null}
       <button
@@ -252,11 +266,19 @@ export default function MarketplaceHeader({
           navigate(ROUTES.profile);
         }}
         aria-label="Open profile"
-        title={authenticatedUser.firstName || authenticatedUser.fullName || 'Profile'}
+        title={authenticatedUser?.firstName || authenticatedUser?.fullName || t('Profile')}
       >
-        <UserRound size={18} />
+        {authenticatedUser?.avatarUrl ? (
+          <img
+            src={authenticatedUser.avatarUrl}
+            alt={authenticatedUser?.fullName || t('Profile')}
+            className="detailHeaderUserAvatar"
+          />
+        ) : (
+          <UserRound size={18} />
+        )}
       </button>
-      <button type="button" className="detailHeaderLogout interactive" onClick={handleSignOut} aria-label="Sign out">
+      <button type="button" className="detailHeaderLogout interactive" onClick={handleSignOut} aria-label={t('Sign out')}>
         <LogOut size={16} />
       </button>
     </>
@@ -267,14 +289,14 @@ export default function MarketplaceHeader({
         className="detailHeaderLink interactive"
         onClick={(event) => resolveLinkNavigation(event, { route: ROUTES.login }, navigate, closeMenu)}
       >
-        Sign In
+        {t('Sign In')}
       </a>
       <a
         href={ROUTES.register}
         className="btn primary interactive detailHeaderRegister"
         onClick={(event) => resolveLinkNavigation(event, { route: ROUTES.register }, navigate, closeMenu)}
       >
-        Register
+        {t('Register')}
       </a>
     </>
   );
@@ -284,12 +306,12 @@ export default function MarketplaceHeader({
       {showPromo ? (
         <div className="marketStrip">
           <div className="wrap marketStripRow">
-            <span>{promoText}</span>
+            <span>{t(promoText)}</span>
             <a
               href={promoAction.href || promoAction.route || ROUTES.home}
               onClick={(event) => resolveLinkNavigation(event, promoAction, navigate, closeMenu)}
             >
-              {promoAction.label}
+              {t(promoAction.label)}
             </a>
           </div>
         </div>
@@ -314,7 +336,7 @@ export default function MarketplaceHeader({
                   href={link.href}
                   onClick={(event) => resolveLinkNavigation(event, link, navigate, closeMenu)}
                 >
-                  {link.label}
+                  {t(link.label)}
                 </a>
               ))}
             </nav>
@@ -338,18 +360,18 @@ export default function MarketplaceHeader({
                 type="button"
                 className="detailSearchActivator interactive"
                 onClick={handleOpenSearch}
-                aria-label="Open search"
+                aria-label={t('Open search')}
                 aria-expanded={isSearchExpanded}
               >
                 <Search size={16} />
-                <span className="detailSearchActivatorLabel">Search</span>
+                <span className="detailSearchActivatorLabel">{t('Search')}</span>
               </button>
 
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Search talent, services, jobs"
-                aria-label="Search"
+                placeholder={t('Search talent, services, jobs')}
+                aria-label={t('Search')}
                 value={searchValue}
                 onFocus={handleOpenSearch}
                 onChange={(event) => setSearchValue(event.target.value)}
@@ -359,7 +381,7 @@ export default function MarketplaceHeader({
                 type="button"
                 className={isSearchExpanded ? 'detailSearchClose interactive visible' : 'detailSearchClose interactive'}
                 onClick={handleCloseSearch}
-                aria-label="Close search"
+                aria-label={t('Close search')}
               >
                 <X size={16} />
               </button>
@@ -373,7 +395,7 @@ export default function MarketplaceHeader({
               type="button"
               className="detailMenuButton interactive"
               onClick={() => setIsOpen((currentState) => !currentState)}
-              aria-label="Toggle navigation"
+              aria-label={t('Toggle navigation')}
               aria-expanded={isOpen}
             >
               {isOpen ? <X size={20} /> : <Menu size={20} />}
@@ -386,7 +408,7 @@ export default function MarketplaceHeader({
             type="button"
             className="detailHeaderBackdrop"
             onClick={closeMenu}
-            aria-label="Close navigation"
+            aria-label={t('Close navigation')}
           />
         ) : null}
       </header>

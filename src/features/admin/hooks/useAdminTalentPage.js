@@ -1,5 +1,14 @@
 import { useEffect, useState } from 'react';
-import { createAdminTalent, deleteAdminTalent, fetchAdminTalent, updateAdminTalent, updateAdminTalentFeatured, updateAdminTalentStatus } from '../services/adminService.js';
+import {
+  createAdminTalent,
+  deleteAdminTalent,
+  fetchAdminCategories,
+  fetchAdminTalent,
+  updateAdminTalent,
+  updateAdminTalentFeatured,
+  updateAdminTalentStatus
+} from '../services/adminService.js';
+import { runAdminMutation } from './adminMutation.js';
 
 export function useAdminTalentPage() {
   const [search, setSearch] = useState('');
@@ -11,6 +20,27 @@ export function useAdminTalentPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [feedback, setFeedback] = useState('');
+  const [categoryOptions, setCategoryOptions] = useState([]);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    fetchAdminCategories({ status: 'active', page: 1, pageSize: 100 })
+      .then((response) => {
+        if (!isCancelled) {
+          setCategoryOptions(response.items || []);
+        }
+      })
+      .catch(() => {
+        if (!isCancelled) {
+          setCategoryOptions([]);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let isCancelled = false;
@@ -20,6 +50,7 @@ export function useAdminTalentPage() {
 
       try {
         const response = await fetchAdminTalent({ search, status, featured, page, pageSize: 8 });
+
         if (!isCancelled) {
           setItems(response.items);
           setMeta(response.meta);
@@ -67,36 +98,55 @@ export function useAdminTalentPage() {
     setPage,
     items,
     meta,
+    categoryOptions,
     isLoading,
     error,
     feedback,
     setFeedback,
     refresh,
-    createTalent: async (values) => {
-      await createAdminTalent(values);
-      setFeedback('Talent əlavə olundu.');
-      await refresh();
-    },
-    saveTalent: async (id, values) => {
-      await updateAdminTalent(id, values);
-      setFeedback('Talent yeniləndi.');
-      await refresh();
-    },
+    createTalent: async (values) => runAdminMutation({
+      action: () => createAdminTalent(values),
+      setError,
+      setFeedback,
+      successMessage: 'Talent əlavə olundu.',
+      errorMessage: 'Talent yaratmaq mümkün olmadı.',
+      afterSuccess: refresh
+    }),
+    saveTalent: async (id, values) => runAdminMutation({
+      action: () => updateAdminTalent(id, values),
+      setError,
+      setFeedback,
+      successMessage: 'Talent yeniləndi.',
+      errorMessage: 'Talent yeniləmək mümkün olmadı.',
+      afterSuccess: refresh
+    }),
     toggleTalentStatus: async (item) => {
       const nextStatus = item.status === 'active' ? 'inactive' : 'active';
-      await updateAdminTalentStatus(item.id, nextStatus);
-      setFeedback(`Talent ${nextStatus} edildi.`);
-      await refresh();
+
+      return runAdminMutation({
+        action: () => updateAdminTalentStatus(item.id, nextStatus),
+        setError,
+        setFeedback,
+        successMessage: `Talent ${nextStatus} edildi.`,
+        errorMessage: 'Talent statusunu dəyişdirmək mümkün olmadı.',
+        afterSuccess: refresh
+      });
     },
-    toggleTalentFeatured: async (item) => {
-      await updateAdminTalentFeatured(item.id, !item.featured);
-      setFeedback(item.featured ? 'Featured status çıxarıldı.' : 'Talent featured edildi.');
-      await refresh();
-    },
-    deleteTalent: async (id) => {
-      await deleteAdminTalent(id);
-      setFeedback('Talent silindi.');
-      await refresh();
-    }
+    toggleTalentFeatured: async (item) => runAdminMutation({
+      action: () => updateAdminTalentFeatured(item.id, !item.featured),
+      setError,
+      setFeedback,
+      successMessage: item.featured ? 'Featured status çıxarıldı.' : 'Talent featured edildi.',
+      errorMessage: 'Talent featured statusunu dəyişdirmək mümkün olmadı.',
+      afterSuccess: refresh
+    }),
+    deleteTalent: async (id) => runAdminMutation({
+      action: () => deleteAdminTalent(id),
+      setError,
+      setFeedback,
+      successMessage: 'Talent silindi.',
+      errorMessage: 'Talent silmək mümkün olmadı.',
+      afterSuccess: refresh
+    })
   };
 }

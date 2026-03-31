@@ -1,5 +1,13 @@
 import { useEffect, useState } from 'react';
-import { deleteAdminJob, fetchAdminJobById, fetchAdminJobs, getAdminCategoryOptions, updateAdminJob, updateAdminJobVisibility } from '../services/adminService.js';
+import {
+  deleteAdminJob,
+  fetchAdminCategories,
+  fetchAdminJobById,
+  fetchAdminJobs,
+  updateAdminJob,
+  updateAdminJobVisibility
+} from '../services/adminService.js';
+import { runAdminMutation } from './adminMutation.js';
 
 export function useAdminJobsPage() {
   const [search, setSearch] = useState('');
@@ -11,7 +19,27 @@ export function useAdminJobsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [feedback, setFeedback] = useState('');
-  const categoryOptions = getAdminCategoryOptions();
+  const [categoryOptions, setCategoryOptions] = useState([]);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    fetchAdminCategories({ status: 'active', page: 1, pageSize: 100 })
+      .then((response) => {
+        if (!isCancelled) {
+          setCategoryOptions(response.items || []);
+        }
+      })
+      .catch(() => {
+        if (!isCancelled) {
+          setCategoryOptions([]);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let isCancelled = false;
@@ -21,6 +49,7 @@ export function useAdminJobsPage() {
 
       try {
         const response = await fetchAdminJobs({ search, categoryId, status, page, pageSize: 8 });
+
         if (!isCancelled) {
           setItems(response.items);
           setMeta(response.meta);
@@ -75,21 +104,33 @@ export function useAdminJobsPage() {
     categoryOptions,
     refresh,
     getJobById: fetchAdminJobById,
-    saveJob: async (id, values) => {
-      await updateAdminJob(id, values);
-      setFeedback('Job yeniləndi.');
-      await refresh();
-    },
+    saveJob: async (id, values) => runAdminMutation({
+      action: () => updateAdminJob(id, values),
+      setError,
+      setFeedback,
+      successMessage: 'Job yeniləndi.',
+      errorMessage: 'Job yeniləmək mümkün olmadı.',
+      afterSuccess: refresh
+    }),
     toggleVisibility: async (item) => {
       const nextVisibility = item.visibility === 'hidden' ? 'visible' : 'hidden';
-      await updateAdminJobVisibility(item.id, nextVisibility);
-      setFeedback(`Job ${nextVisibility} edildi.`);
-      await refresh();
+
+      return runAdminMutation({
+        action: () => updateAdminJobVisibility(item.id, nextVisibility),
+        setError,
+        setFeedback,
+        successMessage: `Job ${nextVisibility} edildi.`,
+        errorMessage: 'Job görünürlüğünü dəyişdirmək mümkün olmadı.',
+        afterSuccess: refresh
+      });
     },
-    deleteJob: async (id) => {
-      await deleteAdminJob(id);
-      setFeedback('Job silindi.');
-      await refresh();
-    }
+    deleteJob: async (id) => runAdminMutation({
+      action: () => deleteAdminJob(id),
+      setError,
+      setFeedback,
+      successMessage: 'Job silindi.',
+      errorMessage: 'Job silmək mümkün olmadı.',
+      afterSuccess: refresh
+    })
   };
 }

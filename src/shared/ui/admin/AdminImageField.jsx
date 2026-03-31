@@ -1,70 +1,85 @@
-import { ImagePlus, Link2, Trash2 } from 'lucide-react';
-import { useRef } from 'react';
-
-function readFileAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error('File oxuna bilmədi.'));
-    reader.readAsDataURL(file);
-  });
-}
+import { Link2, Trash2 } from 'lucide-react';
+import AudioUploadCard from '../../../components/ui/audio-upload-card.jsx';
+import { resolveApiAssetUrl } from '../../api/mediaAssets.js';
+import { fileToOptimizedDataUrl, getImageUploadLimitInMb } from '../../lib/media/imageUpload.js';
 
 export default function AdminImageField({
   label,
   value,
   onChange,
   placeholder = 'Paste image URL or upload',
-  hint = 'Future backend upload endpoint üçün hazır media sahəsi.',
-  shape = 'square'
+  hint = 'Add an image URL or upload a JPG, PNG or WEBP file.',
+  shape = 'square',
+  layout = 'split',
+  showUrlInput = true
 }) {
-  const inputRef = useRef(null);
-  const wrapperClassName = shape === 'circle' ? 'adminImageFieldPreview circle' : 'adminImageFieldPreview';
+  const wrapperClassName = ['adminImageFieldPreview', shape === 'circle' ? 'circle' : '', shape === 'landscape' ? 'landscape' : '']
+    .filter(Boolean)
+    .join(' ');
+  const fieldClassName = ['adminImageField', layout === 'stacked' ? 'stacked' : '']
+    .filter(Boolean)
+    .join(' ');
   const helperHint = /backend/i.test(hint || '') ? 'Add an image URL or upload a local preview file.' : hint;
+  const previewUrl = resolveApiAssetUrl(value);
+  const displayValue = typeof value === 'string' && value.startsWith('data:') ? '' : value;
+  const resolvedPlaceholder = typeof value === 'string' && value.startsWith('data:')
+    ? 'Local image selected. Upload a new file or paste a hosted URL.'
+    : placeholder;
 
-  const handleFileSelection = async (event) => {
-    const file = event.target.files?.[0];
+  const handleFileSelection = async (files) => {
+    const [file] = Array.from(files || []);
 
     if (!file) {
       return;
     }
 
     try {
-      const dataUrl = await readFileAsDataUrl(file);
+      const dataUrl = await fileToOptimizedDataUrl(file);
       onChange(dataUrl);
     } catch {
-      // ignore preview errors in demo mode
-    } finally {
-      event.target.value = '';
+      // Ignore preview read errors.
     }
   };
 
   return (
-    <div className="adminImageField">
+    <div className={fieldClassName}>
       <div className={wrapperClassName}>
-        {value ? <img src={value} alt={label || 'Preview'} /> : <span>{shape === 'circle' ? 'AV' : 'IMG'}</span>}
+        {previewUrl ? <img src={previewUrl} alt={label || 'Preview'} /> : <span>{shape === 'circle' ? 'AV' : 'IMG'}</span>}
       </div>
 
       <div className="adminImageFieldControls">
-        <label className="adminField fullSpan">
-          <span>{label}</span>
-          <div className="adminInlineInput">
-            <Link2 size={16} />
-            <input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} />
+        {showUrlInput ? (
+          <label className="adminField adminFieldStack fullSpan">
+            <span>{label}</span>
+            <div className="adminInlineInput">
+              <Link2 size={16} />
+              <input value={displayValue} onChange={(event) => onChange(event.target.value)} placeholder={resolvedPlaceholder} />
+            </div>
+          </label>
+        ) : (
+          <div className="adminFieldStack fullSpan">
+            <span>{label}</span>
+            <p className="adminFieldHint">{helperHint}</p>
           </div>
-        </label>
+        )}
+
+        <AudioUploadCard
+          className="adminUploadCard fullSpan"
+          title={value ? 'Yuklenmis sekli yenile' : 'Preview sekli yukle'}
+          description={helperHint}
+          accept="image/png,image/jpeg,image/webp"
+          fileTypeLabel="image"
+          buttonLabel={value ? 'Fayli deyis' : 'Fayl sec'}
+          helperItems={['JPG, PNG, WEBP', `Max ${getImageUploadLimitInMb()} MB`]}
+          onFilesSelected={handleFileSelection}
+          showFloatingPreview={false}
+        />
 
         <div className="adminImageFieldActions fullSpan">
-          <button type="button" className="adminSecondaryButton interactive" onClick={() => inputRef.current?.click()}>
-            <ImagePlus size={15} /> Upload preview
-          </button>
           <button type="button" className="adminSecondaryButton interactive danger" onClick={() => onChange('')}>
             <Trash2 size={15} /> Remove
           </button>
         </div>
-
-        <input ref={inputRef} className="adminHiddenFileInput" type="file" accept="image/*" onChange={handleFileSelection} />
-        {helperHint ? <p className="adminFieldHint fullSpan">{helperHint}</p> : null}
       </div>
     </div>
   );

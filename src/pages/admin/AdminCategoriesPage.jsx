@@ -77,10 +77,13 @@ export default function AdminCategoriesPage({ navigate, pathname = ROUTES.adminC
       slug: formState.slug || createSlug(formState.name)
     };
 
-    if (editingCategory?.mode === 'create') {
-      await createCategory(payload);
-    } else {
-      await saveCategory(editingCategory.id, payload);
+    const savedCategory =
+      editingCategory?.mode === 'create'
+        ? await createCategory(payload)
+        : await saveCategory(editingCategory.id, payload);
+
+    if (!savedCategory) {
+      return;
     }
 
     setEditingCategory(null);
@@ -212,8 +215,11 @@ export default function AdminCategoriesPage({ navigate, pathname = ROUTES.adminC
           description={`Status ${statusTarget.status === 'active' ? 'inactive' : 'active'} olacaq.`}
           confirmLabel={statusTarget.status === 'active' ? 'Deactivate' : 'Activate'}
           onConfirm={async () => {
-            await toggleCategoryStatus(statusTarget);
-            setStatusTarget(null);
+            const updatedCategory = await toggleCategoryStatus(statusTarget);
+
+            if (updatedCategory) {
+              setStatusTarget(null);
+            }
           }}
           onClose={() => setStatusTarget(null)}
           tone={statusTarget.status === 'active' ? 'danger' : 'primary'}
@@ -226,8 +232,11 @@ export default function AdminCategoriesPage({ navigate, pathname = ROUTES.adminC
           description="Bu category admin siyahısından silinəcək. Home filter bu source-a bağlıdırsa burada da yenilənəcək."
           confirmLabel="Delete"
           onConfirm={async () => {
-            await deleteCategory(deleteTarget.id);
-            setDeleteTarget(null);
+            const deletedCategory = await deleteCategory(deleteTarget.id);
+
+            if (deletedCategory) {
+              setDeleteTarget(null);
+            }
           }}
           onClose={() => setDeleteTarget(null)}
         />

@@ -15,6 +15,8 @@ import { logoutUser } from '../../features/auth/services/authService.js';
 import { PROFILE_TABS, useProfilePage } from '../../features/profile/hooks/useProfilePage.js';
 import MarketplaceHeader from '../../shared/ui/MarketplaceHeader.jsx';
 import AdminImageField from '../../shared/ui/admin/AdminImageField.jsx';
+import CountrySelect from '../../shared/ui/CountrySelect.jsx';
+import PhoneNumberField from '../../shared/ui/PhoneNumberField.jsx';
 import { ROUTES } from '../../shared/constants/routes.js';
 import { PROFILE_NAVIGATION_LINKS } from '../../shared/constants/navigationLinks.js';
 import { clearAuthenticatedUser } from '../../shared/lib/storage/authStorage.js';
@@ -28,15 +30,16 @@ function StatCard({ label, value }) {
   );
 }
 
-function EmptyState({ title, copy }) {
-  const resolvedCopy = /backend|endpoint/i.test(copy || '')
-    ? 'Fresh activity will appear here as soon as it becomes available.'
-    : copy;
-
+function EmptyState({ title, copy, actionLabel, onAction }) {
   return (
     <div className="profileEmptyState">
       <strong>{title}</strong>
-      <p>{resolvedCopy}</p>
+      <p>{copy}</p>
+      {actionLabel && onAction ? (
+        <button type="button" className="profileActionButton interactive" onClick={onAction}>
+          {actionLabel}
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -56,11 +59,14 @@ export default function ProfilePage({ navigate }) {
     messages,
     stats,
     settingsForm,
+    countries,
+    isCountriesLoading,
     isLoading,
     pageError,
     feedback,
     busyKey,
     setSettingsFieldValue,
+    setSettingsCountryValue,
     submitSettings,
     toggleListingStatus,
     cycleProposalStatus,
@@ -87,7 +93,7 @@ export default function ProfilePage({ navigate }) {
         <main className="wrap profilePage fadeUp">
           <section className="profileHero cardLift profileLoadingState">
             <LoaderCircle className="spinLoader" size={28} />
-            <p>Profile endpoint-ləri yüklənir...</p>
+            <p>Your account hub is loading...</p>
           </section>
         </main>
       </div>
@@ -100,10 +106,10 @@ export default function ProfilePage({ navigate }) {
         <MarketplaceHeader navigate={navigate} links={[{ label: 'Home', route: ROUTES.home }]} />
         <main className="wrap profilePage fadeUp">
           <section className="profileHero cardLift profileErrorState">
-            <strong>Profile məlumatları açıla bilmədi.</strong>
+            <strong>We could not open your account right now.</strong>
             <p>{pageError}</p>
-            <button type="button" className="btn primary interactive" onClick={() => navigate(ROUTES.login)}>
-              Go to Login
+            <button type="button" className="btn primary interactive" onClick={() => navigate(ROUTES.home)}>
+              Return home
             </button>
           </section>
         </main>
@@ -141,7 +147,12 @@ export default function ProfilePage({ navigate }) {
                 </div>
               ))
             ) : (
-              <EmptyState title="No active tasks" copy="Task list backend-dən boş gəldi." />
+              <EmptyState
+                title="No active tasks yet"
+                copy="Your current jobs and active deliveries will appear here as soon as work starts."
+                actionLabel={profile.canPostJobs ? 'Post a job' : 'Get verified'}
+                onAction={() => navigate(profile.canPostJobs ? ROUTES.postTask : ROUTES.verification)}
+              />
             )}
           </div>
         </article>
@@ -176,7 +187,12 @@ export default function ProfilePage({ navigate }) {
                 </div>
               ))
             ) : (
-              <EmptyState title="No messages" copy="Messages endpoint-i hazır olanda siyahı burada görünəcək." />
+              <EmptyState
+                title="No conversations yet"
+                copy="New conversations will appear here as soon as you connect with another member."
+                actionLabel="Explore members"
+                onAction={() => navigate(ROUTES.home)}
+              />
             )}
           </div>
         </article>
@@ -243,7 +259,12 @@ export default function ProfilePage({ navigate }) {
                 </div>
               ))
             ) : (
-              <EmptyState title="No notifications" copy="Notifications endpoint-i boş gəlib." />
+              <EmptyState
+                title="No notifications right now"
+                copy="Verification updates, security alerts and collaboration activity will appear here."
+                actionLabel="Open orders"
+                onAction={() => navigate(ROUTES.orders)}
+              />
             )}
           </div>
         </article>
@@ -348,7 +369,12 @@ export default function ProfilePage({ navigate }) {
             </div>
           ))
         ) : (
-          <EmptyState title="No listings found" copy="Listings endpoint-dən aktiv data gəlməyib." />
+          <EmptyState
+            title="No listings published yet"
+            copy="Create your first job post to start receiving interest and managing it from this panel."
+            actionLabel={profile.canPostJobs ? 'Post a job' : 'Get verified'}
+            onAction={() => navigate(profile.canPostJobs ? ROUTES.postTask : ROUTES.verification)}
+          />
         )}
       </div>
     </section>
@@ -388,7 +414,12 @@ export default function ProfilePage({ navigate }) {
             </div>
           ))
         ) : (
-          <EmptyState title="No proposals yet" copy="Proposal endpoint-i boş cavab verib." />
+          <EmptyState
+            title="No proposals yet"
+            copy="Once you start conversations from public profiles, your proposal activity will appear here."
+            actionLabel="Browse members"
+            onAction={() => navigate(ROUTES.home)}
+          />
         )}
       </div>
     </section>
@@ -415,7 +446,12 @@ export default function ProfilePage({ navigate }) {
             </div>
           ))
         ) : (
-          <EmptyState title="No reviews yet" copy="Reviews endpoint-i geri dönüş etməyib." />
+          <EmptyState
+            title="No reviews yet"
+            copy="Reviews will appear after completed collaborations and published work."
+            actionLabel="Open orders"
+            onAction={() => navigate(ROUTES.orders)}
+          />
         )}
       </div>
     </section>
@@ -453,7 +489,12 @@ export default function ProfilePage({ navigate }) {
             </div>
           ))
         ) : (
-          <EmptyState title="No saved items" copy="Saved endpoint-i boş qayıdıb." />
+          <EmptyState
+            title="No saved items yet"
+            copy="Save strong member profiles to compare them later from one clean place."
+            actionLabel="Explore members"
+            onAction={() => navigate(ROUTES.home)}
+          />
         )}
       </div>
     </section>
@@ -496,11 +537,24 @@ export default function ProfilePage({ navigate }) {
           />
         </label>
         <label className="profileField">
-          <span>Location</span>
-          <input
-            type="text"
-            value={settingsForm.location}
-            onChange={(event) => setSettingsFieldValue('location', event.target.value)}
+          <span>Country</span>
+          <CountrySelect
+            value={settingsForm.country}
+            countries={countries}
+            onChange={setSettingsCountryValue}
+            disabled={isCountriesLoading}
+            placeholder="Select country"
+          />
+        </label>
+        <label className="profileField">
+          <span>Phone number</span>
+          <PhoneNumberField
+            countryValue={settingsForm.country}
+            countries={countries}
+            value={settingsForm.phoneNumber}
+            onChange={(value) => setSettingsFieldValue('phoneNumber', value)}
+            disabled={isCountriesLoading}
+            placeholder="501234567"
           />
         </label>
         <label className="profileField">
@@ -525,7 +579,18 @@ export default function ProfilePage({ navigate }) {
             value={settingsForm.avatarUrl}
             onChange={(value) => setSettingsFieldValue('avatarUrl', value)}
             shape="circle"
-            hint="Image URL daxil et və ya lokal preview yüklə. Backend gələndə bu hissə upload endpoint-ə bağlanacaq."
+            hint="Paste an image URL or upload a JPG, PNG or WEBP file to save it on your profile."
+          />
+        </div>
+        <div className="profileField fullWidth">
+          <AdminImageField
+            label="Profile banner"
+            value={settingsForm.bannerUrl}
+            onChange={(value) => setSettingsFieldValue('bannerUrl', value)}
+            shape="landscape"
+            layout="stacked"
+            showUrlInput={false}
+            hint="Upload a wide banner image for your public profile cards."
           />
         </div>
         <label className="profileField fullWidth">
@@ -567,6 +632,12 @@ export default function ProfilePage({ navigate }) {
 
       <main className="wrap profilePage fadeUp">
         <section className="profileHero cardLift">
+          {profile.bannerUrl ? (
+            <div className="profileHeroBannerWrap">
+              <img src={profile.bannerUrl} alt={`${profile.fullName} banner`} className="profileHeroBanner" />
+            </div>
+          ) : null}
+
           <div className="profileHeroGrid">
             <div className="profileIdentityBlock">
               {profile.avatarUrl ? (

@@ -1,5 +1,9 @@
-import { ArrowLeft, Eye, EyeOff, KeyRound, Mail, ShieldCheck } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowLeft, ArrowRight, Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react';
+import AnimatedCharactersLoginPage from '../../components/ui/animated-characters-login-page.jsx';
+import OTPVerification from '../../components/ui/otp-verify.jsx';
 import { ROUTES } from '../../shared/constants/routes.js';
+import { useI18n } from '../../shared/i18n/I18nProvider.jsx';
 import { navigateWithScroll } from '../../shared/lib/navigation/navigateWithScroll.js';
 import { useForgotPasswordForm } from '../../features/auth/hooks/useForgotPasswordForm.js';
 import LanguageSwitcher from '../../shared/ui/LanguageSwitcher.jsx';
@@ -13,7 +17,36 @@ function ForgotPasswordAlert({ message, type }) {
   return <div className={type === 'success' ? 'authAlert success' : 'authAlert error'}>{message}</div>;
 }
 
+function AuthField({ label, icon: Icon, children }) {
+  return (
+    <label className="animatedAuthField">
+      <span className="animatedAuthFieldLabel">{label}</span>
+      <div className="animatedAuthFieldControl">
+        {Icon ? <Icon className="animatedAuthFieldIcon" aria-hidden="true" /> : null}
+        {children}
+      </div>
+    </label>
+  );
+}
+
+function ForgotPasswordSteps({ isResetStep, t }) {
+  return (
+    <div className="forgotAuthSteps" aria-label={t('Forgot password steps')}>
+      <div className={`forgotAuthStep ${isResetStep ? '' : 'is-active'}`}>
+        <span>01</span>
+        <strong>{t('Send code')}</strong>
+      </div>
+      <div className={`forgotAuthStep ${isResetStep ? 'is-active' : ''}`}>
+        <span>02</span>
+        <strong>{t('Reset password')}</strong>
+      </div>
+    </div>
+  );
+}
+
 export default function ForgotPasswordPage({ navigate }) {
+  const { t } = useI18n();
+  const [focusMode, setFocusMode] = useState('');
   const {
     form,
     activeStep,
@@ -34,212 +67,186 @@ export default function ForgotPasswordPage({ navigate }) {
   } = useForgotPasswordForm(navigate);
 
   const isResetStep = activeStep === 'reset';
+  const homeAction = (
+    <button
+      type="button"
+      className="animatedAuthHomeButton interactive"
+      onClick={() => navigate(ROUTES.home)}
+    >
+      <ArrowLeft size={16} aria-hidden="true" />
+      <span>{t('Return home')}</span>
+    </button>
+  );
 
   return (
-    <div className="authShell">
-      <div className="authBackdrop" />
-      <div className="wrapLarge authGrid">
-        <section className="authPanel fadeUp">
-          <div className="authPanelTopBar">
-            <LanguageSwitcher className="authLanguageSwitcher" />
-          </div>
-
-          <button type="button" className="authBackLink interactive" onClick={goToLogin}>
-            <ArrowLeft size={16} />
-            <span>Back to sign in</span>
+    <AnimatedCharactersLoginPage
+      shellClassName="animatedAuthShellLogin"
+      stageClassName="animatedAuthStageLogin"
+      panelShellClassName="animatedAuthPanelShellLogin"
+      panelClassName="animatedAuthPanelLogin animatedAuthPanelForgot"
+      topBar={
+        <div className="animatedAuthTopActions">
+          {homeAction}
+          <LanguageSwitcher className="animatedAuthLanguageSwitcher" />
+        </div>
+      }
+      brand={
+        <BrandLogo
+          href={ROUTES.home}
+          className="brand animatedAuthBrand animatedAuthBrandMobileOnly"
+          onClick={(event) => navigateWithScroll(event, ROUTES.home, navigate)}
+        />
+      }
+      eyebrow=""
+      title={isResetStep ? t('Reset password') : t('Forgot password?')}
+      subtitle={
+        isResetStep
+          ? t('Enter the code from your email and set a new password for your account.')
+          : t('We will send a verification code to your email so you can safely reset your password.')
+      }
+      footer={
+        <p className="animatedAuthSwitch">
+          {t('Remembered your password?')}{' '}
+          <button type="button" className="animatedAuthInlineLink interactive" onClick={goToLogin}>
+            {t('Sign In')}
           </button>
+        </p>
+      }
+      heroBrand={
+        <BrandLogo
+          href={ROUTES.home}
+          className="brand animatedAuthStageBrand"
+          onClick={(event) => navigateWithScroll(event, ROUTES.home, navigate)}
+        />
+      }
+      heroEyebrow=""
+      heroTitle=""
+      heroDescription=""
+      heroHighlights={[]}
+      heroPanelEyebrow=""
+      heroPanelTitle=""
+      heroPanelStatus=""
+      heroPanelDescription=""
+      isTyping={focusMode === 'identity' || focusMode === 'code'}
+      isPasswordVisible={showPassword || showConfirmPassword}
+      hasPasswordValue={Boolean(form.password || form.confirmPassword)}
+    >
+      <div className="forgotAuthFormShell">
+        <button type="button" className="forgotAuthBackLink interactive" onClick={goToLogin}>
+          <ArrowLeft size={16} aria-hidden="true" />
+          <span>{t('Back to sign in')}</span>
+        </button>
 
-          <BrandLogo
-            href={ROUTES.home}
-            className="brand authBrand"
-            onClick={(event) => navigateWithScroll(event, ROUTES.home, navigate)}
-          />
+        <ForgotPasswordAlert message={feedback.message} type={feedback.type} />
+        <ForgotPasswordSteps isResetStep={isResetStep} t={t} />
 
-          <p className="authSubtitle">
-            {isResetStep
-              ? 'Enter the code from your email and set a new password for your account.'
-              : 'We will send a verification code to your email so you can safely reset your password.'}
-          </p>
+        {!isResetStep ? (
+          <form className="animatedAuthForm" onSubmit={submitEmailStep}>
+            <AuthField label={t('Email address')} icon={Mail}>
+              <input
+                type="email"
+                className="animatedAuthTextInput"
+                value={form.email}
+                onChange={(event) => setFieldValue('email', event.target.value)}
+                onFocus={() => setFocusMode('identity')}
+                onBlur={() => setFocusMode('')}
+                placeholder={t('Please enter your email')}
+                autoComplete="email"
+                required
+              />
+            </AuthField>
 
-          <div className="authStepRow" aria-label="Forgot password steps">
-            <div className={isResetStep ? 'authStep' : 'authStep active'}>
-              <span>01</span>
-              <strong>Send code</strong>
-            </div>
-            <div className={isResetStep ? 'authStep active' : 'authStep'}>
-              <span>02</span>
-              <strong>Reset password</strong>
-            </div>
-          </div>
+            <button type="submit" className="animatedAuthSubmit interactive" disabled={isSubmitting}>
+              <span>{isSubmitting ? t('Sending Code...') : t('Send Verification Code')}</span>
+              <ArrowRight size={18} aria-hidden="true" />
+            </button>
+          </form>
+        ) : (
+          <form className="animatedAuthForm forgotAuthResetForm" onSubmit={submitResetStep}>
+            <OTPVerification
+              title={t('Verification code')}
+              description={t('Code destination')}
+              email={sentToEmail || form.email}
+              value={form.code}
+              onChange={(value) => setFieldValue('code', value)}
+              onResend={resendCode}
+              isResending={isResending}
+              resendLabel={t('Resend code')}
+              resendLoadingLabel={t('Resending...')}
+              helperText={t('Enter the 4-digit code from your email.')}
+              onFocus={() => setFocusMode('code')}
+              onBlur={() => setFocusMode('')}
+            />
 
-          <ForgotPasswordAlert message={feedback.message} type={feedback.type} />
-
-          {!isResetStep ? (
-            <form className="authForm" onSubmit={submitEmailStep}>
-              <label className="authField">
-                <span>Email address</span>
+            <div className="animatedAuthGrid forgotAuthPasswordGrid">
+              <AuthField label={t('New password')} icon={LockKeyhole}>
                 <input
-                  type="email"
-                  value={form.email}
-                  onChange={(event) => setFieldValue('email', event.target.value)}
-                  placeholder="Please enter your email"
-                  autoComplete="email"
+                  type={showPassword ? 'text' : 'password'}
+                  className="animatedAuthTextInput animatedAuthPasswordInput"
+                  value={form.password}
+                  onChange={(event) => setFieldValue('password', event.target.value)}
+                  onFocus={() => setFocusMode('password')}
+                  onBlur={() => setFocusMode('')}
+                  placeholder={t('Please enter new password')}
+                  autoComplete="new-password"
                   required
                 />
-              </label>
 
-              <div className="authHintBox">
-                <p>
-                  Enter your email address to receive a verification code and continue the password reset securely.
-                </p>
-              </div>
-
-              <button type="submit" className="authSubmit interactive" disabled={isSubmitting}>
-                {isSubmitting ? 'Sending Code...' : 'Send Verification Code'}
-              </button>
-            </form>
-          ) : (
-            <form className="authForm" onSubmit={submitResetStep}>
-              <div className="authInfoCard">
-                <div className="authInfoIcon">
-                  <Mail size={18} />
-                </div>
-                <div>
-                  <strong>Code destination</strong>
-                  <p>{sentToEmail || form.email}</p>
-                </div>
-              </div>
-
-              <label className="authField">
-                <span>Verification code</span>
-                <input
-                  type="text"
-                  value={form.code}
-                  onChange={(event) => setFieldValue('code', event.target.value)}
-                  placeholder="Enter the code from your email"
-                  autoComplete="one-time-code"
-                  required
-                />
-              </label>
-
-              <div className="forgotPasswordGrid">
-                <label className="authField">
-                  <span>New password</span>
-                  <div className="passwordWrap">
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={form.password}
-                      onChange={(event) => setFieldValue('password', event.target.value)}
-                      placeholder="Please enter new password"
-                      autoComplete="new-password"
-                      required
-                    />
-                    <button
-                      type="button"
-                      className="passwordToggle interactive"
-                      onClick={() => setShowPassword((currentState) => !currentState)}
-                      aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    >
-                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                  </div>
-                </label>
-
-                <label className="authField">
-                  <span>Confirm password</span>
-                  <div className="passwordWrap">
-                    <input
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      value={form.confirmPassword}
-                      onChange={(event) => setFieldValue('confirmPassword', event.target.value)}
-                      placeholder="Retype new password"
-                      autoComplete="new-password"
-                      required
-                    />
-                    <button
-                      type="button"
-                      className="passwordToggle interactive"
-                      onClick={() => setShowConfirmPassword((currentState) => !currentState)}
-                      aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
-                    >
-                      {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                  </div>
-                </label>
-              </div>
-
-              <div className="authButtonRow">
-                <button type="button" className="authSecondaryButton interactive" onClick={goToRequestStep}>
-                  Change email
-                </button>
                 <button
                   type="button"
-                  className="textButton interactive"
-                  disabled={isResending}
-                  onClick={resendCode}
+                  className="animatedAuthPasswordToggle interactive"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => setShowPassword((currentState) => !currentState)}
+                  aria-label={showPassword ? t('Hide password') : t('Show password')}
+                  title={showPassword ? t('Hide password') : t('Show password')}
                 >
-                  {isResending ? 'Resending...' : 'Resend code'}
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
-              </div>
+              </AuthField>
 
-              <button type="submit" className="authSubmit interactive" disabled={isSubmitting}>
-                {isSubmitting ? 'Updating Password...' : 'Save New Password'}
-              </button>
-            </form>
-          )}
+              <AuthField label={t('Confirm password')} icon={LockKeyhole}>
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  className="animatedAuthTextInput animatedAuthPasswordInput"
+                  value={form.confirmPassword}
+                  onChange={(event) => setFieldValue('confirmPassword', event.target.value)}
+                  onFocus={() => setFocusMode('password')}
+                  onBlur={() => setFocusMode('')}
+                  placeholder={t('Retype new password')}
+                  autoComplete="new-password"
+                  required
+                />
 
-          <p className="authSwitch">
-            Remembered your password?{' '}
-            <button type="button" className="inlineLink interactive" onClick={goToLogin}>
-              Sign In
-            </button>
-          </p>
-        </section>
-
-        <section className="authPreview fadeUp delayOne" aria-hidden="true">
-          <div className="previewLaptop displayFloat">
-            <div className="previewBezel">
-              <div className="previewNotch" />
-              <div className="previewScreen">
-                <div className="previewCard">
-                  <BrandLogo as="div" className="brand previewBrand" />
-
-                  <div className="forgotPreviewBadge">
-                    <ShieldCheck size={18} />
-                    <span>Secure recovery flow</span>
-                  </div>
-
-                  <p>
-                    {isResetStep
-                      ? 'Use the verification code from email and replace the old password in one flow.'
-                      : 'Send a recovery request and receive the verification code in your email.'}
-                  </p>
-
-                  <div className="forgotPreviewSteps">
-                    <div className={isResetStep ? 'forgotPreviewStep' : 'forgotPreviewStep active'}>
-                      <Mail size={16} />
-                      <span>Email code request</span>
-                    </div>
-                    <div className={isResetStep ? 'forgotPreviewStep active' : 'forgotPreviewStep'}>
-                      <KeyRound size={16} />
-                      <span>Reset with code</span>
-                    </div>
-                  </div>
-
-                  <div className="previewInput" />
-                  <div className="previewInput" />
-                  <button type="button" className="previewButton">
-                    {isResetStep ? 'Save New Password' : 'Send Verification Code'}
-                  </button>
-                  <small>{sentToEmail || 'Verification code will arrive to the selected email address.'}</small>
-                </div>
-              </div>
+                <button
+                  type="button"
+                  className="animatedAuthPasswordToggle interactive"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => setShowConfirmPassword((currentState) => !currentState)}
+                  aria-label={showConfirmPassword ? t('Hide password') : t('Show password')}
+                  title={showConfirmPassword ? t('Hide password') : t('Show password')}
+                >
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </AuthField>
             </div>
-            <div className="previewBase" />
-            <div className="floatingSupport">OK</div>
-          </div>
-        </section>
+
+            <div className="forgotAuthActionRow">
+              <button
+                type="button"
+                className="forgotAuthSecondaryButton interactive"
+                onClick={goToRequestStep}
+              >
+                {t('Change email')}
+              </button>
+
+              <button type="submit" className="animatedAuthSubmit interactive" disabled={isSubmitting}>
+                <span>{isSubmitting ? t('Updating Password...') : t('Save New Password')}</span>
+                <ArrowRight size={18} aria-hidden="true" />
+              </button>
+            </div>
+          </form>
+        )}
       </div>
-    </div>
+    </AnimatedCharactersLoginPage>
   );
 }
