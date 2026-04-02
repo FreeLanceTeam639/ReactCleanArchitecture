@@ -132,8 +132,13 @@ export function normalizeReview(item = {}) {
   return {
     id: pickFirst(item.id, item._id, `${item.author || 'review'}-${item.createdAt || ''}`),
     author: pickFirst(item.author, item.clientName, 'Anonymous client'),
+    project: pickFirst(item.project, item.title, 'Project'),
+    role: String(pickFirst(item.role, 'received')).toLowerCase(),
     rating: Number(pickFirst(item.rating, item.score, 0)) || 0,
+    status: String(pickFirst(item.status, 'visible')).toLowerCase(),
     comment: pickFirst(item.comment, item.text, ''),
+    createdAt: pickFirst(item.createdAt, item.timeAgo, ''),
+    replies: Array.isArray(item.replies) ? item.replies.map(normalizeReview) : [],
     timeAgo: pickFirst(item.timeAgo, item.createdAt, '')
   };
 }

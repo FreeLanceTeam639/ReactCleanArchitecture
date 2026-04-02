@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { logoutUser } from '../../features/auth/services/authService.js';
 import { PROFILE_TABS, useProfilePage } from '../../features/profile/hooks/useProfilePage.js';
+import { CommentThread } from '../../components/ui/reddit-nested-thread-reply.jsx';
 import MarketplaceHeader from '../../shared/ui/MarketplaceHeader.jsx';
 import AdminImageField from '../../shared/ui/admin/AdminImageField.jsx';
 import CountrySelect from '../../shared/ui/CountrySelect.jsx';
@@ -435,25 +436,12 @@ export default function ProfilePage({ navigate }) {
         <Star size={20} />
       </div>
 
-      <div className="profileSimpleList">
-        {reviews.length ? (
-          reviews.map((review) => (
-            <div key={review.id} className="profileSimpleRow">
-              <strong>
-                {review.author} • {review.rating.toFixed(1)} / 5
-              </strong>
-              <p>{review.comment}</p>
-            </div>
-          ))
-        ) : (
-          <EmptyState
-            title="No reviews yet"
-            copy="Reviews will appear after completed collaborations and published work."
-            actionLabel="Open orders"
-            onAction={() => navigate(ROUTES.orders)}
-          />
-        )}
-      </div>
+      <CommentThread
+        items={reviews}
+        groupByProject
+        emptyTitle="No reviews yet"
+        emptyDescription="Reviews from completed tasks and client collaborations will appear here."
+      />
     </section>
   );
 

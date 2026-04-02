@@ -120,7 +120,8 @@ function normalizeReview(item = {}) {
     rating: Number(pickFirst(item.rating, 0)) || 0,
     status: toLower(pickFirst(item.status, 'visible')),
     createdAt: pickFirst(item.createdAt, item.timeAgo, ''),
-    comment: pickFirst(item.comment, item.text, '')
+    comment: pickFirst(item.comment, item.text, ''),
+    replies: Array.isArray(item.replies) ? item.replies.map(normalizeReview) : []
   };
 }
 

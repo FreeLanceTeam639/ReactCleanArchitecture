@@ -1,3 +1,5 @@
+import { getRuntimeConfigValue } from './runtimeConfig.js';
+
 function normalizeApiBaseUrl(value) {
   const trimmedValue = String(value || '').trim();
 
@@ -14,7 +16,7 @@ function normalizeApiBaseUrl(value) {
   return `${withoutTrailingSlash}/api`;
 }
 
-export const API_BASE_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL);
+export const API_BASE_URL = normalizeApiBaseUrl(getRuntimeConfigValue('API_BASE_URL') || import.meta.env.VITE_API_BASE_URL);
 
 function normalizeEndpointPath(value) {
   const trimmedValue = String(value || '').trim();

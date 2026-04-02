@@ -5,6 +5,7 @@
 @import './pages/task-detail.css';
 @import './pages/workspace.css';
 @import './pages/admin.css';
+@import './shared/comment-thread.css';
 @import './shared/upload-card.css';
 @import './shared/enhancements.css';
 

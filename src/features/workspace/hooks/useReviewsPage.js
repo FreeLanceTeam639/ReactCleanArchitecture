@@ -32,9 +32,12 @@ export function useReviewsPage(navigate) {
 
   const toggleFeatured = async (reviewId) => {
     setState((current) => ({ ...current, busyKey: `review:${reviewId}` }));
-    await toggleReviewFeatured(reviewId);
-    await load();
-    setState((current) => ({ ...current, busyKey: '' }));
+    try {
+      await toggleReviewFeatured(reviewId);
+      await load();
+    } finally {
+      setState((current) => ({ ...current, busyKey: '' }));
+    }
   };
 
   return { filters, setFilterValue, toggleFeatured, ...state };

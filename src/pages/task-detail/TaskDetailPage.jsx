@@ -17,6 +17,7 @@ import {
   hireTaskService,
   startTaskConversation
 } from '../../features/task-detail/services/taskDetailService.js';
+import { CommentThread } from '../../components/ui/reddit-nested-thread-reply.jsx';
 import { fetchWalletSummary } from '../../features/workspace/services/workspaceService.js';
 import { buildTaskDetailRoute, getTaskSlugFromPathname, ROUTES } from '../../shared/constants/routes.js';
 import { useToast } from '../../shared/hooks/useToast.js';
@@ -136,9 +137,9 @@ export default function TaskDetailPage({ navigate, pathname }) {
   const faqHeading = isJobBrief
     ? 'Everything you may want to confirm before replying to this brief'
     : 'Everything you may want to know before starting';
-  const reviewHeading = isJobBrief
-    ? detail.reviewSectionTitle
-    : `1 client review (${detail.rating} overall rating)`;
+  const reviewHeading = detail.reviews > 0
+    ? `${detail.reviews} review${detail.reviews === 1 ? '' : 's'} (${detail.rating} overall rating)`
+    : detail.reviewSectionTitle;
   const chatButtonLabel = isOpeningChat
     ? 'Opening chat...'
     : isOwnTask
@@ -391,20 +392,17 @@ export default function TaskDetailPage({ navigate, pathname }) {
                 </div>
               </div>
 
-              <div className="detailReviewCard">
-                <div className="detailReviewAvatarWrap">
-                  <img src={detail.avatar} alt={detail.review.author} className="detailReviewAvatar" />
-                </div>
-                <div className="detailReviewBody">
-                  <div className="detailReviewStars">{renderStars(detail.review.score)}</div>
-                  <div className="detailReviewMeta">
-                    <strong>{detail.review.score}</strong>
-                    <span>({detail.review.timeAgo})</span>
-                  </div>
-                  <h3>{detail.reviewCardTitle}</h3>
-                  <p>{detail.review.text}</p>
-                </div>
-              </div>
+              <CommentThread
+                items={detail.reviewThread}
+                groupByProject
+                className="detailReviewThread"
+                emptyTitle={isJobBrief ? 'No task reviews yet' : 'No client reviews yet'}
+                emptyDescription={
+                  isJobBrief
+                    ? 'Reviews from completed deliveries on this task will appear here once collaborators leave feedback.'
+                    : 'Completed collaborations will appear here as soon as clients start leaving feedback.'
+                }
+              />
             </motion.section>
           </div>
 

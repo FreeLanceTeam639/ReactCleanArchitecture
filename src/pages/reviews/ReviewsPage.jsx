@@ -1,4 +1,5 @@
-import { LoaderCircle, SearchCheck, Star } from 'lucide-react';
+import { LoaderCircle, SearchCheck } from 'lucide-react';
+import { CommentThread } from '../../components/ui/reddit-nested-thread-reply.jsx';
 import { useReviewsPage } from '../../features/workspace/hooks/useReviewsPage.js';
 import { AUTHENTICATED_NAVIGATION_LINKS } from '../../shared/constants/navigationLinks.js';
 import { ROUTES } from '../../shared/constants/routes.js';
@@ -53,41 +54,27 @@ export default function ReviewsPage({ navigate }) {
           ) : error ? (
             <div className="workspaceEmptyState">{t(error)}</div>
           ) : (
-            <div className="workspaceCardGrid reviews">
-              {items.map((item) => (
-                <article key={item.id} className="workspaceEntityCard cardLift">
-                  <div className="workspaceEntityTop">
-                    <div>
-                      <strong>{item.author}</strong>
-                      <p>{item.project}</p>
-                    </div>
-                    <span className={`workspaceBadge ${item.status}`}>{t(item.status)}</span>
-                  </div>
-                  <div className="workspaceStarsRow">
-                    {Array.from({ length: 5 }).map((_, index) => (
-                      <Star key={`${item.id}-${index}`} size={16} fill={index < item.rating ? 'currentColor' : 'none'} />
-                    ))}
-                  </div>
-                  <p className="workspaceMutedText">{item.comment}</p>
-                  <div className="workspaceInlineActions">
-                    <small>{item.createdAt}</small>
-                    <button
-                      type="button"
-                      className="profileActionButton interactive"
-                      disabled={busyKey === `review:${item.id}`}
-                      onClick={() => toggleFeatured(item.id)}
-                    >
-                      <SearchCheck size={15} />{' '}
-                      {busyKey === `review:${item.id}`
-                        ? t('Saving...')
-                        : item.status === 'featured'
-                          ? t('Remove feature')
-                          : t('Feature')}
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
+            <CommentThread
+              items={items}
+              groupByProject
+              emptyTitle={t('No reviews yet')}
+              emptyDescription={t('Reviews will appear after completed collaborations and published work.')}
+              renderItemActions={(item) => (
+                <button
+                  type="button"
+                  className="reviewThreadActionButton interactive"
+                  disabled={busyKey === `review:${item.id}`}
+                  onClick={() => toggleFeatured(item.id)}
+                >
+                  <SearchCheck size={15} />
+                  {busyKey === `review:${item.id}`
+                    ? t('Saving...')
+                    : item.status === 'featured'
+                      ? t('Remove feature')
+                      : t('Feature')}
+                </button>
+              )}
+            />
           )}
         </section>
       </main>

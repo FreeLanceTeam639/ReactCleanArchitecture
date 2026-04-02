@@ -17,9 +17,38 @@ function normalizeOwnerTask(item = {}, fallback = {}) {
   };
 }
 
+function normalizeReviewThreadItem(item = {}) {
+  return {
+    id: item.id || item._id || `${item.author || 'review'}-${item.createdAt || item.timeAgo || ''}`,
+    author: item.author || item.clientName || 'Anonymous client',
+    project: item.project || item.title || '',
+    role: item.role || '',
+    rating: Number(item.rating || item.score || 0) || 0,
+    status: item.status || 'visible',
+    createdAt: item.createdAt || item.timeAgo || '',
+    comment: item.comment || item.text || '',
+    replies: Array.isArray(item.replies) ? item.replies.map(normalizeReviewThreadItem) : []
+  };
+}
+
 function normalizeDetail(payload, slug) {
   const entity = extractEntity(payload, ['task', 'detail', 'data']) || payload || {};
   const review = entity.review && typeof entity.review === 'object' ? entity.review : {};
+  const reviewThread = Array.isArray(entity.reviewThread)
+    ? entity.reviewThread.map(normalizeReviewThreadItem)
+    : review?.text
+      ? [
+          normalizeReviewThreadItem({
+            id: `${slug}-review`,
+            author: review.author,
+            rating: review.score,
+            createdAt: review.timeAgo,
+            comment: review.text,
+            project: entity.title || '',
+            status: 'visible'
+          })
+        ]
+      : [];
   const avatar = resolveApiAssetUrl(entity.avatar || entity.imageUrl || '');
   const gallery = Array.isArray(entity.gallery) && entity.gallery.length
     ? entity.gallery.map((image) => resolveApiAssetUrl(image)).filter(Boolean)
@@ -65,6 +94,7 @@ function normalizeDetail(payload, slug) {
     ownerTasks,
     avatar,
     review,
+    reviewThread,
     name: entity.name || entity.fullName || '',
     role: entity.role || entity.profession || '',
     hourlyRate: entity.hourlyRate || entity.rate || '',
