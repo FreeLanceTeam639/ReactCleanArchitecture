@@ -54,6 +54,18 @@ export function appendQuery(path, query) {
   return `${path}${path.includes('?') ? '&' : '?'}${queryString}`;
 }
 
+export function extractFileName(contentDisposition) {
+  const headerValue = String(contentDisposition || '');
+  const utf8Match = headerValue.match(/filename\*=UTF-8''([^;]+)/i);
+
+  if (utf8Match?.[1]) {
+    return decodeURIComponent(utf8Match[1]);
+  }
+
+  const basicMatch = headerValue.match(/filename="?([^"]+)"?/i);
+  return basicMatch?.[1] || 'download';
+}
+
 export async function parseResponse(response) {
   if (response.status === 204) {
     return null;

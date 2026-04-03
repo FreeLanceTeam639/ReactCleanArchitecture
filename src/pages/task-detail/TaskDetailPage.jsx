@@ -7,6 +7,7 @@ import {
   ChevronDown,
   Clock3,
   Eye,
+  FileText,
   Heart,
   Images,
   ShoppingBag,
@@ -69,6 +70,7 @@ export default function TaskDetailPage({ navigate, pathname }) {
   const [selectedPackage, setSelectedPackage] = useState('');
   const [openFaq, setOpenFaq] = useState(0);
   const [activeImage, setActiveImage] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   useEffect(() => {
     let isCancelled = false;
@@ -83,6 +85,7 @@ export default function TaskDetailPage({ navigate, pathname }) {
           setSelectedPackage(payload.packages[1]?.key || payload.packages[0]?.key || '');
           setActiveImage(payload.gallery?.[0] || '');
           setOpenFaq(0);
+          setTermsAccepted(false);
         }
       } catch (nextError) {
         if (!isCancelled) {
@@ -164,7 +167,7 @@ export default function TaskDetailPage({ navigate, pathname }) {
         'Direct access to the job owner',
         'Budget and scope alignment',
         'Timeline clarification',
-        'Conversation-ready brief'
+        'Order-ready brief'
       ]
     : detail.included;
 
@@ -199,6 +202,14 @@ export default function TaskDetailPage({ navigate, pathname }) {
     }
 
     if (!isChatAction) {
+      if (!termsAccepted) {
+        toast.error({
+          title: 'Sertler qebul olunmayib',
+          message: 'Sifarisi tamamlamaq ucun qaydalari tesdiqleyin.'
+        });
+        return;
+      }
+
       try {
         const walletSummary = await fetchWalletSummary();
         const availableBalance = parseMoneyValue(walletSummary?.availableBalance);
@@ -226,7 +237,10 @@ export default function TaskDetailPage({ navigate, pathname }) {
     try {
       const result = isChatAction
         ? await startTaskConversation(detail.slug, selectedPackageData?.key, 'chat')
-        : await hireTaskService(detail.slug, selectedPackageData?.key);
+        : await hireTaskService(detail.slug, selectedPackageData?.key, {
+            termsAccepted,
+            termsVersion: detail.termsVersion
+          });
 
       if (result?.conversationId && isChatAction) {
         setPendingConversationFocusId(result.conversationId);
@@ -454,6 +468,30 @@ export default function TaskDetailPage({ navigate, pathname }) {
                 </AnimatePresence>
 
                 <div className="detailActionGroup">
+                  <div className="detailTermsCard">
+                    <div className="detailTermsHeader">
+                      <div className="detailTermsIcon">
+                        <FileText size={18} />
+                      </div>
+                      <div>
+                        <strong>Order terms acceptance</strong>
+                        <span>Version {detail.termsVersion}</span>
+                      </div>
+                    </div>
+                    <p>{detail.termsSummary}</p>
+                    <label className="detailTermsCheckbox">
+                      <input
+                        type="checkbox"
+                        checked={termsAccepted}
+                        onChange={(event) => setTermsAccepted(event.target.checked)}
+                      />
+                      <span>
+                        I accept the current terms and confirm that the order PDF can be generated automatically after
+                        hire.
+                      </span>
+                    </label>
+                  </div>
+
                   <motion.button
                     whileHover={{ y: -2 }}
                     whileTap={{ scale: 0.98 }}

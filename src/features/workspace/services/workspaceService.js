@@ -3,6 +3,7 @@ import {
   buildWorkspaceConversationEndpoint,
   buildWorkspaceConversationReadEndpoint,
   buildWorkspaceNotificationEndpoint,
+  buildWorkspaceOrderDocumentEndpoint,
   buildWorkspaceReviewFeatureEndpoint,
   buildWorkspaceSessionEndpoint
 } from '../../../shared/api/endpoints.js';
@@ -60,7 +61,12 @@ function normalizeOrder(item = {}) {
     dueDate: pickFirst(item.dueDate, item.deadline, ''),
     priority: toLower(pickFirst(item.priority, 'medium')),
     category: pickFirst(item.category, item.type, 'General'),
-    lastUpdate: pickFirst(item.lastUpdate, item.summary, '')
+    lastUpdate: pickFirst(item.lastUpdate, item.summary, ''),
+    orderNumber: pickFirst(item.orderNumber, ''),
+    termsVersion: pickFirst(item.termsVersion, ''),
+    hasDocument: Boolean(pickFirst(item.hasDocument, false)),
+    documentStatus: toLower(pickFirst(item.documentStatus, '')),
+    documentDownloadUrl: pickFirst(item.documentDownloadUrl, '')
   };
 }
 
@@ -105,9 +111,28 @@ function normalizeTransaction(item = {}) {
     type: toLower(pickFirst(item.type, 'income')),
     title: pickFirst(item.title, item.description, 'Transaction'),
     amount: pickFirst(item.amount, '$0'),
+    currency: pickFirst(item.currency, 'USD'),
     status: toLower(pickFirst(item.status, 'completed')),
     method: pickFirst(item.method, item.channel, ''),
+    reference: pickFirst(item.reference, ''),
+    provider: pickFirst(item.provider, ''),
     createdAt: pickFirst(item.createdAt, item.date, '')
+  };
+}
+
+function normalizeTopUpSession(item = {}) {
+  return {
+    id: pickFirst(item.id, item._id, ''),
+    status: toLower(pickFirst(item.status, 'pending')),
+    amount: Number(pickFirst(item.amount, 0)) || 0,
+    currency: pickFirst(item.currency, 'USD'),
+    paymentMethod: pickFirst(item.paymentMethod, 'card'),
+    provider: pickFirst(item.provider, 'sandbox-card'),
+    transactionReference: pickFirst(item.transactionReference, ''),
+    providerReference: pickFirst(item.providerReference, ''),
+    message: pickFirst(item.message, ''),
+    createdAt: pickFirst(item.createdAt, ''),
+    confirmedAt: pickFirst(item.confirmedAt, '')
   };
 }
 
@@ -301,6 +326,27 @@ export async function requestWithdrawal(amount) {
   const numericAmount = Number(String(amount || '').replace(/[^\d.]/g, ''));
   const payload = await httpClient.post(API_ENDPOINTS.workspace.withdrawals, { amount: numericAmount });
   return normalizeTransaction(extractEntity(payload, ['transaction', 'data']) || payload);
+}
+
+export async function createWalletTopUp(request) {
+  const numericAmount = Number(String(request?.amount || '').replace(/[^\d.]/g, ''));
+  const payload = await httpClient.post(API_ENDPOINTS.workspace.topUps, {
+    amount: numericAmount,
+    currency: request?.currency || 'USD',
+    paymentMethod: 'card',
+    cardholderName: request?.cardholderName || '',
+    billingEmail: request?.billingEmail || '',
+    cardLast4: String(request?.cardLast4 || '').slice(-4),
+    cardBrand: request?.cardBrand || 'Card',
+    billingCountry: request?.billingCountry || '',
+    termsAccepted: Boolean(request?.termsAccepted)
+  });
+
+  return normalizeTopUpSession(extractEntity(payload, ['session', 'data']) || payload);
+}
+
+export async function downloadOrderDocument(proposalId) {
+  return httpClient.download(buildWorkspaceOrderDocumentEndpoint(proposalId));
 }
 
 export async function fetchWorkspaceReviews(query = {}) {

@@ -108,6 +108,7 @@ export const API_ENDPOINTS = {
     subscriptionCheckout: withDefault(import.meta.env.VITE_WORKSPACE_SUBSCRIPTION_CHECKOUT_ENDPOINT, '/workspace/subscription/checkout'),
     walletSummary: withDefault(import.meta.env.VITE_WORKSPACE_WALLET_SUMMARY_ENDPOINT, '/workspace/wallet/summary'),
     transactions: withDefault(import.meta.env.VITE_WORKSPACE_TRANSACTIONS_ENDPOINT, '/workspace/wallet/transactions'),
+    topUps: withDefault(import.meta.env.VITE_WORKSPACE_TOPUPS_ENDPOINT, '/workspace/wallet/top-ups'),
     withdrawals: withDefault(import.meta.env.VITE_WORKSPACE_WITHDRAWALS_ENDPOINT, '/workspace/wallet/withdrawals'),
     reviews: withDefault(import.meta.env.VITE_WORKSPACE_REVIEWS_ENDPOINT, '/workspace/reviews'),
     security: withDefault(import.meta.env.VITE_WORKSPACE_SECURITY_ENDPOINT, '/workspace/security/settings'),
@@ -191,6 +192,10 @@ export function buildWorkspaceReviewFeatureEndpoint(reviewId) {
 
 export function buildWorkspaceSessionEndpoint(sessionId) {
   return `${API_ENDPOINTS.workspace.sessions}/${sessionId}`;
+}
+
+export function buildWorkspaceOrderDocumentEndpoint(proposalId) {
+  return `${API_ENDPOINTS.workspace.orders}/${proposalId}/document`;
 }
 
 export function buildAdminVerificationTicketEndpoint(ticketId) {

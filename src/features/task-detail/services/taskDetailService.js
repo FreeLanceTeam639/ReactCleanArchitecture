@@ -106,6 +106,8 @@ function normalizeDetail(payload, slug) {
     primaryActionLabel: entity.primaryActionLabel || 'Hire me for a task',
     secondaryActionLabel: entity.secondaryActionLabel || 'Compare packages',
     showComparePackages: entity.showComparePackages !== false,
+    termsVersion: entity.termsVersion || '2026-04',
+    termsSummary: entity.termsSummary || 'You must accept the current service terms before placing an order.',
     reviewSectionEyebrow: entity.reviewSectionEyebrow || 'Client reviews',
     reviewSectionTitle: entity.reviewSectionTitle || 'Client reviews',
     reviewCardTitle: entity.reviewCardTitle || 'Highly recommend',
@@ -118,12 +120,22 @@ export async function fetchTaskDetailBySlug(slug) {
   return normalizeDetail(payload, slug);
 }
 
-export async function startTaskConversation(slug, packageKey, action = 'chat') {
-  const payload = await httpClient.post(buildTaskConversationEndpoint(slug), { packageKey, action });
+export async function startTaskConversation(slug, packageKey, action = 'chat', options = {}) {
+  const payload = await httpClient.post(buildTaskConversationEndpoint(slug), {
+    packageKey,
+    action,
+    termsAccepted: Boolean(options?.termsAccepted),
+    termsVersion: options?.termsVersion || ''
+  });
   return extractEntity(payload, ['data', 'conversation', 'result']) || payload;
 }
 
-export async function hireTaskService(slug, packageKey) {
-  const payload = await httpClient.post(buildTaskConversationEndpoint(slug), { packageKey, action: 'hire' });
+export async function hireTaskService(slug, packageKey, options = {}) {
+  const payload = await httpClient.post(buildTaskConversationEndpoint(slug), {
+    packageKey,
+    action: 'hire',
+    termsAccepted: Boolean(options?.termsAccepted),
+    termsVersion: options?.termsVersion || ''
+  });
   return extractEntity(payload, ['data', 'conversation', 'result']) || payload;
 }

@@ -900,6 +900,10 @@
   padding: 10px 14px;
   font-weight: 700;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .profileActionButton:disabled {
@@ -1240,6 +1244,7 @@
 
 .workspaceBadge.review,
 .workspaceBadge.processing,
+.workspaceBadge.queued,
 .workspaceBadge.pending,
 .workspaceBadge.order,
 .workspaceBadge.unread {
@@ -1249,15 +1254,25 @@
 
 .workspaceBadge.blocked,
 .workspaceBadge.expired,
-.workspaceBadge.rejected {
+.workspaceBadge.rejected,
+.workspaceBadge.failed,
+.workspaceBadge.canceled {
   background: rgba(220, 38, 38, 0.12);
   color: #b42318;
 }
 
 .workspaceBadge.featured,
-.workspaceBadge.security {
+.workspaceBadge.security,
+.workspaceBadge.ready {
   background: rgba(47, 128, 237, 0.13);
   color: #1d4ed8;
+}
+
+.workspaceOrderMetaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px 0 4px;
 }
 
 .workspaceSplitLayout {

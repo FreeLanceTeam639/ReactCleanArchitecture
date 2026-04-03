@@ -1,7 +1,7 @@
 import { clearAuthenticatedUser } from '../lib/storage/authStorage.js';
 import { API_BASE_URL } from './endpoints.js';
 import { extractErrorMessage } from './errorMessages.js';
-import { appendQuery, createHeaders, parseResponse, serializeBody } from './requestHelpers.js';
+import { appendQuery, createHeaders, extractFileName, parseResponse, serializeBody } from './requestHelpers.js';
 
 async function request(path, options = {}) {
   const { query, ...fetchOptions } = options;
@@ -41,6 +41,30 @@ export const httpClient = {
   },
   delete(path, options) {
     return request(path, { ...options, method: 'DELETE' });
+  },
+  async download(path, options = {}) {
+    const { query, ...fetchOptions } = options;
+    const finalPath = appendQuery(path, query);
+    const response = await fetch(`${API_BASE_URL}${finalPath}`, {
+      credentials: 'include',
+      ...fetchOptions,
+      headers: createHeaders(undefined, fetchOptions.headers)
+    });
+
+    if (response.status === 401) {
+      clearAuthenticatedUser();
+    }
+
+    if (!response.ok) {
+      const payload = await parseResponse(response);
+      throw new Error(extractErrorMessage(payload, response.status));
+    }
+
+    return {
+      blob: await response.blob(),
+      fileName: extractFileName(response.headers.get('content-disposition')),
+      contentType: response.headers.get('content-type') || 'application/octet-stream'
+    };
   }
 };
 

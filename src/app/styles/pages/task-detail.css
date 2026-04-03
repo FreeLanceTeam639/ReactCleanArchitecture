@@ -882,6 +882,67 @@
   gap: 12px;
 }
 
+.detailTermsCard {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #fff7f2 0%, #fff 100%);
+  border: 1px solid rgba(255, 90, 20, 0.14);
+}
+
+.detailTermsHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.detailTermsIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 90, 20, 0.12);
+  color: var(--accent);
+}
+
+.detailTermsHeader strong,
+.detailTermsHeader span {
+  display: block;
+}
+
+.detailTermsHeader span {
+  margin-top: 4px;
+  color: #667085;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.detailTermsCard p {
+  margin: 0;
+  color: #475467;
+  line-height: 1.7;
+}
+
+.detailTermsCheckbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 90, 20, 0.12);
+  color: #344054;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+.detailTermsCheckbox input {
+  margin-top: 4px;
+}
+
 .detailActionGroup {
   display: grid;
   gap: 12px;

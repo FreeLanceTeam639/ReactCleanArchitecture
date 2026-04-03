@@ -13,30 +13,96 @@ function buildWorkspaceNotificationHubUrl() {
   return `${apiUrl.protocol}//${apiUrl.host}/hubs/workspace-notifications`;
 }
 
-export function createWorkspaceNotificationSubscription(onEvent) {
-  if (typeof window === 'undefined' || typeof onEvent !== 'function') {
-    return () => {};
+const notificationListeners = new Set();
+let sharedConnection = null;
+let sharedConnectionStartPromise = null;
+
+function emitNotificationsChanged(payload) {
+  const eventPayload = payload || { type: 'notifications.changed' };
+
+  notificationListeners.forEach((listener) => {
+    try {
+      listener(eventPayload);
+    } catch {
+      // Ignore subscriber errors to keep the realtime bridge healthy.
+    }
+  });
+}
+
+function ensureSharedConnection() {
+  if (sharedConnection) {
+    return sharedConnection;
   }
 
-  const connection = new HubConnectionBuilder()
+  sharedConnection = new HubConnectionBuilder()
     .withUrl(buildWorkspaceNotificationHubUrl(), {
       accessTokenFactory: () => getAccessToken() || ''
     })
     .withAutomaticReconnect()
     .build();
 
-  const handleNotificationsChanged = (payload) => {
-    onEvent(payload || { type: 'notifications.changed' });
-  };
+  sharedConnection.on('notifications.changed', emitNotificationsChanged);
 
-  connection.on('notifications.changed', handleNotificationsChanged);
-  connection.start().catch(() => {});
+  return sharedConnection;
+}
+
+async function startSharedConnection() {
+  const connection = ensureSharedConnection();
+
+  if (connection.state === HubConnectionState.Connected || connection.state === HubConnectionState.Connecting) {
+    return;
+  }
+
+  if (sharedConnectionStartPromise) {
+    return sharedConnectionStartPromise;
+  }
+
+  sharedConnectionStartPromise = connection.start().catch(() => {}).finally(() => {
+    sharedConnectionStartPromise = null;
+  });
+
+  return sharedConnectionStartPromise;
+}
+
+async function stopSharedConnectionIfIdle(connection) {
+  if (!connection) {
+    return;
+  }
+
+  if (sharedConnectionStartPromise) {
+    try {
+      await sharedConnectionStartPromise;
+    } catch {
+      // Connection start errors are intentionally swallowed here.
+    }
+  }
+
+  if (notificationListeners.size > 0 || sharedConnection !== connection) {
+    return;
+  }
+
+  connection.off('notifications.changed', emitNotificationsChanged);
+
+  if (connection.state !== HubConnectionState.Disconnected) {
+    await connection.stop().catch(() => {});
+  }
+
+  if (sharedConnection === connection) {
+    sharedConnection = null;
+  }
+}
+
+export function createWorkspaceNotificationSubscription(onEvent) {
+  if (typeof window === 'undefined' || typeof onEvent !== 'function') {
+    return () => {};
+  }
+
+  notificationListeners.add(onEvent);
+  const connection = ensureSharedConnection();
+  void startSharedConnection();
 
   return () => {
-    connection.off('notifications.changed', handleNotificationsChanged);
-
-    if (connection.state !== HubConnectionState.Disconnected) {
-      connection.stop().catch(() => {});
-    }
+    notificationListeners.delete(onEvent);
+    void stopSharedConnectionIfIdle(connection);
   };
 }
