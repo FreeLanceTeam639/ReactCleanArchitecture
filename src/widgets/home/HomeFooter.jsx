@@ -9,7 +9,7 @@ export default function HomeFooter() {
         <div>
           <BrandLogo href="#home" />
           <p>
-            {t('Our platform helps businesses discover verified members and launch digital collaborations with speed.')}
+            {t('Our platform helps businesses discover verified professionals and launch digital collaborations faster.')}
           </p>
         </div>
         <div>
@@ -22,7 +22,7 @@ export default function HomeFooter() {
           </ul>
         </div>
         <div>
-          <h4>{t('Post Free To Share Your Question')}</h4>
+          <h4>{t('Contact our team')}</h4>
           <ul>
             <li>+44 877 723 4554</li>
             <li>hello@freelanceaze.az</li>
@@ -31,7 +31,7 @@ export default function HomeFooter() {
         </div>
       </div>
       <div className="wrap footBottom">
-        <span>{t('Copyright 2026 FreelanceAze')}</span>
+        <span>{t('Copyright © 2026 FreelanceAze')}</span>
         <div className="socials">
           <span>in</span>
           <span>f</span>

@@ -150,7 +150,7 @@ export function useHomePageData() {
             limit: DEFAULT_LIMIT
           });
           setSavedTalentIds([]);
-          setNotice(error?.message || 'Member discovery is refreshing. Please try again in a moment.');
+          setNotice(error?.message || 'Talent discovery is refreshing. Please try again in a moment.');
         }
       } finally {
         if (!isCancelled) {
@@ -203,7 +203,7 @@ export function useHomePageData() {
         return Array.from(nextIds);
       });
     } catch (error) {
-      setNotice(error?.message || 'More profiles could not be loaded right now.');
+      setNotice(error?.message || 'More talent profiles could not be loaded right now.');
     } finally {
       setIsTalentLoading(false);
     }
@@ -245,14 +245,14 @@ export function useHomePageData() {
         ))
       }));
     } catch (error) {
-      setNotice(error?.message || 'Saved state could not be updated.');
+      setNotice(error?.message || 'Saved profile status could not be updated.');
     }
   };
 
   const heroHighlights = useMemo(() => [
     { label: 'Featured talent', value: String(talentMeta.total || homeData.talents.length || 0) },
-    { label: 'Categories live', value: String(homeData.tabs.length || homeData.popular.length || 0) },
-    { label: 'Live job posts', value: String(homeData.jobs.length || 0) }
+    { label: 'Active categories', value: String(homeData.tabs.length || homeData.popular.length || 0) },
+    { label: 'Open job posts', value: String(homeData.jobs.length || 0) }
   ], [homeData.jobs.length, homeData.popular.length, homeData.tabs.length, homeData.talents.length, talentMeta.total]);
 
   const trustIndicators = useMemo(() => [

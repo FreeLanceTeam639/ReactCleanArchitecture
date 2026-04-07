@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   BriefcaseBusiness,
   CalendarClock,
@@ -14,8 +14,11 @@ import { AUTHENTICATED_NAVIGATION_LINKS } from '../../shared/constants/navigatio
 import { buildTaskDetailRoute, ROUTES } from '../../shared/constants/routes.js';
 import { useToast } from '../../shared/hooks/useToast.js';
 import { useI18n } from '../../shared/i18n/I18nProvider.jsx';
+import { consumePendingOrderConfirmation } from '../../shared/lib/storage/orderConfirmationState.js';
 import { setPendingConversationFocusId } from '../../shared/lib/storage/workspaceConversationState.js';
 import MarketplaceHeader from '../../shared/ui/MarketplaceHeader.jsx';
+import SelectOne from '../../components/ui/select-1.jsx';
+import { OrderConfirmationCard } from '../../components/ui/order-confirmation-card.jsx';
 
 function MetricCard({ label, value, icon: Icon }) {
   return (
@@ -33,7 +36,32 @@ export default function OrdersPage({ navigate }) {
   const { t } = useI18n();
   const toast = useToast();
   const [downloadingOrderId, setDownloadingOrderId] = useState('');
+  const [orderConfirmation, setOrderConfirmation] = useState(null);
   const { items, summary, filters, setFilterValue, isLoading, error } = useOrdersPage(navigate);
+  const statusOptions = [
+    { value: 'all', label: t('All statuses') },
+    { value: 'active', label: t('Active') },
+    { value: 'review', label: t('Review') },
+    { value: 'completed', label: t('Completed') }
+  ];
+  const roleOptions = [
+    { value: 'all', label: t('All roles') },
+    { value: 'owner', label: t('My job posts') },
+    { value: 'participant', label: t('Collaborations') }
+  ];
+  const sortOptions = [
+    { value: 'updated', label: t('Latest updates') },
+    { value: 'deadline', label: t('Closest deadline') },
+    { value: 'budget', label: t('Highest budget') },
+    { value: 'progress', label: t('Highest progress') }
+  ];
+
+  useEffect(() => {
+    const nextConfirmation = consumePendingOrderConfirmation();
+    if (nextConfirmation?.orderId) {
+      setOrderConfirmation(nextConfirmation);
+    }
+  }, []);
 
   const saveDownloadedFile = (blob, fileName) => {
     const objectUrl = URL.createObjectURL(blob);
@@ -64,11 +92,30 @@ export default function OrdersPage({ navigate }) {
   };
 
   const handleDownloadDocument = async (item) => {
-    if (!item?.id || !item?.hasDocument) {
-      toast.info({
-        title: 'PDF hazir deyil',
-        message: 'Bu sifaris ucun PDF hele generasiya olunmayib.'
-      });
+    const normalizedStatus = String(item?.documentStatus || '').toLowerCase();
+
+    if (!item?.id) {
+      return;
+    }
+
+    if (!item?.hasDocument) {
+      if (normalizedStatus === 'queued' || normalizedStatus === 'processing') {
+        toast.info({
+          title: 'PDF hazirlanir',
+          message: 'Sened generasiya olunur. Bir nece saniye sonra yeniden yoxlayin.'
+        });
+      } else if (normalizedStatus === 'failed') {
+        toast.error({
+          title: 'PDF hazirlanmadi',
+          message: 'Sifaris PDF-i generasiya olunmadi. Zehmet olmasa sonra yeniden yoxlayin.'
+        });
+      } else {
+        toast.info({
+          title: 'PDF hazir deyil',
+          message: 'Bu sifaris ucun PDF hele generasiya olunmayib.'
+        });
+      }
+
       return;
     }
 
@@ -79,7 +126,7 @@ export default function OrdersPage({ navigate }) {
       saveDownloadedFile(response.blob, response.fileName || `${item.orderNumber || 'order'}-summary.pdf`);
       toast.success({
         title: 'PDF endirildi',
-        message: 'Sifaris sənədi ugurla yuklendi.'
+        message: 'Sifaris senedi ugurla yuklendi.'
       });
     } catch (nextError) {
       toast.error({
@@ -100,6 +147,20 @@ export default function OrdersPage({ navigate }) {
       />
 
       <main className="wrap workspacePage fadeUp">
+        {orderConfirmation ? (
+          <div className="orderConfirmationInlineWrap">
+            <OrderConfirmationCard
+              orderId={orderConfirmation.orderId}
+              paymentMethod={orderConfirmation.paymentMethod}
+              dateTime={orderConfirmation.dateTime}
+              totalAmount={orderConfirmation.totalAmount}
+              title="Sifaris ugurla yaradildi"
+              buttonText="Sifarislerime kecdim"
+              onGoToAccount={() => setOrderConfirmation(null)}
+            />
+          </div>
+        ) : null}
+
         <section className="workspaceHero cardLift">
           <div>
             <span className="profileEyebrow">{t('Delivery Hub')}</span>
@@ -123,23 +184,9 @@ export default function OrdersPage({ navigate }) {
                 placeholder={t('Search jobs, updates, categories')}
               />
             </label>
-            <select className="talentSelect" value={filters.status} onChange={(event) => setFilterValue('status', event.target.value)}>
-              <option value="all">{t('All statuses')}</option>
-              <option value="active">{t('Active')}</option>
-              <option value="review">{t('Review')}</option>
-              <option value="completed">{t('Completed')}</option>
-            </select>
-            <select className="talentSelect" value={filters.role} onChange={(event) => setFilterValue('role', event.target.value)}>
-              <option value="all">{t('All roles')}</option>
-              <option value="owner">{t('My job posts')}</option>
-              <option value="participant">{t('Collaborations')}</option>
-            </select>
-            <select className="talentSelect" value={filters.sort} onChange={(event) => setFilterValue('sort', event.target.value)}>
-              <option value="updated">{t('Latest updates')}</option>
-              <option value="deadline">{t('Closest deadline')}</option>
-              <option value="budget">{t('Highest budget')}</option>
-              <option value="progress">{t('Highest progress')}</option>
-            </select>
+            <SelectOne className="workspaceToolbarSelect" triggerClassName="interactive" value={filters.status} onChange={(nextValue) => setFilterValue('status', nextValue)} options={statusOptions} />
+            <SelectOne className="workspaceToolbarSelect" triggerClassName="interactive" value={filters.role} onChange={(nextValue) => setFilterValue('role', nextValue)} options={roleOptions} />
+            <SelectOne className="workspaceToolbarSelect" triggerClassName="interactive" value={filters.sort} onChange={(nextValue) => setFilterValue('sort', nextValue)} options={sortOptions} />
           </div>
 
           {isLoading ? (
@@ -185,10 +232,16 @@ export default function OrdersPage({ navigate }) {
                       type="button"
                       className="profileActionButton interactive"
                       onClick={() => handleDownloadDocument(item)}
-                      disabled={!item.hasDocument || downloadingOrderId === String(item.id)}
+                      disabled={downloadingOrderId === String(item.id)}
                     >
                       {downloadingOrderId === String(item.id) ? (
                         t('Downloading...')
+                      ) : item.hasDocument ? (
+                        <>
+                          <Download size={15} /> {t('Download PDF')}
+                        </>
+                      ) : ['queued', 'processing'].includes(String(item.documentStatus || '').toLowerCase()) ? (
+                        t('PDF generating...')
                       ) : (
                         <>
                           <Download size={15} /> {t('Download PDF')}

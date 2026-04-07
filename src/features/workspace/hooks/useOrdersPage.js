@@ -14,22 +14,52 @@ export function useOrdersPage(navigate) {
     }
 
     let cancelled = false;
-    setState((current) => ({ ...current, isLoading: true, error: '' }));
+    let refreshTimer;
 
-    fetchOrders(filters)
-      .then((payload) => {
-        if (!cancelled) {
-          setState({ items: payload.items || [], summary: payload.summary || null, isLoading: false, error: '' });
+    const loadOrders = async (silent = false) => {
+      if (!silent) {
+        setState((current) => ({ ...current, isLoading: true, error: '' }));
+      }
+
+      try {
+        const payload = await fetchOrders(filters);
+
+        if (cancelled) {
+          return;
         }
-      })
-      .catch((error) => {
-        if (!cancelled) {
-          setState({ items: [], summary: null, isLoading: false, error: error?.message || 'Orders could not be loaded.' });
+
+        const items = payload.items || [];
+        setState({
+          items,
+          summary: payload.summary || null,
+          isLoading: false,
+          error: ''
+        });
+
+        if (items.some((item) => ['queued', 'processing'].includes(String(item.documentStatus || '').toLowerCase()))) {
+          refreshTimer = window.setTimeout(() => {
+            loadOrders(true);
+          }, 2500);
         }
-      });
+      } catch (error) {
+        if (!cancelled) {
+          setState((current) => ({
+            items: silent ? current.items : [],
+            summary: silent ? current.summary : null,
+            isLoading: false,
+            error: error?.message || 'Orders could not be loaded.'
+          }));
+        }
+      }
+    };
+
+    loadOrders();
 
     return () => {
       cancelled = true;
+      if (refreshTimer) {
+        window.clearTimeout(refreshTimer);
+      }
     };
   }, [filters, navigate]);
 

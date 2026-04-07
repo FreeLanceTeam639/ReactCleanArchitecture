@@ -10,6 +10,7 @@ export default function TestimonialSection({
   onNext
 }) {
   const { t } = useI18n();
+
   return (
     <section className="section wrap testimonial cardLift">
       <div className="testImage">
@@ -19,7 +20,7 @@ export default function TestimonialSection({
       <div className="testContent">
         <div className="testimonialTopBar">
           <div>
-            <h2>{t('We Love Our Client Feedback')}</h2>
+            <h2>{t('What our clients say')}</h2>
             <span className="role">{activeTestimonial?.metric}</span>
           </div>
           <div className="testimonialControls">

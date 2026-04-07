@@ -3,18 +3,23 @@ import { httpClient } from '../../../shared/api/httpClient.js';
 import { resolveApiAssetUrl } from '../../../shared/api/mediaAssets.js';
 import { extractCollection } from '../../../shared/lib/response/extractCollection.js';
 import { extractEntity } from '../../../shared/lib/response/extractEntity.js';
+import { decodeMojibake, decodeMojibakeList } from '../../../shared/lib/text/decodeMojibake.js';
 
 function mapCategoryLabel(item) {
   if (typeof item === 'string') {
-    return item;
+    return decodeMojibake(item);
   }
 
-  return item?.name ?? item?.title ?? 'Category';
+  return decodeMojibake(item?.name ?? item?.title ?? 'Category');
 }
 
 function normalizePlan(plan = {}) {
   return {
     ...plan,
+    name: decodeMojibake(plan.name || ''),
+    badge: decodeMojibake(plan.badge || ''),
+    description: decodeMojibake(plan.description || ''),
+    features: decodeMojibakeList(plan.features),
     monthly: plan.monthly ?? plan.monthlyPrice ?? 0,
     yearly: plan.yearly ?? plan.yearlyPrice ?? 0
   };
@@ -24,6 +29,11 @@ function normalizeTalent(item = {}) {
   return {
     ...item,
     id: item.id || item._id || `${item.name || 'talent'}-${item.title || ''}`,
+    name: decodeMojibake(item.name || ''),
+    title: decodeMojibake(item.title || ''),
+    location: decodeMojibake(item.location || ''),
+    summary: decodeMojibake(item.summary || item.description || ''),
+    skills: decodeMojibakeList(item.skills),
     avatar: resolveApiAssetUrl(item.avatar || item.avatarUrl || item.imageUrl || ''),
     banner: resolveApiAssetUrl(item.banner || item.coverImageUrl || ''),
     hourlyRate: Number(item.hourlyRate ?? item.price ?? item.rate ?? 0),
@@ -37,16 +47,16 @@ function normalizeLiveJob(item = {}) {
   return {
     id: item.id || item._id || `${item.title || 'job'}-${item.postedAt || ''}`,
     slug: item.slug || '',
-    title: item.title || 'Open role',
-    category: item.category || 'General',
-    budget: item.budget || '$0',
-    budgetType: item.budgetType || 'Fixed Price',
-    timeline: item.timeline || 'Flexible timeline',
-    summary: item.summary || '',
-    postedAt: item.postedAt || '',
+    title: decodeMojibake(item.title || 'Open role'),
+    category: decodeMojibake(item.category || 'General'),
+    budget: decodeMojibake(item.budget || '$0'),
+    budgetType: decodeMojibake(item.budgetType || 'Fixed Price'),
+    timeline: decodeMojibake(item.timeline || 'Flexible timeline'),
+    summary: decodeMojibake(item.summary || ''),
+    postedAt: decodeMojibake(item.postedAt || ''),
     coverImageUrl: resolveApiAssetUrl(item.coverImageUrl || item.cover || item.imageUrl || ''),
-    ownerName: item.ownerName || item.clientName || 'Platform member',
-    ownerLocation: item.ownerLocation || item.location || 'Remote',
+    ownerName: decodeMojibake(item.ownerName || item.clientName || 'Platform member'),
+    ownerLocation: decodeMojibake(item.ownerLocation || item.location || 'Remote'),
     ownerAvatarUrl: resolveApiAssetUrl(item.ownerAvatarUrl || item.avatarUrl || item.avatar || ''),
     ownerVerified: Boolean(item.ownerVerified || item.isVerified),
     ownerRating: Number(item.ownerRating ?? item.rating ?? 0) || 0,

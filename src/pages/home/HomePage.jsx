@@ -6,7 +6,6 @@ import HomeHeader from '../../widgets/home/HomeHeader.jsx';
 import HeroSection from '../../widgets/home/HeroSection.jsx';
 import LiveJobsSection from '../../widgets/home/LiveJobsSection.jsx';
 import PricingSection from '../../widgets/home/PricingSection.jsx';
-import TalentSection from '../../widgets/home/TalentSection.jsx';
 
 export default function HomePage({ navigate }) {
   const {
@@ -15,22 +14,10 @@ export default function HomePage({ navigate }) {
     activeTalentCategory,
     setActiveTalentCategory,
     isInitialLoading,
-    isTalentLoading,
     billingPeriod,
     setBillingPeriod,
     searchQuery,
     setSearchQuery,
-    budgetFilter,
-    setBudgetFilter,
-    sortOrder,
-    setSortOrder,
-    savedTalentIds,
-    toggleSavedTalent,
-    visibleTalents,
-    filteredTalentCount,
-    hasMoreTalents,
-    loadMoreTalents,
-    resetTalentFilters,
     heroHighlights,
     trustIndicators
   } = useHomePageData();
@@ -51,26 +38,6 @@ export default function HomePage({ navigate }) {
       />
       <NoticeBanner message={notice} />
       <LiveJobsSection jobs={homeData.jobs} navigate={navigate} />
-      <TalentSection
-        tabs={homeData.tabs}
-        activeTab={activeTalentCategory}
-        onTabChange={setActiveTalentCategory}
-        talents={visibleTalents}
-        navigate={navigate}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        budgetFilter={budgetFilter}
-        onBudgetFilterChange={setBudgetFilter}
-        sortOrder={sortOrder}
-        onSortOrderChange={setSortOrder}
-        onResetFilters={resetTalentFilters}
-        filteredTalentCount={filteredTalentCount}
-        isLoading={isTalentLoading}
-        savedTalentIds={savedTalentIds}
-        onSaveToggle={toggleSavedTalent}
-        hasMoreTalents={hasMoreTalents}
-        onLoadMore={loadMoreTalents}
-      />
       <PricingSection
         navigate={navigate}
         billingPeriod={billingPeriod}

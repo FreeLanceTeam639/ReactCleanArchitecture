@@ -2,16 +2,17 @@ import { buildTaskConversationEndpoint, buildTaskDetailEndpoint } from '../../..
 import { httpClient } from '../../../shared/api/httpClient.js';
 import { resolveApiAssetUrl } from '../../../shared/api/mediaAssets.js';
 import { extractEntity } from '../../../shared/lib/response/extractEntity.js';
+import { decodeMojibake, decodeMojibakeList } from '../../../shared/lib/text/decodeMojibake.js';
 
 function normalizeOwnerTask(item = {}, fallback = {}) {
   return {
     id: item.id || fallback.id || '',
     slug: item.slug || fallback.slug || '',
-    title: item.title || fallback.title || 'Task',
-    category: item.category || fallback.category || '',
-    budgetLabel: item.budgetLabel || fallback.budgetLabel || '',
-    timeline: item.timeline || fallback.timeline || '',
-    summary: item.summary || fallback.summary || '',
+    title: decodeMojibake(item.title || fallback.title || 'Task'),
+    category: decodeMojibake(item.category || fallback.category || ''),
+    budgetLabel: decodeMojibake(item.budgetLabel || fallback.budgetLabel || ''),
+    timeline: decodeMojibake(item.timeline || fallback.timeline || ''),
+    summary: decodeMojibake(item.summary || fallback.summary || ''),
     coverImageUrl: resolveApiAssetUrl(item.coverImageUrl || item.imageUrl || fallback.coverImageUrl || ''),
     isCurrent: Boolean(item.isCurrent)
   };
@@ -20,14 +21,32 @@ function normalizeOwnerTask(item = {}, fallback = {}) {
 function normalizeReviewThreadItem(item = {}) {
   return {
     id: item.id || item._id || `${item.author || 'review'}-${item.createdAt || item.timeAgo || ''}`,
-    author: item.author || item.clientName || 'Anonymous client',
-    project: item.project || item.title || '',
-    role: item.role || '',
+    author: decodeMojibake(item.author || item.clientName || 'Anonymous client'),
+    project: decodeMojibake(item.project || item.title || ''),
+    role: decodeMojibake(item.role || ''),
     rating: Number(item.rating || item.score || 0) || 0,
-    status: item.status || 'visible',
-    createdAt: item.createdAt || item.timeAgo || '',
-    comment: item.comment || item.text || '',
+    status: decodeMojibake(item.status || 'visible'),
+    createdAt: decodeMojibake(item.createdAt || item.timeAgo || ''),
+    comment: decodeMojibake(item.comment || item.text || ''),
     replies: Array.isArray(item.replies) ? item.replies.map(normalizeReviewThreadItem) : []
+  };
+}
+
+function normalizePackage(item = {}) {
+  return {
+    ...item,
+    key: item.key || '',
+    name: decodeMojibake(item.name || ''),
+    description: decodeMojibake(item.description || ''),
+    delivery: decodeMojibake(item.delivery || ''),
+    revisions: decodeMojibake(item.revisions || '')
+  };
+}
+
+function normalizeFaq(item = {}) {
+  return {
+    question: decodeMojibake(item.question || ''),
+    answer: decodeMojibake(item.answer || '')
   };
 }
 
@@ -77,41 +96,54 @@ function normalizeDetail(payload, slug) {
     ownerUserId: entity.ownerUserId || entity.userId || entity.ownerId || '',
     slug: entity.slug || slug,
     detailType: entity.detailType || 'member-service',
-    title: entity.title || '',
-    category: entity.category || '',
+    title: decodeMojibake(entity.title || ''),
+    category: decodeMojibake(entity.category || ''),
     rating: Number(entity.rating || 0),
     reviews: Number(entity.reviews || entity.reviewCount || 0),
     sales: Number(entity.sales || 0),
     views: Number(entity.views || 0),
-    summary: entity.summary || entity.description || '',
-    packages: Array.isArray(entity.packages) ? entity.packages : [],
+    summary: decodeMojibake(entity.summary || entity.description || ''),
+    packages: Array.isArray(entity.packages) ? entity.packages.map(normalizePackage) : [],
     gallery,
-    highlights: Array.isArray(entity.highlights) ? entity.highlights : [],
-    overview: Array.isArray(entity.overview) ? entity.overview : [],
-    faqs: Array.isArray(entity.faqs) ? entity.faqs : [],
-    tags: Array.isArray(entity.tags) ? entity.tags : [],
-    included: Array.isArray(entity.included) ? entity.included : [],
+    highlights: decodeMojibakeList(entity.highlights),
+    overview: decodeMojibakeList(entity.overview),
+    faqs: Array.isArray(entity.faqs) ? entity.faqs.map(normalizeFaq) : [],
+    tags: decodeMojibakeList(entity.tags),
+    included: decodeMojibakeList(entity.included),
     ownerTasks,
     avatar,
-    review,
+    review: review && typeof review === 'object'
+      ? {
+          ...review,
+          author: decodeMojibake(review.author || ''),
+          timeAgo: decodeMojibake(review.timeAgo || ''),
+          text: decodeMojibake(review.text || '')
+        }
+      : {},
     reviewThread,
-    name: entity.name || entity.fullName || '',
-    role: entity.role || entity.profession || '',
-    hourlyRate: entity.hourlyRate || entity.rate || '',
-    location: entity.location || entity.country || '',
-    contact: entity.contact && typeof entity.contact === 'object' ? entity.contact : {},
-    delivery: entity.delivery || entity.duration || '',
-    tools: Array.isArray(entity.tools) ? entity.tools : [],
+    name: decodeMojibake(entity.name || entity.fullName || ''),
+    role: decodeMojibake(entity.role || entity.profession || ''),
+    hourlyRate: decodeMojibake(entity.hourlyRate || entity.rate || ''),
+    location: decodeMojibake(entity.location || entity.country || ''),
+    contact: entity.contact && typeof entity.contact === 'object'
+      ? {
+          ...entity.contact,
+          email: decodeMojibake(entity.contact.email || ''),
+          phone: decodeMojibake(entity.contact.phone || '')
+        }
+      : {},
+    delivery: decodeMojibake(entity.delivery || entity.duration || ''),
+    tools: decodeMojibakeList(entity.tools),
     sellerStats: entity.sellerStats && typeof entity.sellerStats === 'object' ? entity.sellerStats : {},
-    primaryActionLabel: entity.primaryActionLabel || 'Hire me for a task',
-    secondaryActionLabel: entity.secondaryActionLabel || 'Compare packages',
+    primaryActionLabel: decodeMojibake(entity.primaryActionLabel || 'Hire me for a task'),
+    secondaryActionLabel: decodeMojibake(entity.secondaryActionLabel || 'Compare packages'),
     showComparePackages: entity.showComparePackages !== false,
-    termsVersion: entity.termsVersion || '2026-04',
-    termsSummary: entity.termsSummary || 'You must accept the current service terms before placing an order.',
-    reviewSectionEyebrow: entity.reviewSectionEyebrow || 'Client reviews',
-    reviewSectionTitle: entity.reviewSectionTitle || 'Client reviews',
-    reviewCardTitle: entity.reviewCardTitle || 'Highly recommend',
-    ownerCtaLabel: entity.ownerCtaLabel || 'View more profiles'
+    termsVersion: decodeMojibake(entity.termsVersion || '2026-04'),
+    termsSummary: decodeMojibake(entity.termsSummary || 'You must accept the current service terms before placing an order.'),
+    reviewSectionEyebrow: decodeMojibake(entity.reviewSectionEyebrow || 'Client reviews'),
+    reviewSectionTitle: decodeMojibake(entity.reviewSectionTitle || 'Client reviews'),
+    reviewCardTitle: decodeMojibake(entity.reviewCardTitle || 'Highly recommend'),
+    ownerCtaLabel: decodeMojibake(entity.ownerCtaLabel || 'View more profiles')
   };
 }
 

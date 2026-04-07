@@ -20,17 +20,15 @@ export default function HeroSection({
   const isAuthenticated = Boolean(authSession);
   const secondaryAction = isAuthenticated
     ? { label: t('Open profile'), route: ROUTES.profile }
-    : { label: t('Member sign in'), route: ROUTES.login };
+    : { label: t('Sign In'), route: ROUTES.login };
 
   return (
     <section className="hero wrap" id="home">
       <div className="heroText fadeUp">
-        <p className="eyebrow">{t('Verified digital marketplace')}</p>
-        <h1>
-          {t('Build faster with')} <span>{t('specialists')}</span> {t('already matched to your goals.')}
-        </h1>
+        <p className="eyebrow">{t('Verified freelance marketplace')}</p>
+        <h1>{t('Build faster with specialists already matched to your goals.')}</h1>
         <p>
-          {t('Search verified members, compare portfolios and move from brief to delivery with a cleaner workflow.')}
+          {t('Search verified professionals, compare portfolios and move from brief to delivery with a cleaner workflow.')}
         </p>
 
         <div className="heroSearchShell cardLift">
@@ -39,8 +37,8 @@ export default function HeroSection({
             <input
               value={searchQuery}
               onChange={(event) => onSearchChange(event.target.value)}
-              placeholder={t('Search by skill, focus or category')}
-              aria-label={t('Search members')}
+              placeholder={t('Search by skill, service or category')}
+              aria-label={t('Search professionals')}
             />
           </div>
           <button
@@ -70,7 +68,7 @@ export default function HeroSection({
 
         <div className="row heroActionRow">
           <a href="#talents" className="btn primary interactive">
-            {t('Explore members')}
+            {t('Explore talent')}
           </a>
           <a
             href={secondaryAction.route}
@@ -112,7 +110,7 @@ export default function HeroSection({
 
           <div className="heroSpotlight">
             <div>
-              <p className="heroSpotlightLabel">{t('Member pipeline')}</p>
+              <p className="heroSpotlightLabel">{t('Talent pipeline')}</p>
               <strong>{t('Matched profiles in minutes')}</strong>
               <span>{t('Shortlist, compare rates and move directly into project scope.')}</span>
             </div>
@@ -124,12 +122,12 @@ export default function HeroSection({
 
           <div className="heroMiniCards">
             <div className="heroMiniCard">
-              <span>{t('Categories')}</span>
-              <strong>{isLoading ? t('Loading categories...') : `${popularCategories.length || 0} ${t('categories online')}`}</strong>
+              <span>{t('Active categories')}</span>
+              <strong>{isLoading ? t('Loading categories...') : `${popularCategories.length || 0} ${t('categories available')}`}</strong>
             </div>
             <div className="heroMiniCard accent">
-              <span>{t('Live jobs')}</span>
-              <strong>{isLoading ? t('Loading job posts...') : `${heroHighlights[2]?.value || 0} ${t('job posts live')}`}</strong>
+              <span>{t('Open job posts')}</span>
+              <strong>{isLoading ? t('Loading job posts...') : `${heroHighlights[2]?.value || 0} ${t('open job posts')}`}</strong>
             </div>
           </div>
         </div>

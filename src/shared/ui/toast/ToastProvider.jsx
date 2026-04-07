@@ -1,4 +1,3 @@
-import { AnimatePresence } from 'framer-motion';
 import {
   createContext,
   useCallback,
@@ -8,11 +7,11 @@ import {
   useRef,
   useState
 } from 'react';
+import SplashedPushNotifications from '../../../components/ui/splashed-push-notifications.jsx';
 import { fetchConversationIndex, fetchWorkspaceNotifications } from '../../../features/workspace/services/workspaceService.js';
 import { useAuthSessionState } from '../../hooks/useAuthSessionState.js';
 import { createWorkspaceNotificationSubscription } from '../../realtime/workspaceNotificationHub.js';
 import { createWorkspaceSocketSubscription } from '../../realtime/workspaceSocket.js';
-import FloatingToast from '../FloatingToast.jsx';
 import { subscribeToToastEvents } from './toastBus.js';
 
 const ToastContext = createContext({
@@ -27,10 +26,10 @@ let toastSequence = 0;
 function createToastItem(payload = {}) {
   return {
     id: payload.id || `toast-${Date.now()}-${toastSequence += 1}`,
-    tone: payload.tone === 'success' || payload.tone === 'info' ? payload.tone : 'error',
+    tone: payload.tone === 'success' || payload.tone === 'info' || payload.tone === 'warning' ? payload.tone : 'error',
     title: String(payload.title || '').trim(),
     message: String(payload.message || '').trim(),
-    duration: Number(payload.duration) > 0 ? Number(payload.duration) : 3600
+    duration: Number(payload.duration) > 0 ? Number(payload.duration) : 5000
   };
 }
 
@@ -147,10 +146,10 @@ function WorkspaceRealtimeToastBridge({ showToast }) {
 
       showToast({
         tone: 'info',
-        title: 'Yeni mesaj geldi',
+        title: 'Yeni mesaj gəldi',
         message: nextConversation.participant
-          ? `${nextConversation.participant} size mesaj gonderdi.`
-          : 'Inbox bolmenizde yeni mesaj var.'
+          ? `${nextConversation.participant} sizə mesaj göndərdi.`
+          : 'Mesajlar bölmənizdə yeni mesaj var.'
       });
     });
   }, [authSession, showToast]);
@@ -180,8 +179,8 @@ function WorkspaceRealtimeToastBridge({ showToast }) {
 
       showToast({
         tone: 'info',
-        title: 'Yeni bildiris geldi',
-        message: 'Hesabiniz ucun yeni bildiris var.'
+        title: 'Yeni bildiriş gəldi',
+        message: 'Hesabınız üçün yeni bildiriş var.'
       });
     });
   }, [authSession, showToast]);
@@ -270,14 +269,7 @@ export function ToastProvider({ children }) {
     <ToastContext.Provider value={contextValue}>
       <WorkspaceRealtimeToastBridge showToast={showToast} />
       {children}
-
-      <div className="floatingToastStack" aria-live="polite" aria-atomic="true">
-        <AnimatePresence initial={false}>
-          {toasts.map((toast) => (
-            <FloatingToast key={toast.id} toast={toast} onClose={() => dismissToast(toast.id)} />
-          ))}
-        </AnimatePresence>
-      </div>
+      <SplashedPushNotifications notifications={toasts} onDismiss={dismissToast} />
     </ToastContext.Provider>
   );
 }

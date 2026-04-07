@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { getLocaleFromLanguage, getStoredLanguage, sanitizeLanguage, setStoredLanguage } from './locale.js';
+import { fetchLanguageCatalog, getFallbackLanguages } from '../api/referenceService.js';
+import { DEFAULT_LANGUAGE_OPTIONS, getLocaleFromLanguage, getStoredLanguage, sanitizeLanguage, setStoredLanguage } from './locale.js';
 import { translateText } from './translations.js';
 
 const I18nContext = createContext(null);
@@ -34,16 +35,47 @@ function createTreeWalker(root) {
 
 export function I18nProvider({ children }) {
   const [language, setLanguage] = useState(getStoredLanguage);
+  const [languageOptions, setLanguageOptions] = useState(DEFAULT_LANGUAGE_OPTIONS);
   const originalTextMapRef = useRef(new WeakMap());
   const previousLanguageRef = useRef(language);
+  const supportedLanguageCodes = useMemo(
+    () => languageOptions.map((item) => item.value).filter(Boolean),
+    [languageOptions]
+  );
 
   useEffect(() => {
-    const nextLanguage = sanitizeLanguage(language);
-    const locale = getLocaleFromLanguage(nextLanguage);
+    let isCancelled = false;
+
+    fetchLanguageCatalog()
+      .then((catalog) => {
+        if (isCancelled) {
+          return;
+        }
+
+        const nextCatalog = Array.isArray(catalog) && catalog.length ? catalog : getFallbackLanguages();
+
+        setLanguageOptions(nextCatalog);
+        setLanguage((currentLanguage) => sanitizeLanguage(currentLanguage, nextCatalog.map((item) => item.value)));
+      })
+      .catch(() => {
+        if (!isCancelled) {
+          setLanguageOptions(getFallbackLanguages());
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const nextLanguage = sanitizeLanguage(language, supportedLanguageCodes);
+    const selectedLanguage = languageOptions.find((item) => item.value === nextLanguage);
+    const locale = selectedLanguage?.locale || getLocaleFromLanguage(nextLanguage);
 
     setStoredLanguage(nextLanguage);
     document.documentElement.lang = locale;
-  }, [language]);
+  }, [language, languageOptions, supportedLanguageCodes]);
 
   useEffect(() => {
     const previousLanguage = previousLanguageRef.current;
@@ -172,11 +204,12 @@ export function I18nProvider({ children }) {
   const contextValue = useMemo(
     () => ({
       language,
-      locale: getLocaleFromLanguage(language),
-      setLanguage,
+      locale: languageOptions.find((item) => item.value === language)?.locale || getLocaleFromLanguage(language),
+      languageOptions,
+      setLanguage: (nextLanguage) => setLanguage(sanitizeLanguage(nextLanguage, supportedLanguageCodes)),
       t: (value) => translateText(language, value)
     }),
-    [language]
+    [language, languageOptions, supportedLanguageCodes]
   );
 
   return <I18nContext.Provider value={contextValue}>{children}</I18nContext.Provider>;

@@ -14,7 +14,7 @@ function buildWorkspaceSocketUrl() {
   return `${protocol}//${apiUrl.host}/ws/chat`;
 }
 
-export function createWorkspaceSocketSubscription(onEvent) {
+export function createWorkspaceSocketSubscription(onEvent, options = {}) {
   if (typeof window === 'undefined' || typeof onEvent !== 'function') {
     return () => {};
   }
@@ -22,6 +22,18 @@ export function createWorkspaceSocketSubscription(onEvent) {
   let socket = null;
   let reconnectTimeoutId = 0;
   let disposed = false;
+  const sendJson = (payload) => {
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+      return false;
+    }
+
+    try {
+      socket.send(JSON.stringify(payload));
+      return true;
+    } catch {
+      return false;
+    }
+  };
 
   const connect = () => {
     const accessToken = getAccessToken();
@@ -34,6 +46,10 @@ export function createWorkspaceSocketSubscription(onEvent) {
     socketUrl.searchParams.set('access_token', accessToken);
 
     socket = new WebSocket(socketUrl.toString());
+
+    socket.onopen = () => {
+      options.onReady?.({ sendJson });
+    };
 
     socket.onmessage = (event) => {
       try {

@@ -12,9 +12,9 @@ export default function ServicesSection({ services, selectedService, activeServi
       <div className="sectionHead splitHead">
         <div>
           <p className="eyebrow">{t('Curated categories')}</p>
-          <h2>{t('Professional service lanes built for faster decisions')}</h2>
+          <h2>{t('Professional service categories built for faster decisions')}</h2>
           <p className="lead">
-            {t('Explore the categories members use most, compare active briefs and see how each lane is performing right now.')}
+            {t('Explore the categories clients use most, compare active briefs, and see how each lane is performing right now.')}
           </p>
         </div>
 
@@ -25,7 +25,7 @@ export default function ServicesSection({ services, selectedService, activeServi
             <p>{selectedService.description}</p>
             <div className="serviceInsightMeta">
               <span>{selectedService.projectCount || 0}+ {t('live briefs')}</span>
-              <span>{selectedService.averageRate || '$0/hr'} {t('avg rate')}</span>
+              <span>{selectedService.averageRate || '$0/hr'} {t('avg. rate')}</span>
             </div>
           </div>
         ) : null}

@@ -1,4 +1,5 @@
 import { DEFAULT_LANGUAGE } from './locale.js';
+import { TRANSLATION_OVERRIDES } from './translationOverrides.js';
 
 const EXACT_TRANSLATIONS = {
   az: {
@@ -1371,6 +1372,26 @@ Object.assign(EXACT_TRANSLATIONS.en, {
   'User review': 'User review'
 });
 
+Object.assign(EXACT_TRANSLATIONS.az, TRANSLATION_OVERRIDES.az);
+Object.assign(EXACT_TRANSLATIONS.ru, TRANSLATION_OVERRIDES.ru);
+Object.assign(EXACT_TRANSLATIONS.en, TRANSLATION_OVERRIDES.en);
+
+function normalizeTranslationKey(value) {
+  return String(value || '')
+    .replace(/\u00a0/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+const NORMALIZED_TRANSLATIONS = Object.fromEntries(
+  Object.entries(EXACT_TRANSLATIONS).map(([language, dictionary]) => [
+    language,
+    Object.fromEntries(
+      Object.entries(dictionary).map(([key, value]) => [normalizeTranslationKey(key), value])
+    )
+  ])
+);
+
 function preserveWhitespace(source, translated) {
   const leading = source.match(/^\s*/)?.[0] || '';
   const trailing = source.match(/\s*$/)?.[0] || '';
@@ -1392,6 +1413,11 @@ export function translateText(language = DEFAULT_LANGUAGE, text = '') {
   const exactMatch = EXACT_TRANSLATIONS[language]?.[trimmed];
   if (exactMatch) {
     return preserveWhitespace(text, exactMatch);
+  }
+
+  const normalizedMatch = NORMALIZED_TRANSLATIONS[language]?.[normalizeTranslationKey(trimmed)];
+  if (normalizedMatch) {
+    return preserveWhitespace(text, normalizedMatch);
   }
 
   for (const item of PATTERN_TRANSLATORS) {

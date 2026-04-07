@@ -1,4 +1,7 @@
+import { useI18n } from '../../shared/i18n/I18nProvider.jsx';
+
 export default function BlogSection({ blogs }) {
+  const { t } = useI18n();
   const featuredBlog = blogs?.[0];
   const otherBlogs = (blogs || []).slice(1);
 
@@ -6,8 +9,8 @@ export default function BlogSection({ blogs }) {
     <section className="section wrap" id="articles">
       <div className="sectionHead splitHead blogHead">
         <div>
-          <h2>Insights and perspectives, exploring the boundless horizons</h2>
-          <p className="lead">Explore diverse topics to gain fresh ideas, workflow improvements and practical hiring insights.</p>
+          <h2>{t('Insights, guides and practical freelance advice')}</h2>
+          <p className="lead">{t('Explore fresh ideas, workflow improvements, and practical hiring insights from across the marketplace.')}</p>
         </div>
       </div>
 
@@ -18,7 +21,7 @@ export default function BlogSection({ blogs }) {
             <div className="metaLine">
               <span>{featuredBlog.category}</span>
               <span>{featuredBlog.date}</span>
-              <span>{featuredBlog.readTime || '5 min read'}</span>
+              <span>{featuredBlog.readTime || t('5 min read')}</span>
             </div>
             <h3>{featuredBlog.title}</h3>
             <p>{featuredBlog.summary}</p>
@@ -33,7 +36,7 @@ export default function BlogSection({ blogs }) {
             <div className="metaLine">
               <span>{blog.category}</span>
               <span>{blog.date}</span>
-              <span>{blog.readTime || '4 min read'}</span>
+              <span>{blog.readTime || t('4 min read')}</span>
             </div>
             <h3>{blog.title}</h3>
             <p>{blog.summary}</p>
@@ -42,7 +45,7 @@ export default function BlogSection({ blogs }) {
       </div>
       <div className="center">
         <a href="#cta" className="btn soft interactive">
-          Explore More
+          {t('Explore more')}
         </a>
       </div>
     </section>

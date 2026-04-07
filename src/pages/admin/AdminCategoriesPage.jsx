@@ -10,6 +10,7 @@ import AdminStatusBadge from '../../shared/ui/admin/AdminStatusBadge.jsx';
 import AdminToolbar from '../../shared/ui/admin/AdminToolbar.jsx';
 import AdminImageField from '../../shared/ui/admin/AdminImageField.jsx';
 import AdminActionIconButton from '../../shared/ui/admin/AdminActionIconButton.jsx';
+import SelectOne from '../../components/ui/select-1.jsx';
 
 function buildCategoryFormState(category) {
   return {
@@ -199,10 +200,7 @@ export default function AdminCategoriesPage({ navigate, pathname = ROUTES.adminC
               </label>
               <label>
                 <span>Status</span>
-                <select value={formState.status} onChange={(event) => setFormState((current) => ({ ...current, status: event.target.value }))}>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
+                <SelectOne value={formState.status} onChange={(nextValue) => setFormState((current) => ({ ...current, status: nextValue }))} options={[{ value: 'active', label: 'Active' }, { value: 'inactive', label: 'Inactive' }]} />
               </label>
             </div>
           </div>

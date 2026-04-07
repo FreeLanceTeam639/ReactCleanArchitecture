@@ -27,7 +27,8 @@
   align-items: center;
   gap: 16px;
   position: relative;
-  transition: min-height 0.28s ease, gap 0.28s ease, padding 0.28s ease;
+  transition: min-height 0.34s cubic-bezier(0.22, 1, 0.36, 1), gap 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+    padding 0.34s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .detailHeader.scrolled .detailHeaderRow {
@@ -42,16 +43,21 @@
   min-width: 0;
   display: flex;
   align-items: center;
+  transition: opacity 0.28s ease, transform 0.28s ease, filter 0.28s ease;
 }
 
 .detailHeaderPanel.searchHidden {
   opacity: 0;
   pointer-events: none;
+  transform: translateY(-4px);
+  filter: blur(2px);
 }
 
 .detailHeaderRow.searchOpen .detailHeaderPanel {
   opacity: 0;
   pointer-events: none;
+  transform: translateY(-4px);
+  filter: blur(2px);
 }
 
 .detailHeaderNav {
@@ -92,6 +98,7 @@
   justify-self: end;
   position: relative;
   z-index: 2;
+  transition: width 0.34s cubic-bezier(0.22, 1, 0.36, 1), transform 0.28s ease;
 }
 
 .detailHeaderActions.searchMode {
@@ -120,17 +127,18 @@
   position: relative;
   overflow: hidden;
   transition:
-    width 0.34s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 0.28s ease,
-    box-shadow 0.28s ease,
-    border-color 0.28s ease,
-    background 0.28s ease,
-    gap 0.28s ease,
-    padding 0.28s ease;
+    width 0.44s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.34s ease,
+    border-color 0.34s ease,
+    background 0.34s ease,
+    gap 0.34s cubic-bezier(0.22, 1, 0.36, 1),
+    padding 0.34s cubic-bezier(0.22, 1, 0.36, 1);
   z-index: 3;
   cursor: pointer;
   flex: 0 0 auto;
   transform-origin: right center;
+  will-change: width, transform, box-shadow;
 }
 
 .detailHeaderRow.searchOpen .detailSearchShell {
@@ -142,6 +150,7 @@
 .detailSearchShell:focus-within {
   border-color: rgba(255, 90, 20, 0.24);
   box-shadow: 0 14px 30px rgba(18, 38, 63, 0.07);
+  transform: translateY(-1px);
 }
 
 .detailSearchShell.open {
@@ -153,6 +162,7 @@
   border-color: rgba(255, 90, 20, 0.24);
   box-shadow: 0 22px 46px rgba(18, 38, 63, 0.12);
   cursor: text;
+  transform: translateY(-1px) scale(1.002);
 }
 
 .detailSearchShell input {
@@ -167,8 +177,8 @@
   font-size: 14px;
   opacity: 0;
   pointer-events: none;
-  transform: translateX(6px);
-  transition: opacity 0.22s ease, transform 0.22s ease, width 0.22s ease;
+  transform: translateX(10px);
+  transition: opacity 0.24s ease, transform 0.34s cubic-bezier(0.22, 1, 0.36, 1), width 0.28s ease;
 }
 
 .detailSearchShell input::placeholder {
@@ -184,6 +194,7 @@
   opacity: 1;
   pointer-events: auto;
   transform: translateX(0);
+  transition-delay: 0.05s;
 }
 
 .detailSearchActivator {
@@ -200,6 +211,7 @@
   justify-content: center;
   gap: 0;
   flex: 0 0 auto;
+  transition: background 0.28s ease, color 0.28s ease, transform 0.28s ease;
 }
 
 .detailSearchActivatorLabel {
@@ -212,6 +224,7 @@
   justify-content: center;
   background: rgba(255, 90, 20, 0.1);
   color: var(--accent);
+  transform: scale(0.98);
 }
 
 .detailSearchShell.open .detailSearchActivatorLabel {
@@ -230,12 +243,24 @@
   color: #667085;
   align-items: center;
   justify-content: center;
-  display: none;
+  display: inline-flex;
   flex: 0 0 auto;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  margin-left: -34px;
+  transform: translateX(8px) scale(0.92);
+  transition: opacity 0.22s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), margin-left 0.3s ease,
+    visibility 0s linear 0.3s;
 }
 
 .detailSearchClose.visible {
-  display: inline-flex;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  margin-left: 0;
+  transform: translateX(0) scale(1);
+  transition-delay: 0.06s, 0.06s, 0.06s, 0s;
 }
 
 .detailHeaderLink {

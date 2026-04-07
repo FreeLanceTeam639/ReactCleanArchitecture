@@ -7,7 +7,7 @@ import {
   buildWorkspaceReviewFeatureEndpoint,
   buildWorkspaceSessionEndpoint
 } from '../../../shared/api/endpoints.js';
-import { ensureUploadedImage } from '../../../shared/api/mediaAssets.js';
+import { ensureUploadedImage, resolveApiAssetUrl } from '../../../shared/api/mediaAssets.js';
 import { httpClient } from '../../../shared/api/httpClient.js';
 import { extractCollection } from '../../../shared/lib/response/extractCollection.js';
 import { extractEntity } from '../../../shared/lib/response/extractEntity.js';
@@ -33,6 +33,21 @@ function normalizeSelectFilter(value) {
 
 function toLower(value) {
   return String(value || '').trim().toLowerCase();
+}
+
+function decodeMojibake(value) {
+  const text = String(value || '');
+
+  if (!text || !/[ÃÅÄâ]/.test(text)) {
+    return text;
+  }
+
+  try {
+    const bytes = Uint8Array.from(text, (character) => character.charCodeAt(0) & 0xff);
+    return new TextDecoder('utf-8').decode(bytes);
+  } catch {
+    return text;
+  }
 }
 
 function resolveCollection(payload, preferredKeys = []) {
@@ -75,6 +90,7 @@ function normalizeConversation(item = {}) {
     id: pickFirst(item.id, item._id, item.slug, item.title),
     title: pickFirst(item.title, item.subject, 'Conversation'),
     participant: pickFirst(item.participant, item.sender, item.clientName, 'User'),
+    avatarUrl: resolveApiAssetUrl(pickFirst(item.avatarUrl, item.avatar, item.imageUrl, '')),
     role: toLower(pickFirst(item.role, 'member')),
     unreadCount: Number(pickFirst(item.unreadCount, item.unread, 0)) || 0,
     lastMessage: pickFirst(item.lastMessage, item.preview, ''),
@@ -86,9 +102,9 @@ function normalizeConversation(item = {}) {
 function normalizeConversationMessage(item = {}) {
   return {
     id: pickFirst(item.id, item._id, `${item.sender}-${item.sentAt}`),
-    sender: pickFirst(item.sender, item.author, 'User'),
+    sender: decodeMojibake(pickFirst(item.sender, item.author, 'User')),
     direction: toLower(pickFirst(item.direction, item.type, 'inbound')),
-    text: pickFirst(item.text, item.message, ''),
+    text: decodeMojibake(pickFirst(item.text, item.message, '')),
     sentAt: pickFirst(item.sentAt, item.createdAt, ''),
     isRead: Boolean(pickFirst(item.isRead, item.read, false))
   };
@@ -98,8 +114,8 @@ function normalizeNotification(item = {}) {
   return {
     id: pickFirst(item.id, item._id, item.title),
     type: toLower(pickFirst(item.type, 'general')),
-    title: pickFirst(item.title, 'Notification'),
-    message: pickFirst(item.message, item.text, ''),
+    title: decodeMojibake(pickFirst(item.title, 'Notification')),
+    message: decodeMojibake(pickFirst(item.message, item.text, '')),
     isRead: Boolean(pickFirst(item.isRead, item.read, false)),
     createdAt: pickFirst(item.createdAt, item.timeAgo, '')
   };

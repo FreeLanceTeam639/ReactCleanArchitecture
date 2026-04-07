@@ -5,11 +5,22 @@ import { AUTHENTICATED_NAVIGATION_LINKS } from '../../shared/constants/navigatio
 import { ROUTES } from '../../shared/constants/routes.js';
 import { useI18n } from '../../shared/i18n/I18nProvider.jsx';
 import MarketplaceHeader from '../../shared/ui/MarketplaceHeader.jsx';
+import SelectOne from '../../components/ui/select-1.jsx';
 
 export default function ReviewsPage({ navigate }) {
   const { t } = useI18n();
   const { filters, setFilterValue, items, summary, isLoading, error, busyKey, toggleFeatured } =
     useReviewsPage(navigate);
+  const roleOptions = [
+    { value: 'all', label: t('All roles') },
+    { value: 'received', label: t('Received reviews') },
+    { value: 'given', label: t('Shared reviews') }
+  ];
+  const ratingOptions = [
+    { value: 'all', label: t('All ratings') },
+    { value: '5', label: t('5 stars') },
+    { value: '4', label: t('4 stars') }
+  ];
 
   return (
     <div className="profileShell">
@@ -35,16 +46,8 @@ export default function ReviewsPage({ navigate }) {
 
         <section className="workspacePanel cardLift">
           <div className="workspaceToolbar compact">
-            <select className="talentSelect" value={filters.role} onChange={(event) => setFilterValue('role', event.target.value)}>
-              <option value="all">{t('All roles')}</option>
-              <option value="received">{t('Received reviews')}</option>
-              <option value="given">{t('Shared reviews')}</option>
-            </select>
-            <select className="talentSelect" value={filters.rating} onChange={(event) => setFilterValue('rating', event.target.value)}>
-              <option value="all">{t('All ratings')}</option>
-              <option value="5">{t('5 stars')}</option>
-              <option value="4">{t('4 stars')}</option>
-            </select>
+            <SelectOne className="workspaceToolbarSelect" triggerClassName="interactive" value={filters.role} onChange={(nextValue) => setFilterValue('role', nextValue)} options={roleOptions} />
+            <SelectOne className="workspaceToolbarSelect" triggerClassName="interactive" value={filters.rating} onChange={(nextValue) => setFilterValue('rating', nextValue)} options={ratingOptions} />
           </div>
 
           {isLoading ? (

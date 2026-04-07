@@ -7,6 +7,7 @@ import { AdminConfirmDialog, AdminModal } from '../../shared/ui/admin/AdminModal
 import AdminPagination from '../../shared/ui/admin/AdminPagination.jsx';
 import AdminStatusBadge from '../../shared/ui/admin/AdminStatusBadge.jsx';
 import AdminToolbar from '../../shared/ui/admin/AdminToolbar.jsx';
+import SelectOne from '../../components/ui/select-1.jsx';
 
 function buildPricingFormState(item) {
   return {
@@ -185,10 +186,7 @@ export default function AdminPricingPage({ navigate, pathname = ROUTES.adminPric
             </label>
             <label>
               <span>Status</span>
-              <select value={formState.status} onChange={(event) => setFormState((current) => ({ ...current, status: event.target.value }))}>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
+              <SelectOne value={formState.status} onChange={(nextValue) => setFormState((current) => ({ ...current, status: nextValue }))} options={[{ value: 'active', label: 'Active' }, { value: 'inactive', label: 'Inactive' }]} />
             </label>
             <label className="fullSpan">
               <span>Features (one per line)</span>

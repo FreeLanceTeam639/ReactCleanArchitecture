@@ -14,6 +14,7 @@ import AdminActionIconButton from '../../shared/ui/admin/AdminActionIconButton.j
 import CountrySelect from '../../shared/ui/CountrySelect.jsx';
 import PhoneNumberField from '../../shared/ui/PhoneNumberField.jsx';
 import { getCurrentLocale } from '../../shared/i18n/locale.js';
+import SelectOne from '../../components/ui/select-1.jsx';
 
 const initialPasswordState = {
   newPassword: '',
@@ -496,10 +497,7 @@ export default function AdminUsersPage({ navigate, pathname = ROUTES.adminUsers 
               </label>
               <label>
                 <span>Access</span>
-                <select value={formState.status} onChange={(event) => setFormState((current) => ({ ...current, status: event.target.value }))}>
-                  <option value="active">Active</option>
-                  <option value="blocked">Blocked</option>
-                </select>
+                <SelectOne value={formState.status} onChange={(nextValue) => setFormState((current) => ({ ...current, status: nextValue }))} options={[{ value: 'active', label: 'Active' }, { value: 'blocked', label: 'Blocked' }]} />
               </label>
               <label className="fullSpan">
                 <span>Bio</span>

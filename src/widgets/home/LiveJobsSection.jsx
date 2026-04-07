@@ -58,16 +58,16 @@ export default function LiveJobsSection({ jobs, navigate }) {
         <div className="sectionHead splitHead liveJobsHead">
           <div>
             <p className="eyebrow">{t('Live opportunities')}</p>
-            <h2>{t('Fresh job posts are now visible on the public homepage')}</h2>
+            <h2>{t('Fresh job posts from the marketplace')}</h2>
             <p className="lead">
-              {t('Recent verified briefs, delivery windows and budgets stay visible so the marketplace feels active and trustworthy.')}
+              {t('Recent verified briefs, delivery windows, and budgets stay visible so the marketplace feels active and trustworthy.')}
             </p>
           </div>
 
           <div className="liveJobsSummary">
             <span>{t('Open briefs')}</span>
             <strong>{safeJobs.length || 0}</strong>
-            <small>{t('Updated from the real backend feed')}</small>
+            <small>{t('Updated from the live backend feed')}</small>
           </div>
         </div>
 

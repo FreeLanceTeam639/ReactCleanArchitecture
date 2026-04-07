@@ -405,8 +405,7 @@
 }
 
 .heroSearchField input,
-.talentSearchInput input,
-.talentSelect {
+.talentSearchInput input {
   width: 100%;
   border: 0;
   background: transparent;
@@ -706,12 +705,7 @@
 }
 
 .talentSelect {
-  min-height: 52px;
-  border-radius: 16px;
-  border: 1px solid var(--line);
-  padding: 0 14px;
-  appearance: none;
-  background: #fff;
+  width: 100%;
 }
 
 .talentResetButton {
@@ -1124,6 +1118,19 @@
   border-radius: 26px;
   padding: 24px;
   margin-top: 18px;
+}
+
+@media (hover: hover) {
+  .workspaceHero.cardLift:hover,
+  .workspacePanel.cardLift:hover,
+  .workspaceEntityCard.cardLift:hover,
+  .workspaceListCard.cardLift:hover,
+  .workspaceConversationCard.cardLift:hover,
+  .workspacePreviewCard.cardLift:hover,
+  .workspaceToggleCard.cardLift:hover {
+    transform: none;
+    box-shadow: var(--shadow-soft);
+  }
 }
 
 .workspaceToolbar {
@@ -2682,9 +2689,7 @@
 
 .adminSearchField input,
 .adminFormGrid input,
-.adminFormGrid select,
-.adminFormGrid textarea,
-.adminFilterField select {
+.adminFormGrid textarea {
   width: 100%;
   border: 0;
   background: transparent;
@@ -2705,9 +2710,7 @@
   color: var(--muted);
 }
 
-.adminFilterField select,
 .adminFormGrid input,
-.adminFormGrid select,
 .adminFormGrid textarea {
   min-height: 48px;
   border-radius: 14px;
@@ -3128,3 +3131,877 @@
 /* ==========================
    Admin panel premium refresh
 ========================== */
+
+.workspaceNotificationCard {
+  position: relative;
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  padding: 18px 20px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 90, 20, 0.1);
+  background:
+    radial-gradient(circle at top right, rgba(255, 90, 20, 0.08), transparent 24%),
+    linear-gradient(180deg, rgba(255, 250, 247, 0.98), rgba(255, 255, 255, 1));
+  box-shadow: 0 18px 36px rgba(30, 20, 12, 0.06);
+}
+
+.workspaceNotificationCard.unread {
+  border-color: rgba(255, 90, 20, 0.18);
+  box-shadow: 0 22px 42px rgba(255, 90, 20, 0.1);
+}
+
+.workspaceNotificationSplash {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 64px;
+  border-radius: 18px 18px 12px 18px;
+  color: #fff;
+  background: linear-gradient(180deg, #5f6ef5, #3248de);
+  box-shadow: 0 16px 28px rgba(50, 72, 222, 0.22);
+}
+
+.workspaceNotificationSplash::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 72% 24%, rgba(255, 255, 255, 0.22), transparent 14%),
+    radial-gradient(circle at 26% 72%, rgba(255, 255, 255, 0.12), transparent 14%);
+}
+
+.workspaceNotificationSplash.payment {
+  background: linear-gradient(180deg, #0070e0, #05478a);
+  box-shadow: 0 16px 28px rgba(5, 71, 138, 0.24);
+}
+
+.workspaceNotificationSplash.order {
+  background: linear-gradient(180deg, #fc8621, #c24914);
+  box-shadow: 0 16px 28px rgba(194, 73, 20, 0.24);
+}
+
+.workspaceNotificationSplash.security {
+  background: linear-gradient(180deg, #db3056, #851d41);
+  box-shadow: 0 16px 28px rgba(133, 29, 65, 0.24);
+}
+
+.workspaceNotificationSplash.review {
+  background: linear-gradient(180deg, #03a65a, #005e38);
+  box-shadow: 0 16px 28px rgba(0, 94, 56, 0.24);
+}
+
+.workspaceNotificationSplash.general {
+  background: linear-gradient(180deg, #5f6ef5, #3248de);
+}
+
+.workspaceNotificationBody {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.workspaceNotificationCopy strong {
+  display: block;
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.workspaceNotificationCopy p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.workspaceNotificationMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.workspaceNotificationMeta small {
+  color: var(--muted);
+}
+
+.workspaceNotificationActions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.workspaceNotificationPulse {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 0 rgba(255, 90, 20, 0.28);
+  animation: workspaceNotificationPulse 1.8s ease infinite;
+}
+
+@keyframes workspaceNotificationPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 90, 20, 0.28);
+  }
+
+  70% {
+    box-shadow: 0 0 0 12px rgba(255, 90, 20, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 90, 20, 0);
+  }
+}
+
+@media (max-width: 780px) {
+  .workspaceNotificationCard {
+    grid-template-columns: 1fr;
+    justify-items: stretch;
+  }
+
+  .workspaceNotificationSplash {
+    width: 52px;
+    height: 58px;
+  }
+
+  .workspaceNotificationActions {
+    align-items: stretch;
+  }
+}
+
+.workspaceMonoShell {
+  background: linear-gradient(180deg, rgba(255, 250, 247, 0.98), #fff);
+  border: 1px solid rgba(93, 52, 24, 0.1);
+  border-radius: 32px;
+  box-shadow: 0 24px 60px rgba(41, 24, 10, 0.08);
+  padding: 24px;
+  display: grid;
+  gap: 18px;
+}
+
+.workspaceMonoHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-start;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(93, 52, 24, 0.08);
+}
+
+.workspaceMonoHeaderMain {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.workspaceMonoIconWrap {
+  width: 54px;
+  height: 54px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #24150d, #6c4b32);
+  color: #fff;
+  box-shadow: 0 18px 36px rgba(36, 21, 13, 0.16);
+}
+
+.workspaceMonoHeader h2 {
+  margin: 0 0 4px;
+  font-size: clamp(1.75rem, 2.6vw, 2.3rem);
+  color: #1f130c;
+}
+
+.workspaceMonoHeader p {
+  margin: 0;
+  color: #7f6e63;
+  line-height: 1.65;
+}
+
+.workspaceMonoHeaderSide {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.workspaceMonoStats {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.workspaceMonoStatCard {
+  min-width: 112px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff, #fff7f1);
+  border: 1px solid rgba(147, 102, 57, 0.12);
+  box-shadow: 0 12px 26px rgba(36, 21, 13, 0.05);
+}
+
+.workspaceMonoStatCard span {
+  display: block;
+  font-size: 12px;
+  color: #7f6e63;
+  margin-bottom: 6px;
+}
+
+.workspaceMonoStatCard strong {
+  color: #1f130c;
+  font-size: 1.15rem;
+}
+
+.workspaceMonoHeaderAction {
+  width: 44px;
+  height: 44px;
+  border-radius: 16px;
+  border: 1px solid rgba(93, 52, 24, 0.09);
+  background: #fff;
+  color: #6c4b32;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.workspaceMonoToolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(180px, 0.55fr);
+  gap: 12px;
+}
+
+.workspaceMonoBody {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.72fr) minmax(0, 1.28fr);
+  gap: 18px;
+  min-height: 780px;
+}
+
+.workspaceMonoAside {
+  border: 1px solid rgba(93, 52, 24, 0.1);
+  background: linear-gradient(180deg, #f9f3ed, #fdfaf7);
+  border-radius: 24px;
+  padding: 18px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 16px;
+  min-height: 0;
+}
+
+.workspaceMonoAsideTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.workspaceMonoAsideTop strong {
+  color: #24150d;
+}
+
+.workspaceMonoClearButton {
+  border: 0;
+  background: transparent;
+  color: #b25a2b;
+  font-weight: 600;
+  padding: 0;
+}
+
+.workspaceMonoParticipantList {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.workspaceMonoParticipant {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  text-align: left;
+  padding: 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(147, 102, 57, 0.08);
+  background: rgba(255, 255, 255, 0.84);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.workspaceMonoParticipant:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px rgba(36, 21, 13, 0.07);
+}
+
+.workspaceMonoParticipant.active {
+  border-color: rgba(255, 122, 48, 0.28);
+  background: linear-gradient(135deg, rgba(255, 245, 237, 0.98), rgba(255, 236, 225, 0.92));
+  box-shadow: 0 18px 34px rgba(255, 122, 48, 0.14);
+}
+
+.workspaceMonoParticipant.unread {
+  border-color: rgba(255, 122, 48, 0.18);
+}
+
+.workspaceMonoAvatarWrap {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+}
+
+.workspaceMonoAvatarImage,
+.workspaceMonoAvatarFallback {
+  width: 46px;
+  height: 46px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.workspaceMonoAvatarImage {
+  object-fit: cover;
+  object-position: center;
+  border: 1px solid rgba(147, 102, 57, 0.12);
+  background: linear-gradient(180deg, #fff, #f4ece6);
+  box-shadow: 0 10px 22px rgba(36, 21, 13, 0.08);
+}
+
+.workspaceMonoAvatarFallback {
+  background: linear-gradient(135deg, #ff8a4d, #ffb787);
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.workspaceMonoOnlineDot {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #b8b8b8;
+  border: 2px solid #fff;
+}
+
+.workspaceMonoOnlineDot.online {
+  background: #22c55e;
+}
+
+.workspaceMonoParticipantCopy {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+  flex: 1;
+}
+
+.workspaceMonoParticipantTop,
+.workspaceMonoParticipantMeta {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.workspaceMonoParticipantTop strong,
+.workspaceMonoParticipantMeta span {
+  display: block;
+  min-width: 0;
+}
+
+.workspaceMonoParticipantTop strong {
+  color: #24150d;
+}
+
+.workspaceMonoParticipantTop small,
+.workspaceMonoParticipantMeta span,
+.workspaceMonoParticipantCopy p {
+  color: #7f6e63;
+}
+
+.workspaceMonoParticipantCopy p {
+  margin: 0;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.workspaceMonoUnreadBadge {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #24150d;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.workspaceMonoMain {
+  min-width: 0;
+}
+
+.workspaceThreadPanel {
+  padding: 0;
+  overflow: hidden;
+  min-height: 760px;
+}
+
+.workspaceChatShell {
+  position: relative;
+  min-height: 760px;
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  background:
+    radial-gradient(circle at top left, rgba(255, 168, 120, 0.18), transparent 34%),
+    linear-gradient(180deg, #fff9f5 0%, #fff4ec 100%);
+  border-radius: 22px;
+}
+
+.workspaceChatShell.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+}
+
+.workspaceChatBackdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 12% 14%, rgba(255, 255, 255, 0.82), transparent 20%),
+    radial-gradient(circle at 88% 18%, rgba(255, 145, 77, 0.16), transparent 24%);
+}
+
+.workspaceChatHeader,
+.workspaceChatComposer,
+.workspaceChatBody {
+  position: relative;
+  z-index: 1;
+}
+
+.workspaceChatHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 24px 18px;
+  border-bottom: 1px solid rgba(147, 102, 57, 0.09);
+}
+
+.workspaceChatIdentity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.workspaceChatHeroAvatar,
+.workspaceChatAvatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  flex-shrink: 0;
+}
+
+.workspaceChatHeroAvatar {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #ff7a30, #ffb175);
+  color: #fff;
+  box-shadow: 0 16px 30px rgba(255, 122, 48, 0.18);
+}
+
+.workspaceChatHeroAvatarImage {
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 1px solid rgba(147, 102, 57, 0.12);
+  box-shadow: 0 16px 30px rgba(36, 21, 13, 0.12);
+}
+
+.workspaceChatIdentity strong,
+.workspaceChatEmpty strong {
+  display: block;
+  color: #24150d;
+}
+
+.workspaceChatIdentity p,
+.workspaceChatHeaderMeta small,
+.workspaceChatEmpty p,
+.workspaceChatSender,
+.workspaceChatMeta span {
+  margin: 0;
+  color: #7f6e63;
+}
+
+.workspaceChatHeaderMeta {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+}
+
+.workspaceChatBody {
+  position: relative;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 24px 12px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(147, 102, 57, 0.18) transparent;
+}
+
+.workspaceChatTypingBar {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 24px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(147, 102, 57, 0.1);
+  color: #7b4f2d;
+  box-shadow: 0 12px 24px rgba(36, 21, 13, 0.05);
+}
+
+.workspaceChatTypingBar .workspaceChatLoader {
+  gap: 5px;
+}
+
+.workspaceChatTopFade {
+  position: sticky;
+  top: 0;
+  height: 96px;
+  margin-bottom: -32px;
+  pointer-events: none;
+  z-index: 2;
+  background: linear-gradient(180deg, rgba(255, 249, 245, 0.98) 0%, rgba(255, 244, 236, 0.78) 42%, rgba(255, 244, 236, 0) 100%);
+}
+
+.workspaceChatMessages {
+  display: grid;
+  gap: 18px;
+  padding: 16px 0 4px;
+}
+
+.workspaceChatBodyEmpty {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  min-height: 100%;
+  text-align: center;
+  color: #7f6e63;
+}
+
+.workspaceChatBodyEmpty strong {
+  color: #24150d;
+}
+
+.workspaceChatRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  max-width: min(100%, 620px);
+}
+
+.workspaceChatRow.outbound {
+  margin-left: auto;
+  flex-direction: row-reverse;
+}
+
+.workspaceChatAvatar {
+  width: 38px;
+  height: 38px;
+  font-size: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+}
+
+.workspaceChatAvatar.inbound {
+  background: #f5e7d8;
+  color: #7b4f2d;
+}
+
+.workspaceChatAvatar.outbound {
+  background: #dfcab6;
+  color: #5d3418;
+}
+
+.workspaceChatEntry {
+  display: grid;
+  gap: 6px;
+}
+
+.workspaceChatRow.outbound .workspaceChatEntry {
+  justify-items: end;
+}
+
+.workspaceChatSender {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.workspaceChatBubble {
+  max-width: min(100%, 480px);
+  border-radius: 22px;
+  padding: 16px 18px 14px;
+  box-shadow: 0 14px 34px rgba(93, 52, 24, 0.06);
+}
+
+.workspaceChatBubble.inbound {
+  background: #fffaf6;
+  border: 1px solid rgba(147, 102, 57, 0.14);
+  border-bottom-left-radius: 8px;
+}
+
+.workspaceChatBubble.outbound {
+  background: linear-gradient(135deg, #ede0d4, #f3e7dd);
+  border: 1px solid rgba(147, 102, 57, 0.08);
+  border-bottom-right-radius: 8px;
+}
+
+.workspaceChatBubble p,
+.workspaceChatRichText p {
+  margin: 0;
+  color: #4e3424;
+  line-height: 1.75;
+  white-space: pre-wrap;
+}
+
+.workspaceChatImageWrap {
+  display: grid;
+  gap: 12px;
+}
+
+.workspaceChatImage {
+  display: block;
+  width: min(100%, 260px);
+  border-radius: 16px;
+  object-fit: cover;
+}
+
+.workspaceChatLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.workspaceChatLinkBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(147, 102, 57, 0.12);
+  color: #7b4f2d;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+}
+
+.workspaceChatMeta {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.workspaceChatPending {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.workspaceChatLoader {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.workspaceChatLoader span {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #936639;
+  animation: workspaceChatLoaderBounce 0.9s ease-in-out infinite;
+}
+
+.workspaceChatLoader span:nth-child(2) {
+  animation-delay: 0.12s;
+}
+
+.workspaceChatLoader span:nth-child(3) {
+  animation-delay: 0.24s;
+}
+
+.workspaceChatComposer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+  padding: 18px 24px 24px;
+  border-top: 1px solid rgba(147, 102, 57, 0.09);
+  background: linear-gradient(180deg, rgba(255, 250, 247, 0.65), rgba(255, 247, 240, 0.96));
+}
+
+.workspaceChatComposerField {
+  display: block;
+}
+
+.workspaceChatComposerField textarea {
+  min-height: 104px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.workspaceChatSendButton {
+  min-height: 56px;
+  min-width: 136px;
+  justify-content: center;
+  gap: 8px;
+}
+
+.workspaceChatEmpty {
+  max-width: 360px;
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.workspaceChatEmptyIcon {
+  width: 52px;
+  height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(255, 122, 48, 0.16), rgba(255, 177, 117, 0.24));
+  color: #7b4f2d;
+}
+
+@keyframes workspaceChatLoaderBounce {
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+
+  40% {
+    transform: translateY(-5px);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 980px) {
+  .workspaceThreadPanel {
+    min-height: 680px;
+  }
+
+  .workspaceChatShell {
+    min-height: 680px;
+  }
+}
+
+@media (max-width: 760px) {
+  .workspaceThreadPanel,
+  .workspaceChatShell {
+    min-height: 0;
+  }
+
+  .workspaceChatHeader,
+  .workspaceChatComposer {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .workspaceChatHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .workspaceChatHeaderMeta {
+    justify-items: start;
+  }
+
+  .workspaceChatBody {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .workspaceChatRow,
+  .workspaceChatBubble {
+    max-width: 100%;
+  }
+
+  .workspaceChatComposer {
+    grid-template-columns: 1fr;
+  }
+
+  .workspaceChatSendButton {
+    width: 100%;
+  }
+}
+
+@media (max-width: 980px) {
+  .workspaceMonoBody {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .workspaceMonoAside {
+    max-height: 380px;
+  }
+}
+
+@media (max-width: 760px) {
+  .workspaceMonoShell {
+    padding: 16px;
+    border-radius: 24px;
+  }
+
+  .workspaceMonoHeader,
+  .workspaceMonoHeaderSide,
+  .workspaceMonoToolbar,
+  .workspaceMonoParticipantTop,
+  .workspaceMonoParticipantMeta {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .workspaceMonoToolbar {
+    display: grid;
+  }
+
+  .workspaceMonoStats {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .workspaceMonoStatCard {
+    width: 100%;
+  }
+
+  .workspaceMonoAside {
+    padding: 14px;
+  }
+}

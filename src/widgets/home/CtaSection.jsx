@@ -14,9 +14,9 @@ export default function CtaSection({ navigate }) {
     <section className="cta">
       <div className="wrap ctaRow cardLift" id="cta">
         <div>
-          <p className="eyebrow">{t('Get Started')}</p>
-          <h2>{t('Join and get a unique opportunity')}</h2>
-          <p>{t('Connect with skilled professionals, optimize collaborations, and unlock success.')}</p>
+          <p className="eyebrow">{t('Start today')}</p>
+          <h2>{t('Join the marketplace and unlock your next opportunity')}</h2>
+          <p>{t('Connect with skilled professionals, streamline collaboration, and move projects forward with confidence.')}</p>
         </div>
         <a
           href={action.route}

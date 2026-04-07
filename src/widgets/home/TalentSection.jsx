@@ -1,6 +1,7 @@
 import { Search } from 'lucide-react';
 import { useI18n } from '../../shared/i18n/I18nProvider.jsx';
 import FreelancerProfileCard from '../../shared/ui/FreelancerProfileCard.jsx';
+import SelectOne from '../../components/ui/select-1.jsx';
 
 const BUDGET_FILTERS = [
   { value: 'all', label: 'All budgets' },
@@ -44,13 +45,9 @@ export default function TalentSection({
     <section className="section wrap" id="talents">
       <div className="sectionHead splitHead talentHead">
         <div>
-          <span className="eyebrow">{t('Top members')}</span>
+          <span className="eyebrow">{t('Top talent')}</span>
           <h2>{t('Meet verified specialists ready for your next project')}</h2>
           <p className="lead">{t('Filter by category, rate and relevance to narrow down your shortlist faster.')}</p>
-        </div>
-        <div className="talentCounterCard cardLift">
-          <span>{t('Profiles matched')}</span>
-          <strong>{isLoading ? t('Loading...') : `${filteredTalentCount} ${t('profiles')}`}</strong>
         </div>
       </div>
 
@@ -74,21 +71,13 @@ export default function TalentSection({
             value={searchQuery}
             onChange={(event) => onSearchChange(event.target.value)}
             placeholder={t('Filter by title, skill or location')}
-            aria-label={t('Filter members')}
+            aria-label={t('Filter professionals')}
           />
         </div>
 
-        <select value={budgetFilter} onChange={(event) => onBudgetFilterChange(event.target.value)} className="talentSelect interactive">
-          {BUDGET_FILTERS.map((option) => (
-            <option key={option.value} value={option.value}>{option.label}</option>
-          ))}
-        </select>
+        <SelectOne className="workspaceToolbarSelect" triggerClassName="interactive" value={budgetFilter} onChange={onBudgetFilterChange} options={BUDGET_FILTERS} />
 
-        <select value={sortOrder} onChange={(event) => onSortOrderChange(event.target.value)} className="talentSelect interactive">
-          {SORT_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>{option.label}</option>
-          ))}
-        </select>
+        <SelectOne className="workspaceToolbarSelect" triggerClassName="interactive" value={sortOrder} onChange={onSortOrderChange} options={SORT_OPTIONS} />
 
         <button type="button" className="btn soft interactive talentResetButton" onClick={onResetFilters}>
           {t('Reset')}
@@ -109,7 +98,7 @@ export default function TalentSection({
         </div>
       ) : (
         <div className="talentEmptyState cardLift">
-          <strong>{t('No matching profile found')}</strong>
+          <strong>{t('No matching profiles found')}</strong>
           <p>{t('Adjust the category, search or budget filter to widen the shortlist.')}</p>
           <button type="button" className="btn primary interactive" onClick={onResetFilters}>{t('Clear filters')}</button>
         </div>
@@ -118,7 +107,7 @@ export default function TalentSection({
       <div className="center">
         {hasMoreTalents ? (
           <button type="button" className="btn soft interactive" onClick={onLoadMore}>
-            {t('Load more profiles')}
+            {t('Load more talent')}
           </button>
         ) : (
           <a href="#cta" className="btn soft interactive">

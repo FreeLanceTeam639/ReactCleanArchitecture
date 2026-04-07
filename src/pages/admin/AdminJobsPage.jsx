@@ -11,6 +11,7 @@ import AdminImageField from '../../shared/ui/admin/AdminImageField.jsx';
 import AdminMediaGalleryField from '../../shared/ui/admin/AdminMediaGalleryField.jsx';
 import AdminActionIconButton from '../../shared/ui/admin/AdminActionIconButton.jsx';
 import { getCurrentLocale } from '../../shared/i18n/locale.js';
+import SelectOne from '../../components/ui/select-1.jsx';
 
 function formatDate(value) {
   return new Intl.DateTimeFormat(getCurrentLocale(), { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(value));
@@ -257,11 +258,7 @@ export default function AdminJobsPage({ navigate, pathname = ROUTES.adminJobs })
               </label>
               <label>
                 <span>Category</span>
-                <select value={formState.categoryId} onChange={(event) => setFormState((current) => ({ ...current, categoryId: event.target.value }))}>
-                  {categoryOptions.map((item) => (
-                    <option key={item.id} value={item.id}>{item.name}</option>
-                  ))}
-                </select>
+                <SelectOne value={formState.categoryId} onChange={(nextValue) => setFormState((current) => ({ ...current, categoryId: nextValue }))} options={categoryOptions.map((item) => ({ value: item.id, label: item.name }))} />
               </label>
               <label>
                 <span>Budget</span>
@@ -269,18 +266,11 @@ export default function AdminJobsPage({ navigate, pathname = ROUTES.adminJobs })
               </label>
               <label>
                 <span>Status</span>
-                <select value={formState.status} onChange={(event) => setFormState((current) => ({ ...current, status: event.target.value }))}>
-                  <option value="active">Active</option>
-                  <option value="pending">Pending</option>
-                  <option value="closed">Closed</option>
-                </select>
+                <SelectOne value={formState.status} onChange={(nextValue) => setFormState((current) => ({ ...current, status: nextValue }))} options={[{ value: 'active', label: 'Active' }, { value: 'pending', label: 'Pending' }, { value: 'closed', label: 'Closed' }]} />
               </label>
               <label>
                 <span>Visibility</span>
-                <select value={formState.visibility} onChange={(event) => setFormState((current) => ({ ...current, visibility: event.target.value }))}>
-                  <option value="visible">Visible</option>
-                  <option value="hidden">Hidden</option>
-                </select>
+                <SelectOne value={formState.visibility} onChange={(nextValue) => setFormState((current) => ({ ...current, visibility: nextValue }))} options={[{ value: 'visible', label: 'Visible' }, { value: 'hidden', label: 'Hidden' }]} />
               </label>
               <label>
                 <span>Tags</span>

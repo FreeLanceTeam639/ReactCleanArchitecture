@@ -7,6 +7,7 @@ import { useExploreMembersPage } from '../../features/explore/hooks/useExploreMe
 import ExploreMemberRow from '../../features/explore/components/ExploreMemberRow.jsx';
 import HomeFooter from '../../widgets/home/HomeFooter.jsx';
 import MarketplaceHeader from '../../shared/ui/MarketplaceHeader.jsx';
+import SelectOne from '../../components/ui/select-1.jsx';
 
 const SORT_OPTIONS = [
   { value: 'recent', label: 'Recently updated' },
@@ -106,22 +107,12 @@ export default function ExploreMembersPage({ navigate }) {
 
             <label className="exploreField">
               <span>{t('Category')}</span>
-              <select value={filters.category} onChange={(event) => setFilterValue('category', event.target.value)}>
-                <option value="all">{t('All categories')}</option>
-                {meta.categories.map((item) => (
-                  <option key={item} value={item}>{item}</option>
-                ))}
-              </select>
+              <SelectOne value={filters.category} onChange={(nextValue) => setFilterValue('category', nextValue)} options={[{ value: 'all', label: t('All categories') }, ...meta.categories.map((item) => ({ value: item, label: item }))]} />
             </label>
 
             <label className="exploreField">
               <span>{t('Task duration')}</span>
-              <select value={filters.duration} onChange={(event) => setFilterValue('duration', event.target.value)}>
-                <option value="all">{t('All durations')}</option>
-                {meta.durations.map((item) => (
-                  <option key={item} value={item}>{item}</option>
-                ))}
-              </select>
+              <SelectOne value={filters.duration} onChange={(nextValue) => setFilterValue('duration', nextValue)} options={[{ value: 'all', label: t('All durations') }, ...meta.durations.map((item) => ({ value: item, label: item }))]} />
             </label>
 
             <div className="exploreBudgetGrid">
@@ -150,11 +141,7 @@ export default function ExploreMembersPage({ navigate }) {
 
             <label className="exploreField">
               <span>{t('Sort by')}</span>
-              <select value={filters.sort} onChange={(event) => setFilterValue('sort', event.target.value)}>
-                {SORT_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>{t(option.label)}</option>
-                ))}
-              </select>
+              <SelectOne value={filters.sort} onChange={(nextValue) => setFilterValue('sort', nextValue)} options={SORT_OPTIONS.map((option) => ({ value: option.value, label: t(option.label) }))} />
             </label>
 
             <button type="button" className="btn soft interactive exploreResetButton" onClick={resetFilters}>

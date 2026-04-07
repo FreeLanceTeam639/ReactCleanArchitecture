@@ -23,9 +23,11 @@ import { fetchWalletSummary } from '../../features/workspace/services/workspaceS
 import { buildTaskDetailRoute, getTaskSlugFromPathname, ROUTES } from '../../shared/constants/routes.js';
 import { useToast } from '../../shared/hooks/useToast.js';
 import { getAuthenticatedUser, hasAuthenticatedSession } from '../../shared/lib/storage/authStorage.js';
+import { setPendingOrderConfirmation } from '../../shared/lib/storage/orderConfirmationState.js';
 import { setPendingConversationFocusId } from '../../shared/lib/storage/workspaceConversationState.js';
 import HomeFooter from '../../widgets/home/HomeFooter.jsx';
 import TaskDetailHeader from '../../widgets/task-detail/TaskDetailHeader.jsx';
+import { OrderConfirmationCard } from '../../components/ui/order-confirmation-card.jsx';
 
 
 const transitionUp = {
@@ -71,6 +73,7 @@ export default function TaskDetailPage({ navigate, pathname }) {
   const [openFaq, setOpenFaq] = useState(0);
   const [activeImage, setActiveImage] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [orderConfirmation, setOrderConfirmation] = useState(null);
 
   useEffect(() => {
     let isCancelled = false;
@@ -86,6 +89,7 @@ export default function TaskDetailPage({ navigate, pathname }) {
           setActiveImage(payload.gallery?.[0] || '');
           setOpenFaq(0);
           setTermsAccepted(false);
+          setOrderConfirmation(null);
         }
       } catch (nextError) {
         if (!isCancelled) {
@@ -247,12 +251,23 @@ export default function TaskDetailPage({ navigate, pathname }) {
       }
 
       const normalizedMessage = String(result?.message || '').toLowerCase();
-      const toastMethod = normalizedMessage.includes('artıq') ? toast.info : toast.success;
+      const toastMethod = normalizedMessage.includes('artiq') || normalizedMessage.includes('artıq') || normalizedMessage.includes('already')
+        ? toast.info
+        : toast.success;
 
       toastMethod({
         title: isChatAction ? 'Chat hazirdir' : 'Sifaris hazirdir',
         message: result?.message || (isChatAction ? 'Conversation ugurla acildi.' : 'Sifaris ugurla yaradildi.')
       });
+
+      if (!isChatAction && result?.orderNumber && !normalizedMessage.includes('artiq') && !normalizedMessage.includes('already')) {
+        setPendingOrderConfirmation({
+          orderId: result.orderNumber,
+          paymentMethod: 'Wallet balance',
+          dateTime: new Date().toLocaleString(),
+          totalAmount: selectedTaskPanelPrice
+        });
+      }
 
       navigate(isChatAction ? ROUTES.messages : ROUTES.orders);
     } catch (nextError) {

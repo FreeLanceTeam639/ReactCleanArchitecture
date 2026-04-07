@@ -27,9 +27,7 @@
 .adminActionTextButton,
 .adminSecondaryButton,
 .adminInlineInput,
-.adminFilterField select,
 .adminFormGrid input,
-.adminFormGrid select,
 .adminFormGrid textarea,
 .adminSearchField {
   background: rgba(255, 250, 246, 0.9);
@@ -480,20 +478,46 @@
 }
 
 .languageSwitcher {
-  display: inline-flex;
+  position: relative;
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   align-items: center;
-  gap: 4px;
-  padding: 3px;
+  gap: 0;
+  padding: 4px;
   border-radius: 999px;
   border: 1px solid rgba(232, 225, 217, 0.92);
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 12px 24px rgba(33, 21, 14, 0.05);
+  overflow: hidden;
+  isolation: isolate;
+  transition: border-color 0.28s ease, box-shadow 0.28s ease, transform 0.28s ease;
+}
+
+.languageSwitcher:hover,
+.languageSwitcher:focus-within {
+  border-color: rgba(255, 90, 20, 0.18);
+  box-shadow: 0 16px 30px rgba(33, 21, 14, 0.08);
+}
+
+.languageSwitchTrack {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--accent) 0%, #ff7b43 100%);
+  box-shadow: 0 12px 26px rgba(255, 90, 20, 0.22);
+  transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1), width 0.34s ease;
+  z-index: 0;
 }
 
 .languageSwitchButton {
-  min-width: 36px;
-  height: 32px;
-  padding: 0 10px;
+  position: relative;
+  z-index: 1;
+  min-width: 38px;
+  height: 34px;
+  padding: 0 12px;
   border: 0;
   border-radius: 999px;
   background: transparent;
@@ -501,12 +525,18 @@
   font-size: 0.76rem;
   font-weight: 800;
   letter-spacing: 0.06em;
+  transition: color 0.24s ease, transform 0.24s ease, opacity 0.24s ease;
+}
+
+.languageSwitchButton:hover,
+.languageSwitchButton:focus-visible {
+  transform: translateY(-1px);
+  opacity: 0.96;
 }
 
 .languageSwitchButton.active {
-  background: linear-gradient(135deg, var(--accent) 0%, #ff7b43 100%);
   color: #fff;
-  box-shadow: 0 12px 26px rgba(255, 90, 20, 0.22);
+  transform: translateY(-1px);
 }
 
 .detailHeaderLanguage {

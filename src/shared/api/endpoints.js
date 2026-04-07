@@ -131,7 +131,8 @@ export const API_ENDPOINTS = {
     auditLogs: withDefault(import.meta.env.VITE_ADMIN_AUDIT_LOGS_ENDPOINT, '/admin/audit-logs')
   },
   reference: {
-    countries: withDefault(import.meta.env.VITE_REFERENCE_COUNTRIES_ENDPOINT, '/reference/countries')
+    countries: withDefault(import.meta.env.VITE_REFERENCE_COUNTRIES_ENDPOINT, '/reference/countries'),
+    languages: withDefault(import.meta.env.VITE_REFERENCE_LANGUAGES_ENDPOINT, '/reference/languages')
   }
 };
 

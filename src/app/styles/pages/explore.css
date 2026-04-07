@@ -119,8 +119,7 @@
   font-weight: 700;
 }
 
-.exploreField input,
-.exploreField select {
+.exploreField input {
   width: 100%;
   min-height: 50px;
   border: 1px solid rgba(229, 229, 229, 0.92);
@@ -130,8 +129,7 @@
   transition: border-color 0.24s ease, box-shadow 0.24s ease, background-color 0.24s ease;
 }
 
-.exploreField input:focus,
-.exploreField select:focus {
+.exploreField input:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 4px rgba(255, 90, 20, 0.1);
   background: #fff;

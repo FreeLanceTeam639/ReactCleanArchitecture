@@ -59,8 +59,8 @@ export function useNotificationsPage(navigate) {
       await load();
     } catch (nextError) {
       toast.error({
-        title: 'Bildiris yenilenmedi',
-        message: nextError?.message || 'Bildiris statusunu yenilemek mumkun olmadi.'
+        title: 'Bildiriş yenilənmədi',
+        message: nextError?.message || 'Bildiriş statusunu yeniləmək mümkün olmadı.'
       });
     } finally {
       setState((current) => ({ ...current, busyKey: '' }));
@@ -73,13 +73,13 @@ export function useNotificationsPage(navigate) {
       await markAllWorkspaceNotificationsRead();
       await load();
       toast.info({
-        title: 'Bildirisler yenilendi',
-        message: 'Butun bildirisler oxunmus kimi isaretlendi.'
+        title: 'Bildirişlər yeniləndi',
+        message: 'Bütün bildirişlər oxunmuş kimi işarələndi.'
       });
     } catch (nextError) {
       toast.error({
-        title: 'Bildirisler yenilenmedi',
-        message: nextError?.message || 'Butun bildirisleri yenilemek mumkun olmadi.'
+        title: 'Bildirişlər yenilənmədi',
+        message: nextError?.message || 'Bütün bildirişləri yeniləmək mümkün olmadı.'
       });
     } finally {
       setState((current) => ({ ...current, busyKey: '' }));

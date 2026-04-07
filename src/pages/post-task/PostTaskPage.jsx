@@ -5,6 +5,7 @@ import { ROUTES } from '../../shared/constants/routes.js';
 import MarketplaceHeader from '../../shared/ui/MarketplaceHeader.jsx';
 import WorkspaceTaskMediaField from '../../features/workspace/components/WorkspaceTaskMediaField.jsx';
 import { usePostTaskPage } from '../../features/workspace/hooks/usePostTaskPage.js';
+import SelectOne from '../../components/ui/select-1.jsx';
 
 function VerificationStatusBadge({ status = 'Unverified' }) {
   const normalizedStatus = String(status).toLowerCase();
@@ -224,16 +225,12 @@ export default function PostTaskPage({ navigate }) {
 
                 <label className="profileField">
                   <span>Category</span>
-                  <select className="talentSelect" value={form.category} onChange={(event) => setFieldValue('category', event.target.value)}>
-                    {meta.categories.map((item) => <option key={item}>{item}</option>)}
-                  </select>
+                  <SelectOne value={form.category} onChange={(nextValue) => setFieldValue('category', nextValue)} options={meta.categories} />
                 </label>
 
                 <label className="profileField">
                   <span>Budget type</span>
-                  <select className="talentSelect" value={form.budgetType} onChange={(event) => setFieldValue('budgetType', event.target.value)}>
-                    {meta.budgetTypes.map((item) => <option key={item}>{item}</option>)}
-                  </select>
+                  <SelectOne value={form.budgetType} onChange={(nextValue) => setFieldValue('budgetType', nextValue)} options={meta.budgetTypes} />
                 </label>
 
                 <label className="profileField">
@@ -243,9 +240,7 @@ export default function PostTaskPage({ navigate }) {
 
                 <label className="profileField">
                   <span>Timeline</span>
-                  <select className="talentSelect" value={form.duration} onChange={(event) => setFieldValue('duration', event.target.value)}>
-                    {meta.durations.map((item) => <option key={item}>{item}</option>)}
-                  </select>
+                  <SelectOne value={form.duration} onChange={(nextValue) => setFieldValue('duration', nextValue)} options={meta.durations} />
                 </label>
 
                 <label className="profileField fullWidth">

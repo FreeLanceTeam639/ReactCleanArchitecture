@@ -18,14 +18,30 @@ export function useMessagesPage(navigate) {
   const [thread, setThread] = useState([]);
   const [activeConversationId, setActiveConversationId] = useState('');
   const [draftMessage, setDraftMessage] = useState('');
+  const [isParticipantTyping, setIsParticipantTyping] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [busyKey, setBusyKey] = useState('');
   const activeConversationIdRef = useRef('');
+  const socketSendRef = useRef(() => false);
+  const typingDebounceTimeoutRef = useRef(0);
+  const typingVisibilityTimeoutRef = useRef(0);
 
   useEffect(() => {
     activeConversationIdRef.current = activeConversationId;
   }, [activeConversationId]);
+
+  const emitTypingState = useCallback((isTyping, conversationId = activeConversationIdRef.current) => {
+    if (!conversationId) {
+      return;
+    }
+
+    socketSendRef.current?.({
+      type: 'conversation.typing',
+      conversationId,
+      isTyping
+    });
+  }, []);
 
   const loadConversations = useCallback(async (preferredConversationId = '') => {
     const items = await fetchConversationIndex(filters);
@@ -106,6 +122,7 @@ export function useMessagesPage(navigate) {
   useEffect(() => {
     if (!activeConversationId) {
       setThread([]);
+      setIsParticipantTyping(false);
       return;
     }
 
@@ -127,20 +144,49 @@ export function useMessagesPage(navigate) {
       return () => {};
     }
 
-    return createWorkspaceSocketSubscription(async (event) => {
-      if (event?.type !== 'conversation.updated') {
-        return;
-      }
+    return createWorkspaceSocketSubscription(
+      async (event) => {
+        if (event?.type === 'conversation.typing') {
+          if (!event.conversationId || event.conversationId !== activeConversationIdRef.current) {
+            return;
+          }
 
-      const targetConversationId = event.conversationId || activeConversationId;
-      const result = await loadConversations(targetConversationId);
-      const resolvedConversationId = result.activeConversationId || targetConversationId;
+          window.clearTimeout(typingVisibilityTimeoutRef.current);
+          setIsParticipantTyping(Boolean(event.isTyping));
 
-      if (resolvedConversationId) {
-        await loadThread(resolvedConversationId);
+          if (event.isTyping) {
+            typingVisibilityTimeoutRef.current = window.setTimeout(() => {
+              setIsParticipantTyping(false);
+            }, 2200);
+          }
+
+          return;
+        }
+
+        if (event?.type !== 'conversation.updated') {
+          return;
+        }
+
+        const targetConversationId = event.conversationId || activeConversationIdRef.current;
+        const result = await loadConversations(targetConversationId);
+        const resolvedConversationId = result.activeConversationId || targetConversationId;
+
+        if (resolvedConversationId) {
+          await loadThread(resolvedConversationId);
+        }
+      },
+      {
+        onReady({ sendJson }) {
+          socketSendRef.current = sendJson;
+        }
       }
-    });
-  }, [activeConversationId, loadConversations, loadThread]);
+    );
+  }, [loadConversations, loadThread]);
+
+  useEffect(() => () => {
+    window.clearTimeout(typingDebounceTimeoutRef.current);
+    window.clearTimeout(typingVisibilityTimeoutRef.current);
+  }, []);
 
   const activeConversation = useMemo(
     () => conversations.find((item) => item.id === activeConversationId) || null,
@@ -152,6 +198,10 @@ export function useMessagesPage(navigate) {
   };
 
   const openConversation = async (conversationId) => {
+    emitTypingState(false);
+    window.clearTimeout(typingDebounceTimeoutRef.current);
+    window.clearTimeout(typingVisibilityTimeoutRef.current);
+    setIsParticipantTyping(false);
     setActiveConversationId(conversationId);
     setBusyKey(`read:${conversationId}`);
 
@@ -161,6 +211,25 @@ export function useMessagesPage(navigate) {
       await loadThread(conversationId);
     } finally {
       setBusyKey('');
+    }
+  };
+
+  const handleDraftMessageChange = (value) => {
+    setDraftMessage(value);
+
+    if (!activeConversationIdRef.current) {
+      return;
+    }
+
+    window.clearTimeout(typingDebounceTimeoutRef.current);
+
+    if (value.trim()) {
+      emitTypingState(true);
+      typingDebounceTimeoutRef.current = window.setTimeout(() => {
+        emitTypingState(false);
+      }, 1100);
+    } else {
+      emitTypingState(false);
     }
   };
 
@@ -184,6 +253,8 @@ export function useMessagesPage(navigate) {
 
       await loadConversations(activeConversationId);
       setDraftMessage('');
+      emitTypingState(false, activeConversationId);
+      window.clearTimeout(typingDebounceTimeoutRef.current);
     } catch (nextError) {
       toast.error({
         title: 'Mesaj gonderilmedi',
@@ -200,10 +271,11 @@ export function useMessagesPage(navigate) {
     thread,
     activeConversation,
     draftMessage,
+    isParticipantTyping,
     isLoading,
     error,
     busyKey,
-    setDraftMessage,
+    setDraftMessage: handleDraftMessageChange,
     setFilterValue,
     openConversation,
     submitReply

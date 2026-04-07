@@ -9,6 +9,7 @@ import AdminStatusBadge from '../../shared/ui/admin/AdminStatusBadge.jsx';
 import AdminToolbar from '../../shared/ui/admin/AdminToolbar.jsx';
 import AdminImageField from '../../shared/ui/admin/AdminImageField.jsx';
 import AdminActionIconButton from '../../shared/ui/admin/AdminActionIconButton.jsx';
+import SelectOne from '../../components/ui/select-1.jsx';
 
 function buildTalentFormState(item) {
   return {
@@ -216,10 +217,7 @@ export default function AdminTalentPage({ navigate, pathname = ROUTES.adminTalen
               </label>
               <label>
                 <span>Category</span>
-                <select value={formState.categoryId} onChange={(event) => setFormState((current) => ({ ...current, categoryId: event.target.value }))}>
-                  <option value="">Select category</option>
-                  {categoryOptions.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-                </select>
+                <SelectOne value={formState.categoryId} onChange={(nextValue) => setFormState((current) => ({ ...current, categoryId: nextValue }))} options={[{ value: '', label: 'Select category' }, ...categoryOptions.map((item) => ({ value: item.id, label: item.name }))]} />
               </label>
               <label>
                 <span>Rating</span>
@@ -227,10 +225,7 @@ export default function AdminTalentPage({ navigate, pathname = ROUTES.adminTalen
               </label>
               <label>
                 <span>Status</span>
-                <select value={formState.status} onChange={(event) => setFormState((current) => ({ ...current, status: event.target.value }))}>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
+                <SelectOne value={formState.status} onChange={(nextValue) => setFormState((current) => ({ ...current, status: nextValue }))} options={[{ value: 'active', label: 'Active' }, { value: 'inactive', label: 'Inactive' }]} />
               </label>
               <label className="adminCheckboxField fullSpan">
                 <input type="checkbox" checked={formState.featured} onChange={(event) => setFormState((current) => ({ ...current, featured: event.target.checked }))} />

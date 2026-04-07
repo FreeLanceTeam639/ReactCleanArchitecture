@@ -1,4 +1,5 @@
 import { Search } from 'lucide-react';
+import SelectOne from '../../../components/ui/select-1.jsx';
 
 export default function AdminToolbar({
   searchValue,
@@ -20,13 +21,7 @@ export default function AdminToolbar({
         {filters.map((filter) => (
           <label key={filter.key} className="adminFilterField">
             <span>{filter.label}</span>
-            <select value={filter.value} onChange={(event) => filter.onChange(event.target.value)}>
-              {filter.options.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            <SelectOne value={filter.value} onChange={filter.onChange} options={filter.options} />
           </label>
         ))}
 

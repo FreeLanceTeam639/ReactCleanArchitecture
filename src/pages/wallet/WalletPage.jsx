@@ -4,6 +4,7 @@ import { AUTHENTICATED_NAVIGATION_LINKS } from '../../shared/constants/navigatio
 import { ROUTES } from '../../shared/constants/routes.js';
 import { useI18n } from '../../shared/i18n/I18nProvider.jsx';
 import MarketplaceHeader from '../../shared/ui/MarketplaceHeader.jsx';
+import SelectOne from '../../components/ui/select-1.jsx';
 
 export default function WalletPage({ navigate }) {
   const { t } = useI18n();
@@ -24,6 +25,23 @@ export default function WalletPage({ navigate }) {
     submitTopUp,
     submitWithdrawal
   } = useWalletPage(navigate);
+
+  const typeOptions = [
+    { value: 'all', label: t('All transactions') },
+    { value: 'income', label: t('Income') },
+    { value: 'topup', label: t('Top-ups') },
+    { value: 'withdrawal', label: t('Withdrawals') },
+    { value: 'fee', label: t('Fees') }
+  ];
+
+  const statusOptions = [
+    { value: 'all', label: t('All statuses') },
+    { value: 'completed', label: t('Completed') },
+    { value: 'processing', label: t('Processing') },
+    { value: 'pending', label: t('Pending') },
+    { value: 'failed', label: t('Failed') },
+    { value: 'canceled', label: t('Canceled') }
+  ];
 
   return (
     <div className="profileShell">
@@ -50,21 +68,20 @@ export default function WalletPage({ navigate }) {
         <section className="workspaceSplitLayout singleTop">
           <article className="workspacePanel cardLift">
             <div className="workspaceToolbar compact">
-              <select className="talentSelect" value={filters.type} onChange={(event) => setFilterValue('type', event.target.value)}>
-                <option value="all">{t('All transactions')}</option>
-                <option value="income">{t('Income')}</option>
-                <option value="topup">{t('Top-ups')}</option>
-                <option value="withdrawal">{t('Withdrawals')}</option>
-                <option value="fee">{t('Fees')}</option>
-              </select>
-              <select className="talentSelect" value={filters.status} onChange={(event) => setFilterValue('status', event.target.value)}>
-                <option value="all">{t('All statuses')}</option>
-                <option value="completed">{t('Completed')}</option>
-                <option value="processing">{t('Processing')}</option>
-                <option value="pending">{t('Pending')}</option>
-                <option value="failed">{t('Failed')}</option>
-                <option value="canceled">{t('Canceled')}</option>
-              </select>
+              <SelectOne
+                className="workspaceToolbarSelect"
+                triggerClassName="interactive"
+                value={filters.type}
+                onChange={(nextValue) => setFilterValue('type', nextValue)}
+                options={typeOptions}
+              />
+              <SelectOne
+                className="workspaceToolbarSelect"
+                triggerClassName="interactive"
+                value={filters.status}
+                onChange={(nextValue) => setFilterValue('status', nextValue)}
+                options={statusOptions}
+              />
             </div>
 
             {isLoading ? (

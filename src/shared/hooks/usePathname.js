@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 function getCurrentPathname() {
   return window.location.pathname || '/';
@@ -21,8 +21,10 @@ export function usePathname() {
     };
   }, []);
 
-  const navigate = (nextPathname, options = {}) => {
-    if (nextPathname === pathname) {
+  const navigate = useCallback((nextPathname, options = {}) => {
+    const currentPathname = getCurrentPathname();
+
+    if (nextPathname === currentPathname) {
       return;
     }
 
@@ -34,7 +36,7 @@ export function usePathname() {
 
     setPathname(nextPathname);
     notifyPathnameChange();
-  };
+  }, []);
 
   return [pathname, navigate];
 }

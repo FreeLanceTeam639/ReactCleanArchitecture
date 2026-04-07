@@ -1,3 +1,5 @@
+import SelectOne from '../../components/ui/select-1.jsx';
+
 export default function CountrySelect({
   value,
   countries,
@@ -8,19 +10,18 @@ export default function CountrySelect({
   className = ''
 }) {
   return (
-    <select
-      className={`countrySelectInput ${className}`.trim()}
+    <SelectOne
+      className={className}
+      triggerClassName="countrySelectInput"
       value={value}
-      onChange={(event) => onChange(event.target.value)}
+      onChange={onChange}
       disabled={disabled}
-      required={required}
-    >
-      <option value="">{disabled ? 'Loading countries...' : placeholder}</option>
-      {countries.map((country) => (
-        <option key={country.iso2} value={country.name}>
-          {country.name} ({country.dialCode})
-        </option>
-      ))}
-    </select>
+      placeholder={disabled ? 'Loading countries...' : placeholder}
+      options={countries.map((country) => ({
+        value: country.name,
+        label: `${country.name} (${country.dialCode})`
+      }))}
+      showClear={!required}
+    />
   );
 }
