@@ -44,10 +44,7 @@ export default function HeroSection({
           <button
             type="button"
             className="btn primary interactive heroSearchButton"
-            onClick={() => {
-              const talentsSection = document.getElementById('talents');
-              talentsSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }}
+            onClick={(event) => navigateWithScroll(event, ROUTES.exploreMembers, navigate)}
           >
             {t('Find matches')}
           </button>
@@ -67,7 +64,11 @@ export default function HeroSection({
         </div>
 
         <div className="row heroActionRow">
-          <a href="#talents" className="btn primary interactive">
+          <a
+            href={ROUTES.exploreMembers}
+            className="btn primary interactive"
+            onClick={(event) => navigateWithScroll(event, ROUTES.exploreMembers, navigate)}
+          >
             {t('Explore talent')}
           </a>
           <a

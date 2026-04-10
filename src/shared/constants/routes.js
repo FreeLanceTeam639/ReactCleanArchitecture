@@ -25,6 +25,22 @@ export const ROUTES = {
   adminAuditLogs: '/admin/audit-logs'
 };
 
+export const EXPLORE_MEMBER_ROUTE_ALIASES = ['/talent', '/talents/', '/explore', '/explore-members', '/explore-members/'];
+
+export function normalizeAppPathname(pathname = '') {
+  if (!pathname || pathname === '/') {
+    return '/';
+  }
+
+  const normalizedPathname = pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
+
+  if (EXPLORE_MEMBER_ROUTE_ALIASES.includes(pathname) || EXPLORE_MEMBER_ROUTE_ALIASES.includes(normalizedPathname)) {
+    return ROUTES.exploreMembers;
+  }
+
+  return normalizedPathname || '/';
+}
+
 export function buildTaskDetailRoute(slug = '') {
   return `${ROUTES.taskDetail}/${slug}`;
 }

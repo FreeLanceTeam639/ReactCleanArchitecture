@@ -59,7 +59,7 @@ export default function TalentSection({
             className={activeTab === tab ? 'tab active interactive' : 'tab interactive'}
             onClick={() => onTabChange(tab)}
           >
-            {tab}
+            {t(tab)}
           </button>
         ))}
       </div>

@@ -19,16 +19,16 @@ import {
   startTaskConversation
 } from '../../features/task-detail/services/taskDetailService.js';
 import { CommentThread } from '../../components/ui/reddit-nested-thread-reply.jsx';
+import { OrderConfirmationCard } from '../../components/ui/order-confirmation-card.jsx';
 import { fetchWalletSummary } from '../../features/workspace/services/workspaceService.js';
 import { buildTaskDetailRoute, getTaskSlugFromPathname, ROUTES } from '../../shared/constants/routes.js';
 import { useToast } from '../../shared/hooks/useToast.js';
+import { useI18n } from '../../shared/i18n/I18nProvider.jsx';
 import { getAuthenticatedUser, hasAuthenticatedSession } from '../../shared/lib/storage/authStorage.js';
 import { setPendingOrderConfirmation } from '../../shared/lib/storage/orderConfirmationState.js';
 import { setPendingConversationFocusId } from '../../shared/lib/storage/workspaceConversationState.js';
 import HomeFooter from '../../widgets/home/HomeFooter.jsx';
 import TaskDetailHeader from '../../widgets/task-detail/TaskDetailHeader.jsx';
-import { OrderConfirmationCard } from '../../components/ui/order-confirmation-card.jsx';
-
 
 const transitionUp = {
   initial: { opacity: 0, y: 24 },
@@ -62,7 +62,32 @@ function renderStars(score) {
   ));
 }
 
+function formatOwnerTasksDescription(name, language) {
+  if (language === 'az') {
+    return `${name} tərəfindən paylaşılmış tapşırıqlar burada yuxarıdan aşağı düzülüb. Hər hansına klik etdikdə həmin tapşırığın detail səhifəsi açılacaq.`;
+  }
+
+  if (language === 'ru') {
+    return `Здесь сверху вниз показаны задачи, опубликованные ${name}. Нажмите на любую из них, чтобы открыть страницу деталей.`;
+  }
+
+  return `Tasks shared by ${name} are listed here. Select any of them to open its detail page.`;
+}
+
+function formatReviewHeading(detail, isJobBrief, t) {
+  if (!detail.reviews || detail.reviews <= 0) {
+    return t(detail.reviewSectionTitle);
+  }
+
+  const reviewLabel = isJobBrief
+    ? t(detail.reviews === 1 ? 'owner review' : 'owner reviews')
+    : t(detail.reviews === 1 ? 'review' : 'reviews');
+
+  return `${detail.reviews} ${reviewLabel} (${detail.rating} ${t('overall rating')})`;
+}
+
 export default function TaskDetailPage({ navigate, pathname }) {
+  const { t, language } = useI18n();
   const slug = getTaskSlugFromPathname(pathname);
   const toast = useToast();
   const [detail, setDetail] = useState(null);
@@ -91,10 +116,10 @@ export default function TaskDetailPage({ navigate, pathname }) {
           setTermsAccepted(false);
           setOrderConfirmation(null);
         }
-      } catch (nextError) {
+      } catch {
         if (!isCancelled) {
           setDetail(null);
-          setError(nextError?.message || 'Task detail could not be loaded.');
+          setError('Task detail could not be loaded.');
         }
       }
     }
@@ -111,7 +136,7 @@ export default function TaskDetailPage({ navigate, pathname }) {
       <div className="detailPageShell">
         <TaskDetailHeader navigate={navigate} />
         <main className="wrap detailPage fadeUp">
-          <section className="detailTitleCard">{error || 'Loading task detail...'}</section>
+          <section className="detailTitleCard">{t(error || 'Loading task detail...')}</section>
         </main>
       </div>
     );
@@ -122,9 +147,7 @@ export default function TaskDetailPage({ navigate, pathname }) {
       <div className="detailPageShell">
         <TaskDetailHeader navigate={navigate} />
         <main className="wrap detailPage fadeUp">
-          <section className="detailTitleCard">
-            Task detail is currently unavailable.
-          </section>
+          <section className="detailTitleCard">{t('Task detail is currently unavailable.')}</section>
         </main>
       </div>
     );
@@ -139,33 +162,30 @@ export default function TaskDetailPage({ navigate, pathname }) {
   const authenticatedUserId = authenticatedUser?.id || authenticatedUser?.userId || '';
   const isOwnTask = Boolean(authenticatedUserId && detail.ownerUserId && authenticatedUserId === detail.ownerUserId);
   const isJobBrief = detail.detailType === 'job-brief';
-  const hasMultiplePackages = detail.packages.length > 1;
-  const faqEyebrow = isJobBrief ? 'Project questions' : 'Frequently asked questions';
+  const faqEyebrow = isJobBrief ? t('Project questions') : t('Frequently asked questions');
   const faqHeading = isJobBrief
-    ? 'Everything you may want to confirm before replying to this brief'
-    : 'Everything you may want to know before starting';
-  const reviewHeading = detail.reviews > 0
-    ? `${detail.reviews} review${detail.reviews === 1 ? '' : 's'} (${detail.rating} overall rating)`
-    : detail.reviewSectionTitle;
+    ? t('Everything you may want to confirm before replying to this brief')
+    : t('Everything you may want to know before starting');
+  const reviewHeading = formatReviewHeading(detail, isJobBrief, t);
   const chatButtonLabel = isOpeningChat
-    ? 'Opening chat...'
+    ? t('Opening chat...')
     : isOwnTask
-      ? 'Bu sizin elaninizdir'
-      : 'Open chat';
+      ? t('This is your listing')
+      : t('Open chat');
   const hireButtonLabel = isHiringTask
-    ? 'Creating order...'
+    ? t('Creating order...')
     : isOwnTask
-      ? 'Bu sizin elaninizdir'
-      : detail.primaryActionLabel;
+      ? t('This is your listing')
+      : t(detail.primaryActionLabel || 'Hire me for this task');
   const selectedTaskPanelLabel = selectedOwnerTask
-    ? 'Project budget'
-    : selectedPackageData.name;
+    ? t('Project budget')
+    : t(selectedPackageData.name);
   const selectedTaskPanelPrice = selectedOwnerTask?.budgetLabel || `$${selectedPackageData.price}`;
   const selectedTaskPanelDescription = selectedOwnerTask?.summary || selectedPackageData.description;
   const selectedTaskPanelTimeline = selectedOwnerTask?.timeline || selectedPackageData.delivery;
   const selectedTaskPanelStatus = selectedOwnerTask
-    ? 'Scope can be refined in chat'
-    : selectedPackageData.revisions;
+    ? t('Scope can be refined in chat')
+    : t(selectedPackageData.revisions);
   const selectedTaskFeatures = selectedOwnerTask
     ? [
         'Direct access to the job owner',
@@ -183,10 +203,10 @@ export default function TaskDetailPage({ navigate, pathname }) {
       normalizedMessage.includes('your own job post') ||
       normalizedMessage.includes('yourself')
     ) {
-      return 'Ozunuz ile conversation baslada bilmezsiniz.';
+      return t('You cannot start a conversation with your own listing.');
     }
 
-    return message || 'Conversation baslatmaq mumkun olmadi.';
+    return t(message || 'Conversation could not be started.');
   };
 
   const handleTaskAction = async (action) => {
@@ -199,8 +219,8 @@ export default function TaskDetailPage({ navigate, pathname }) {
 
     if (isOwnTask) {
       toast.info({
-        title: 'Mesaj gonderilmedi',
-        message: 'Oz elaniniz ucun conversation baslada bilmezsiniz.'
+        title: t('Message was not sent'),
+        message: t('You cannot start a conversation with your own listing.')
       });
       return;
     }
@@ -208,8 +228,8 @@ export default function TaskDetailPage({ navigate, pathname }) {
     if (!isChatAction) {
       if (!termsAccepted) {
         toast.error({
-          title: 'Sertler qebul olunmayib',
-          message: 'Sifarisi tamamlamaq ucun qaydalari tesdiqleyin.'
+          title: t('Order terms were not accepted'),
+          message: t('Please accept the current terms before completing the order.')
         });
         return;
       }
@@ -221,8 +241,8 @@ export default function TaskDetailPage({ navigate, pathname }) {
 
         if (availableBalance < requiredBalance) {
           toast.error({
-            title: 'Balans kifayet etmir',
-            message: 'Bu xidmeti sifaris etmek ucun once wallet balansinizi artirin.'
+            title: t('Insufficient balance'),
+            message: t('Please add funds to your wallet before ordering this service.')
           });
           navigate(ROUTES.wallet);
           return;
@@ -251,19 +271,22 @@ export default function TaskDetailPage({ navigate, pathname }) {
       }
 
       const normalizedMessage = String(result?.message || '').toLowerCase();
-      const toastMethod = normalizedMessage.includes('artiq') || normalizedMessage.includes('artıq') || normalizedMessage.includes('already')
-        ? toast.info
-        : toast.success;
+      const isExistingFlow =
+        normalizedMessage.includes('artiq') ||
+        normalizedMessage.includes('already') ||
+        normalizedMessage.includes('existing');
+
+      const toastMethod = isExistingFlow ? toast.info : toast.success;
 
       toastMethod({
-        title: isChatAction ? 'Chat hazirdir' : 'Sifaris hazirdir',
-        message: result?.message || (isChatAction ? 'Conversation ugurla acildi.' : 'Sifaris ugurla yaradildi.')
+        title: isChatAction ? t('Chat ready') : t('Order ready'),
+        message: isChatAction ? t('The conversation was opened successfully.') : t('The order was created successfully.')
       });
 
-      if (!isChatAction && result?.orderNumber && !normalizedMessage.includes('artiq') && !normalizedMessage.includes('already')) {
+      if (!isChatAction && result?.orderNumber && !isExistingFlow) {
         setPendingOrderConfirmation({
           orderId: result.orderNumber,
-          paymentMethod: 'Wallet balance',
+          paymentMethod: t('Wallet balance'),
           dateTime: new Date().toLocaleString(),
           totalAmount: selectedTaskPanelPrice
         });
@@ -272,7 +295,7 @@ export default function TaskDetailPage({ navigate, pathname }) {
       navigate(isChatAction ? ROUTES.messages : ROUTES.orders);
     } catch (nextError) {
       toast.error({
-        title: isChatAction ? 'Chat acilmadi' : 'Sifaris yaradilmadi',
+        title: isChatAction ? t('Chat could not be opened') : t('Order could not be created'),
         message: resolveTaskActionErrorMessage(nextError?.message)
       });
     } finally {
@@ -289,6 +312,20 @@ export default function TaskDetailPage({ navigate, pathname }) {
       <TaskDetailHeader navigate={navigate} />
 
       <main className="wrap detailPage fadeUp">
+        {orderConfirmation ? (
+          <div className="orderConfirmationInlineWrap">
+            <OrderConfirmationCard
+              orderId={orderConfirmation.orderId}
+              paymentMethod={orderConfirmation.paymentMethod}
+              dateTime={orderConfirmation.dateTime}
+              totalAmount={orderConfirmation.totalAmount}
+              title={t('Order created successfully')}
+              buttonText={t('Continue to my orders')}
+              onGoToAccount={() => setOrderConfirmation(null)}
+            />
+          </div>
+        ) : null}
+
         <motion.section className="detailTitleCard" {...transitionUp}>
           <div>
             <span className="detailCategoryPill">{detail.category}</span>
@@ -297,19 +334,21 @@ export default function TaskDetailPage({ navigate, pathname }) {
               <span className="detailMetaInline detailMetaReview">
                 <span className="detailStars">{renderStars(detail.rating)}</span>
                 <strong>{detail.rating}/5.0</strong>
-                <span>{isJobBrief ? `${detail.reviews} owner reviews` : `${detail.reviews} reviews`}</span>
+                <span>
+                  {detail.reviews} {t(isJobBrief ? (detail.reviews === 1 ? 'owner review' : 'owner reviews') : detail.reviews === 1 ? 'review' : 'reviews')}
+                </span>
               </span>
               <span className="detailMetaInline">
                 <ShoppingBag size={16} />
-                {detail.sales} {isJobBrief ? 'open briefs' : 'sales'}
+                {detail.sales} {t(isJobBrief ? (detail.sales === 1 ? 'open brief' : 'open briefs') : detail.sales === 1 ? 'sale' : 'sales')}
               </span>
               <span className="detailMetaInline">
                 <Eye size={16} />
-                {detail.views} views
+                {detail.views} {t('views')}
               </span>
               <button type="button" className="detailSaveButton interactive">
                 <Heart size={16} />
-                Save
+                {t('Save')}
               </button>
             </div>
           </div>
@@ -324,7 +363,7 @@ export default function TaskDetailPage({ navigate, pathname }) {
                   <span className="detailVisualPill">{detail.category}</span>
                   <span className="detailVisualPill dark">
                     <Images size={15} />
-                    {detail.gallery.length} images
+                    {detail.gallery.length} {t('images')}
                   </span>
                 </div>
               </div>
@@ -363,7 +402,7 @@ export default function TaskDetailPage({ navigate, pathname }) {
                 </p>
               ))}
               <div className="detailTagRow">
-                <span className="detailTagLabel">Tags:</span>
+                <span className="detailTagLabel">{t('Tags:')}</span>
                 {detail.tags.map((tag) => (
                   <span key={tag} className="detailTagChip">
                     {tag}
@@ -383,6 +422,7 @@ export default function TaskDetailPage({ navigate, pathname }) {
               <div className="detailFaqList">
                 {detail.faqs.map((faq, index) => {
                   const isOpen = openFaq === index;
+
                   return (
                     <motion.div key={faq.question} className={isOpen ? 'detailFaqItem open' : 'detailFaqItem'} layout>
                       <button
@@ -416,7 +456,7 @@ export default function TaskDetailPage({ navigate, pathname }) {
             <motion.section className="detailContentCard" {...transitionUp} transition={{ duration: 0.5, delay: 0.22 }}>
               <div className="detailSectionHeading detailReviewHeading">
                 <div>
-                  <span className="eyebrow">{detail.reviewSectionEyebrow}</span>
+                  <span className="eyebrow">{t(detail.reviewSectionEyebrow)}</span>
                   <h2>{reviewHeading}</h2>
                 </div>
               </div>
@@ -425,11 +465,13 @@ export default function TaskDetailPage({ navigate, pathname }) {
                 items={detail.reviewThread}
                 groupByProject
                 className="detailReviewThread"
-                emptyTitle={isJobBrief ? 'No task reviews yet' : 'No client reviews yet'}
+                emptyTitle={t(isJobBrief ? 'No task reviews yet' : 'No client reviews yet')}
                 emptyDescription={
-                  isJobBrief
-                    ? 'Reviews from completed deliveries on this task will appear here once collaborators leave feedback.'
-                    : 'Completed collaborations will appear here as soon as clients start leaving feedback.'
+                  t(
+                    isJobBrief
+                      ? 'Reviews from completed deliveries on this task will appear here once collaborators leave feedback.'
+                      : 'Completed collaborations will appear here as soon as clients start leaving feedback.'
+                  )
                 }
               />
             </motion.section>
@@ -461,7 +503,7 @@ export default function TaskDetailPage({ navigate, pathname }) {
 
                     <div className="detailInfoPill">
                       <Clock3 size={16} />
-                      <strong>Timeline</strong>
+                      <strong>{t('Timeline')}</strong>
                       <span>{selectedTaskPanelTimeline}</span>
                     </div>
 
@@ -471,11 +513,11 @@ export default function TaskDetailPage({ navigate, pathname }) {
                     </div>
 
                     <div className="detailFeatureBlock">
-                      <h4>Features included</h4>
+                      <h4>{t('Features included')}</h4>
                       {selectedTaskFeatures.map((feature) => (
                         <div key={`${selectedOwnerTask?.slug || selectedPackageData.key}-${feature}`} className="detailIncludedRow">
                           <Check size={15} />
-                          <span>{feature}</span>
+                          <span>{t(feature)}</span>
                         </div>
                       ))}
                     </div>
@@ -489,21 +531,18 @@ export default function TaskDetailPage({ navigate, pathname }) {
                         <FileText size={18} />
                       </div>
                       <div>
-                        <strong>Order terms acceptance</strong>
-                        <span>Version {detail.termsVersion}</span>
+                        <strong>{t('Order terms acceptance')}</strong>
+                        <span>{t('Version')} {detail.termsVersion}</span>
                       </div>
                     </div>
-                    <p>{detail.termsSummary}</p>
+                    <p>{t(detail.termsSummary)}</p>
                     <label className="detailTermsCheckbox">
                       <input
                         type="checkbox"
                         checked={termsAccepted}
                         onChange={(event) => setTermsAccepted(event.target.checked)}
                       />
-                      <span>
-                        I accept the current terms and confirm that the order PDF can be generated automatically after
-                        hire.
-                      </span>
+                      <span>{t('I accept the current terms and confirm that the order PDF can be generated automatically after hire.')}</span>
                     </label>
                   </div>
 
@@ -531,17 +570,13 @@ export default function TaskDetailPage({ navigate, pathname }) {
                     <ArrowRight size={16} />
                   </motion.button>
                 </div>
-
               </div>
 
               <div className="detailOwnerTasksCard">
                 <div className="detailOwnerTasksHeader">
-                  <span className="eyebrow">Task shortlist</span>
-                  <h3>Open another task detail</h3>
-                  <p>
-                    {detail.name} terefinden paylasilan tasklar burada yuxaridan asagi duzulub. Her hansina basanda
-                    hemin taskin detail sehifesi acilacaq.
-                  </p>
+                  <span className="eyebrow">{t('Task shortlist')}</span>
+                  <h3>{t('Open another task detail')}</h3>
+                  <p>{formatOwnerTasksDescription(detail.name, language)}</p>
                 </div>
 
                 <div className="detailOwnerTasksList">
@@ -576,8 +611,8 @@ export default function TaskDetailPage({ navigate, pathname }) {
 
                         <div className="detailOwnerTaskMeta">
                           <strong>{task.budgetLabel || '$0'}</strong>
-                          <span>{task.timeline || 'Flexible timeline'}</span>
-                          <em>{isSelected ? 'Current detail' : 'Open detail'}</em>
+                          <span>{task.timeline || t('Flexible timeline')}</span>
+                          <em>{isSelected ? t('Current detail') : t('Open detail')}</em>
                         </div>
                       </button>
                     );

@@ -100,7 +100,7 @@ export default function WalletPage({ navigate }) {
                       </div>
                       <div>
                         <strong>{item.title}</strong>
-                        <p>{[item.method, item.provider, item.reference].filter(Boolean).join(' • ')}</p>
+                        <p>{[item.method, item.provider, item.reference].filter(Boolean).join(' - ')}</p>
                       </div>
                     </div>
                     <div className="workspaceListCardSide">

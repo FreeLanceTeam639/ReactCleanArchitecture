@@ -3850,31 +3850,140 @@
 }
 
 .workspaceChatComposer {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: 12px;
+  display: block;
   padding: 18px 24px 24px;
   border-top: 1px solid rgba(147, 102, 57, 0.09);
   background: linear-gradient(180deg, rgba(255, 250, 247, 0.65), rgba(255, 247, 240, 0.96));
 }
 
-.workspaceChatComposerField {
-  display: block;
+.workspaceGlowingComposer {
+  position: relative;
 }
 
-.workspaceChatComposerField textarea {
-  min-height: 104px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+.workspaceGlowingComposerTrail {
+  position: absolute;
+  top: 50%;
+  width: min(160px, 22vw);
+  height: 76px;
+  transform: translateY(-50%);
+  filter: blur(28px);
+  pointer-events: none;
+  z-index: 0;
 }
 
-.workspaceChatSendButton {
-  min-height: 56px;
-  min-width: 136px;
+.workspaceGlowingComposerTrail.left {
+  left: -82px;
+  background: linear-gradient(90deg, rgba(255, 122, 48, 0.66), rgba(255, 148, 74, 0.18), rgba(255, 255, 255, 0));
+}
+
+.workspaceGlowingComposerTrail.right {
+  right: -82px;
+  background: linear-gradient(270deg, rgba(255, 122, 48, 0.66), rgba(255, 148, 74, 0.18), rgba(255, 255, 255, 0));
+}
+
+.workspaceGlowingComposerShell {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 74px;
+  padding: 10px 12px 10px 22px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: linear-gradient(135deg, #0c1328 0%, #0f1730 48%, #111c38 100%);
+}
+
+.workspaceGlowingComposerHighlight {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  top: 1px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 198, 145, 0.92), rgba(255, 255, 255, 0));
+  opacity: 0.78;
+  pointer-events: none;
+}
+
+.workspaceGlowingComposerCore {
+  position: absolute;
+  top: 50%;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  background: rgba(255, 174, 84, 0.85);
+  filter: blur(22px);
+  transform: translateY(-50%);
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.workspaceGlowingComposerCore.left {
+  left: -10px;
+}
+
+.workspaceGlowingComposerCore.right {
+  right: -10px;
+}
+
+.workspaceGlowingComposerInput {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: #f8fbff;
+  font-size: 1rem;
+  line-height: 1.45;
+  outline: none;
+  caret-color: #ffb357;
+}
+
+.workspaceGlowingComposerInput::placeholder {
+  color: rgba(228, 234, 245, 0.68);
+}
+
+.workspaceGlowingComposerInput:disabled {
+  cursor: not-allowed;
+  opacity: 0.74;
+}
+
+.workspaceGlowingComposerButton {
+  position: relative;
+  z-index: 1;
+  width: 52px;
+  height: 52px;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  gap: 8px;
+  flex-shrink: 0;
+  color: #120f0a;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ffbe63 0%, #ff8a52 55%, #ff7342 100%);
+  box-shadow: 0 0 10px rgba(255, 144, 70, 0.18);
+  cursor: pointer;
+}
+
+.workspaceGlowingComposerButton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: inherit;
+}
+
+.workspaceGlowingComposerButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.56;
+}
+
+.workspaceGlowingComposerButtonIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .workspaceChatEmpty {
@@ -3952,11 +4061,36 @@
   }
 
   .workspaceChatComposer {
-    grid-template-columns: 1fr;
+    padding-bottom: 18px;
   }
 
-  .workspaceChatSendButton {
-    width: 100%;
+  .workspaceGlowingComposerTrail {
+    width: min(96px, 18vw);
+    height: 54px;
+    filter: blur(22px);
+  }
+
+  .workspaceGlowingComposerTrail.left {
+    left: -40px;
+  }
+
+  .workspaceGlowingComposerTrail.right {
+    right: -40px;
+  }
+
+  .workspaceGlowingComposerShell {
+    min-height: 66px;
+    gap: 12px;
+    padding-left: 18px;
+  }
+
+  .workspaceGlowingComposerInput {
+    font-size: 0.96rem;
+  }
+
+  .workspaceGlowingComposerButton {
+    width: 48px;
+    height: 48px;
   }
 }
 
@@ -4003,5 +4137,431 @@
 
   .workspaceMonoAside {
     padding: 14px;
+  }
+}
+
+/* Orders experience refresh */
+
+.workspaceOrdersPanel {
+  overflow: hidden;
+}
+
+.workspaceOrdersStack {
+  display: grid;
+  gap: 16px;
+}
+
+.workspaceOrderCard {
+  border: 1px solid rgba(93, 52, 24, 0.1);
+  border-radius: 26px;
+  background:
+    linear-gradient(180deg, rgba(255, 251, 247, 0.98), rgba(255, 247, 241, 0.96));
+  box-shadow: 0 20px 44px rgba(36, 21, 13, 0.06);
+  overflow: hidden;
+}
+
+.workspaceOrderCard.expanded {
+  border-color: rgba(255, 122, 48, 0.18);
+  box-shadow: 0 28px 56px rgba(255, 122, 48, 0.12);
+}
+
+.workspaceOrderSummary {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 20px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  text-align: left;
+}
+
+.workspaceOrderSummaryMain {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+}
+
+.workspaceOrderThumb {
+  width: 94px;
+  height: 94px;
+  border-radius: 24px;
+  flex-shrink: 0;
+  display: grid;
+  align-content: space-between;
+  justify-items: start;
+  padding: 14px;
+  color: #fff;
+  background: linear-gradient(135deg, #ff7a30, #6c4b32);
+  box-shadow: 0 20px 36px rgba(255, 122, 48, 0.18);
+}
+
+.workspaceOrderThumb.review {
+  background: linear-gradient(135deg, #f59e0b, #b45309);
+}
+
+.workspaceOrderThumb.completed {
+  background: linear-gradient(135deg, #22c55e, #047857);
+}
+
+.workspaceOrderThumb span {
+  font-size: 1.55rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.workspaceOrderThumb small {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.workspaceOrderSummaryCopy {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.workspaceOrderSummaryTop,
+.workspaceOrderSummaryMeta,
+.workspaceOrderActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.workspaceOrderSummaryTop strong,
+.workspaceOrderShowcaseCopy strong,
+.workspaceOrderFact strong,
+.workspaceOrderValueBlock strong {
+  color: #24150d;
+}
+
+.workspaceOrderSummaryCopy h3 {
+  margin: 0;
+  color: #24150d;
+  font-size: 1.28rem;
+  line-height: 1.25;
+}
+
+.workspaceOrderSummaryMeta {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  color: #7f6e63;
+  font-size: 0.92rem;
+}
+
+.workspaceOrderCounterparty {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.workspaceOrderStatusDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #b0aea8;
+}
+
+.workspaceOrderStatusDot.active,
+.workspaceOrderStatusDot.completed {
+  background: #22c55e;
+}
+
+.workspaceOrderStatusDot.review {
+  background: #f59e0b;
+}
+
+.workspaceOrderSummarySide {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-shrink: 0;
+}
+
+.workspaceOrderValueBlock {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+}
+
+.workspaceOrderValueBlock small,
+.workspaceOrderSectionLabel,
+.workspaceOrderTimelineCopy span,
+.workspaceOrderFact span,
+.workspaceOrderShowcasePrice small {
+  color: #8b7668;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.workspaceOrderValueBlock span {
+  color: #7f6e63;
+  font-size: 0.95rem;
+}
+
+.workspaceOrderValueBlock strong {
+  font-size: 1.45rem;
+}
+
+.workspaceOrderExpandIcon {
+  width: 46px;
+  height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(255, 122, 48, 0.12);
+  color: #9b5d32;
+  flex-shrink: 0;
+}
+
+.workspaceOrderExpanded {
+  border-top: 1px solid rgba(93, 52, 24, 0.08);
+  padding: 18px;
+  display: grid;
+  gap: 16px;
+  background:
+    radial-gradient(circle at top right, rgba(255, 122, 48, 0.08), transparent 26%),
+    linear-gradient(180deg, rgba(255, 250, 246, 0.96), rgba(255, 247, 242, 0.98));
+}
+
+.workspaceOrderActionButtons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.workspaceOrderExpandedGrid {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.72fr) minmax(0, 1.28fr);
+  gap: 16px;
+}
+
+.workspaceOrderAside,
+.workspaceOrderTimelineCard,
+.workspaceOrderNoteCard {
+  border: 1px solid rgba(93, 52, 24, 0.08);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 18px 38px rgba(36, 21, 13, 0.05);
+}
+
+.workspaceOrderAside {
+  padding: 16px;
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.workspaceOrderShowcase {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(255, 247, 241, 0.98), rgba(255, 255, 255, 0.98));
+  border: 1px solid rgba(255, 122, 48, 0.1);
+}
+
+.workspaceOrderPoster {
+  min-height: 160px;
+  border-radius: 22px;
+  padding: 16px;
+  display: grid;
+  align-content: space-between;
+  background: linear-gradient(135deg, #ff7a30, #6c4b32);
+  color: #fff;
+}
+
+.workspaceOrderPoster.review {
+  background: linear-gradient(135deg, #f59e0b, #b45309);
+}
+
+.workspaceOrderPoster.completed {
+  background: linear-gradient(135deg, #22c55e, #047857);
+}
+
+.workspaceOrderPoster span {
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.workspaceOrderPoster small {
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 0.82rem;
+}
+
+.workspaceOrderShowcaseCopy {
+  display: grid;
+  gap: 8px;
+}
+
+.workspaceOrderShowcaseCopy p,
+.workspaceOrderNoteCard p,
+.workspaceOrderTimelineCopy p {
+  margin: 0;
+  color: #68574b;
+  line-height: 1.68;
+}
+
+.workspaceOrderShowcasePrice {
+  display: grid;
+  gap: 6px;
+}
+
+.workspaceOrderShowcasePrice strong {
+  font-size: 1.45rem;
+  color: #b14e16;
+}
+
+.workspaceOrderFacts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.workspaceOrderFact {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 250, 247, 0.98);
+  border: 1px solid rgba(147, 102, 57, 0.08);
+}
+
+.workspaceOrderFact.fullWidth {
+  grid-column: 1 / -1;
+}
+
+.workspaceOrderMain {
+  display: grid;
+  gap: 16px;
+}
+
+.workspaceOrderTimelineCard,
+.workspaceOrderNoteCard {
+  padding: 18px;
+}
+
+.workspaceOrderTimeline {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.workspaceOrderTimelineStep {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.workspaceOrderTimelineIcon {
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(147, 102, 57, 0.1);
+  color: #7b4f2d;
+}
+
+.workspaceOrderTimelineIcon.success {
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
+}
+
+.workspaceOrderTimelineIcon.pending {
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+}
+
+.workspaceOrderTimelineIcon.danger {
+  background: rgba(220, 38, 38, 0.12);
+  color: #b42318;
+}
+
+.workspaceOrderTimelineIcon.accent {
+  background: rgba(255, 122, 48, 0.12);
+  color: #b14e16;
+}
+
+.workspaceOrderTimelineCopy {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(147, 102, 57, 0.08);
+}
+
+.workspaceOrderTimelineStep:last-child .workspaceOrderTimelineCopy {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.workspaceOrderTimelineCopy strong {
+  color: #24150d;
+  font-size: 1.02rem;
+}
+
+.workspaceOrdersHero .workspaceMetricCard strong {
+  font-size: 1.55rem;
+}
+
+@media (max-width: 980px) {
+  .workspaceOrderExpandedGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 780px) {
+  .workspaceOrderSummary,
+  .workspaceOrderSummaryMain,
+  .workspaceOrderSummaryTop,
+  .workspaceOrderActions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .workspaceOrderSummarySide {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .workspaceOrderValueBlock {
+    justify-items: start;
+  }
+
+  .workspaceOrderFact,
+  .workspaceOrderFact.fullWidth {
+    grid-column: auto;
+  }
+
+  .workspaceOrderFacts {
+    grid-template-columns: 1fr;
+  }
+
+  .workspaceOrderActionButtons {
+    width: 100%;
+  }
+
+  .workspaceOrderActionButtons .profileActionButton {
+    width: 100%;
   }
 }

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, ChevronDown, X } from 'lucide-react';
+import { useI18n } from '../../shared/i18n/I18nProvider.jsx';
 
 function joinClassNames(...values) {
   return values.filter(Boolean).join(' ');
@@ -31,6 +32,7 @@ export default function SelectOne({
   disabled = false,
   showClear = false
 }) {
+  const { t } = useI18n();
   const fieldRef = useRef(null);
   const triggerRef = useRef(null);
   const menuRef = useRef(null);
@@ -38,8 +40,17 @@ export default function SelectOne({
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0, width: 0 });
 
   const normalizedOptions = useMemo(
-    () => options.map(normalizeOption),
-    [options]
+    () =>
+      options.map((option) => {
+        const normalized = normalizeOption(option);
+
+        return {
+          ...normalized,
+          label: t(normalized.label),
+          group: normalized.group ? t(normalized.group) : ''
+        };
+      }),
+    [options, t]
   );
 
   const selectedOption = useMemo(
@@ -173,7 +184,7 @@ export default function SelectOne({
 
   return (
     <div ref={fieldRef} className={joinClassNames('selectOneField', className)}>
-      {label ? <span className="selectOneLabel">{label}</span> : null}
+      {label ? <span className="selectOneLabel">{t(label)}</span> : null}
 
       <button
         ref={triggerRef}
@@ -185,12 +196,18 @@ export default function SelectOne({
         aria-expanded={isOpen}
       >
         <span className={joinClassNames('selectOneValue', selectedOption ? 'hasValue' : 'isPlaceholder')}>
-          {selectedOption?.label || placeholder}
+          {selectedOption?.label || t(placeholder)}
         </span>
 
         <span className="selectOneActions">
           {showClear && selectedOption ? (
-            <span className="selectOneInlineClear" onClick={handleClear} role="button" tabIndex={-1} aria-label={clearLabel}>
+            <span
+              className="selectOneInlineClear"
+              onClick={handleClear}
+              role="button"
+              tabIndex={-1}
+              aria-label={t(clearLabel)}
+            >
               <X size={14} />
             </span>
           ) : null}

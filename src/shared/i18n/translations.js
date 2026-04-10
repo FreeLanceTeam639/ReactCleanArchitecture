@@ -1,5 +1,9 @@
 import { DEFAULT_LANGUAGE } from './locale.js';
 import { TRANSLATION_OVERRIDES } from './translationOverrides.js';
+import { PROFILE_TRANSLATION_OVERRIDES } from './profileTranslationOverrides.js';
+import { TASK_DETAIL_TRANSLATION_OVERRIDES } from './taskDetailTranslationOverrides.js';
+import { WORKSPACE_TRANSLATION_OVERRIDES } from './workspaceTranslationOverrides.js';
+import { decodeMojibake } from '../lib/text/decodeMojibake.js';
 
 const EXACT_TRANSLATIONS = {
   az: {
@@ -1375,6 +1379,15 @@ Object.assign(EXACT_TRANSLATIONS.en, {
 Object.assign(EXACT_TRANSLATIONS.az, TRANSLATION_OVERRIDES.az);
 Object.assign(EXACT_TRANSLATIONS.ru, TRANSLATION_OVERRIDES.ru);
 Object.assign(EXACT_TRANSLATIONS.en, TRANSLATION_OVERRIDES.en);
+Object.assign(EXACT_TRANSLATIONS.az, PROFILE_TRANSLATION_OVERRIDES.az);
+Object.assign(EXACT_TRANSLATIONS.ru, PROFILE_TRANSLATION_OVERRIDES.ru);
+Object.assign(EXACT_TRANSLATIONS.en, PROFILE_TRANSLATION_OVERRIDES.en);
+Object.assign(EXACT_TRANSLATIONS.az, TASK_DETAIL_TRANSLATION_OVERRIDES.az);
+Object.assign(EXACT_TRANSLATIONS.ru, TASK_DETAIL_TRANSLATION_OVERRIDES.ru);
+Object.assign(EXACT_TRANSLATIONS.en, TASK_DETAIL_TRANSLATION_OVERRIDES.en);
+Object.assign(EXACT_TRANSLATIONS.az, WORKSPACE_TRANSLATION_OVERRIDES.az);
+Object.assign(EXACT_TRANSLATIONS.ru, WORKSPACE_TRANSLATION_OVERRIDES.ru);
+Object.assign(EXACT_TRANSLATIONS.en, WORKSPACE_TRANSLATION_OVERRIDES.en);
 
 function normalizeTranslationKey(value) {
   return String(value || '')
@@ -1396,7 +1409,7 @@ function preserveWhitespace(source, translated) {
   const leading = source.match(/^\s*/)?.[0] || '';
   const trailing = source.match(/\s*$/)?.[0] || '';
 
-  return `${leading}${translated}${trailing}`;
+  return `${leading}${decodeMojibake(translated)}${trailing}`;
 }
 
 export function translateText(language = DEFAULT_LANGUAGE, text = '') {
@@ -1427,5 +1440,5 @@ export function translateText(language = DEFAULT_LANGUAGE, text = '') {
     }
   }
 
-  return text;
+  return decodeMojibake(text);
 }

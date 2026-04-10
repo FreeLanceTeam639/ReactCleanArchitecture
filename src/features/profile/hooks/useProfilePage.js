@@ -30,7 +30,14 @@ import {
   updateProfileProposalStatus
 } from '../services/profileService.js';
 
-export const PROFILE_TABS = ['Dashboard', 'My Listings', 'Proposals', 'Reviews', 'Saved', 'Settings'];
+export const PROFILE_TABS = [
+  { id: 'dashboard', label: 'Dashboard' },
+  { id: 'listings', label: 'My Listings' },
+  { id: 'proposals', label: 'Proposals' },
+  { id: 'reviews', label: 'Reviews' },
+  { id: 'saved', label: 'Saved' },
+  { id: 'settings', label: 'Settings' }
+];
 
 const PROPOSAL_STATUS_FLOW = ['pending', 'shortlisted', 'accepted'];
 
@@ -62,7 +69,7 @@ function buildInitialState() {
 export function useProfilePage(navigate) {
   const toast = useToast();
   const { countries, isLoading: isCountriesLoading, defaultCountry } = useCountryDirectory();
-  const [activeTab, setActiveTab] = useState(PROFILE_TABS[0]);
+  const [activeTab, setActiveTab] = useState(PROFILE_TABS[0].id);
   const [pageState, setPageState] = useState(buildInitialState);
   const [settingsForm, setSettingsForm] = useState({
       fullName: '',

@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { ImageIcon, Link2, Send } from 'lucide-react';
+import { ImageIcon, Link2 } from 'lucide-react';
 import { useEffect, useMemo, useRef } from 'react';
+import { GlowingInput } from './glowing-input.jsx';
 
 function getInitials(name) {
   return String(name || 'U')
@@ -215,18 +216,14 @@ export default function ChatInterface({
       </div>
 
       <form className="workspaceChatComposer" onSubmit={onSubmit}>
-        <label className="workspaceChatComposerField">
-          <textarea
-            value={draftMessage}
-            onChange={(event) => onDraftChange(event.target.value)}
-            placeholder={placeholder}
-          />
-        </label>
-
-        <button type="submit" className="btn primary interactive workspaceChatSendButton" disabled={isSending}>
-          <Send size={16} />
-          {isSending ? sendingLabel : sendLabel}
-        </button>
+        <GlowingInput
+          value={draftMessage}
+          onChange={onDraftChange}
+          placeholder={placeholder}
+          disabled={isSending}
+          isSubmitting={isSending}
+          submitLabel={isSending ? sendingLabel : sendLabel}
+        />
       </form>
     </section>
   );

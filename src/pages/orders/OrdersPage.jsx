@@ -1,12 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
+  ArrowUpRight,
   BriefcaseBusiness,
   CalendarClock,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   CircleDollarSign,
+  Clock3,
   Download,
+  FileText,
   LoaderCircle,
+  MessageSquareText,
   Search,
-  Sparkles
+  Sparkles,
+  TriangleAlert
 } from 'lucide-react';
 import { useOrdersPage } from '../../features/workspace/hooks/useOrdersPage.js';
 import { downloadOrderDocument } from '../../features/workspace/services/workspaceService.js';
@@ -32,28 +40,192 @@ function MetricCard({ label, value, icon: Icon }) {
   );
 }
 
+function OrderTimelineStep({ icon: Icon, eyebrow, title, description, tone = 'neutral' }) {
+  return (
+    <article className={`workspaceOrderTimelineStep ${tone}`}>
+      <div className={`workspaceOrderTimelineIcon ${tone}`}>
+        <Icon size={16} />
+      </div>
+      <div className="workspaceOrderTimelineCopy">
+        <span>{eyebrow}</span>
+        <strong>{title}</strong>
+        <p>{description}</p>
+      </div>
+    </article>
+  );
+}
+
+function getOrderMonogram(title = '') {
+  const words = String(title || '')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2);
+
+  if (!words.length) {
+    return 'OR';
+  }
+
+  return words.map((word) => word.charAt(0).toUpperCase()).join('');
+}
+
+function getOrderStatusLabel(status, t) {
+  const normalizedStatus = String(status || '').toLowerCase();
+
+  if (normalizedStatus === 'review') {
+    return t('In Review');
+  }
+
+  if (normalizedStatus === 'completed') {
+    return t('Completed');
+  }
+
+  if (normalizedStatus === 'active') {
+    return t('Active');
+  }
+
+  return t(normalizedStatus || 'Active');
+}
+
+function getDocumentStatusLabel(item, t) {
+  const normalizedStatus = String(item?.documentStatus || '').toLowerCase();
+
+  if (String(item?.role || '').toLowerCase() !== 'participant') {
+    return t('PDF unavailable');
+  }
+
+  if (normalizedStatus === 'ready') {
+    return t('PDF Ready');
+  }
+
+  if (normalizedStatus === 'queued' || normalizedStatus === 'processing') {
+    return t('Generating PDF');
+  }
+
+  if (normalizedStatus === 'failed') {
+    return t('PDF failed');
+  }
+
+  return t('PDF is not ready');
+}
+
+function getDocumentStatusDescription(item, t) {
+  const normalizedStatus = String(item?.documentStatus || '').toLowerCase();
+
+  if (String(item?.role || '').toLowerCase() !== 'participant') {
+    return t('PDF files are created only for hired order records.');
+  }
+
+  if (normalizedStatus === 'ready') {
+    return t('The order document is ready to download.');
+  }
+
+  if (normalizedStatus === 'queued' || normalizedStatus === 'processing') {
+    return t('The document is being generated. Please check again in a few seconds.');
+  }
+
+  if (normalizedStatus === 'failed') {
+    return t('The order PDF could not be generated. Please try again later.');
+  }
+
+  return t('The PDF for this order has not been generated yet.');
+}
+
+function getDocumentTone(item) {
+  const normalizedStatus = String(item?.documentStatus || '').toLowerCase();
+
+  if (String(item?.role || '').toLowerCase() !== 'participant') {
+    return 'neutral';
+  }
+
+  if (normalizedStatus === 'ready') {
+    return 'success';
+  }
+
+  if (normalizedStatus === 'queued' || normalizedStatus === 'processing') {
+    return 'pending';
+  }
+
+  if (normalizedStatus === 'failed') {
+    return 'danger';
+  }
+
+  return 'neutral';
+}
+
+function getDocumentIcon(item) {
+  const normalizedStatus = String(item?.documentStatus || '').toLowerCase();
+
+  if (normalizedStatus === 'ready') {
+    return CheckCircle2;
+  }
+
+  if (normalizedStatus === 'queued' || normalizedStatus === 'processing') {
+    return Clock3;
+  }
+
+  if (normalizedStatus === 'failed') {
+    return TriangleAlert;
+  }
+
+  return FileText;
+}
+
+function buildTimelineSteps(item, t) {
+  const documentTone = getDocumentTone(item);
+  const DocumentIcon = getDocumentIcon(item);
+
+  return [
+    {
+      key: 'stage',
+      icon: BriefcaseBusiness,
+      tone: String(item?.status || '').toLowerCase() === 'completed' ? 'success' : 'accent',
+      eyebrow: t('Current stage'),
+      title: getOrderStatusLabel(item?.status, t),
+      description: item?.lastUpdate || t('This workspace is syncing the latest delivery update.')
+    },
+    {
+      key: 'progress',
+      icon: CalendarClock,
+      tone: 'pending',
+      eyebrow: t('Progress'),
+      title: `${Math.min(100, Math.max(0, Number(item?.progress) || 0))}%`,
+      description: item?.dueDate ? `${t('Due date')}: ${item.dueDate}` : t('No deadline set')
+    },
+    {
+      key: 'document',
+      icon: DocumentIcon,
+      tone: documentTone,
+      eyebrow: t('Document status'),
+      title: getDocumentStatusLabel(item, t),
+      description: getDocumentStatusDescription(item, t)
+    }
+  ];
+}
+
 export default function OrdersPage({ navigate }) {
   const { t } = useI18n();
   const toast = useToast();
   const [downloadingOrderId, setDownloadingOrderId] = useState('');
   const [orderConfirmation, setOrderConfirmation] = useState(null);
+  const [expandedOrderId, setExpandedOrderId] = useState('');
   const { items, summary, filters, setFilterValue, isLoading, error } = useOrdersPage(navigate);
+
   const statusOptions = [
-    { value: 'all', label: t('All statuses') },
-    { value: 'active', label: t('Active') },
-    { value: 'review', label: t('Review') },
-    { value: 'completed', label: t('Completed') }
+    { value: 'all', label: 'All statuses' },
+    { value: 'active', label: 'Active' },
+    { value: 'review', label: 'Review' },
+    { value: 'completed', label: 'Completed' }
   ];
   const roleOptions = [
-    { value: 'all', label: t('All roles') },
-    { value: 'owner', label: t('My job posts') },
-    { value: 'participant', label: t('Collaborations') }
+    { value: 'all', label: 'All roles' },
+    { value: 'owner', label: 'My job posts' },
+    { value: 'participant', label: 'Collaborations' }
   ];
   const sortOptions = [
-    { value: 'updated', label: t('Latest updates') },
-    { value: 'deadline', label: t('Closest deadline') },
-    { value: 'budget', label: t('Highest budget') },
-    { value: 'progress', label: t('Highest progress') }
+    { value: 'updated', label: 'Latest updates' },
+    { value: 'deadline', label: 'Closest deadline' },
+    { value: 'budget', label: 'Highest budget' },
+    { value: 'progress', label: 'Highest progress' }
   ];
 
   useEffect(() => {
@@ -62,6 +234,21 @@ export default function OrdersPage({ navigate }) {
       setOrderConfirmation(nextConfirmation);
     }
   }, []);
+
+  useEffect(() => {
+    if (!items.length) {
+      setExpandedOrderId('');
+      return;
+    }
+
+    setExpandedOrderId((currentId) => {
+      if (currentId && items.some((item) => String(item.id) === String(currentId))) {
+        return currentId;
+      }
+
+      return String(items[0].id);
+    });
+  }, [items]);
 
   const saveDownloadedFile = (blob, fileName) => {
     const objectUrl = URL.createObjectURL(blob);
@@ -98,21 +285,29 @@ export default function OrdersPage({ navigate }) {
       return;
     }
 
+    if (String(item?.role || '').toLowerCase() !== 'participant') {
+      toast.info({
+        title: t('PDF unavailable'),
+        message: t('PDF files are created only for hired order records.')
+      });
+      return;
+    }
+
     if (!item?.hasDocument) {
       if (normalizedStatus === 'queued' || normalizedStatus === 'processing') {
         toast.info({
-          title: 'PDF hazirlanir',
-          message: 'Sened generasiya olunur. Bir nece saniye sonra yeniden yoxlayin.'
+          title: t('PDF is being prepared'),
+          message: t('The document is being generated. Please check again in a few seconds.')
         });
       } else if (normalizedStatus === 'failed') {
         toast.error({
-          title: 'PDF hazirlanmadi',
-          message: 'Sifaris PDF-i generasiya olunmadi. Zehmet olmasa sonra yeniden yoxlayin.'
+          title: t('PDF could not be prepared'),
+          message: t('The order PDF could not be generated. Please try again later.')
         });
       } else {
         toast.info({
-          title: 'PDF hazir deyil',
-          message: 'Bu sifaris ucun PDF hele generasiya olunmayib.'
+          title: t('PDF is not ready'),
+          message: t('The PDF for this order has not been generated yet.')
         });
       }
 
@@ -125,18 +320,41 @@ export default function OrdersPage({ navigate }) {
       const response = await downloadOrderDocument(item.id);
       saveDownloadedFile(response.blob, response.fileName || `${item.orderNumber || 'order'}-summary.pdf`);
       toast.success({
-        title: 'PDF endirildi',
-        message: 'Sifaris senedi ugurla yuklendi.'
+        title: t('PDF downloaded'),
+        message: t('The order document was downloaded successfully.')
       });
     } catch (nextError) {
       toast.error({
-        title: 'PDF endirilemedi',
-        message: nextError?.message || 'Sifaris senedini yuklemek mumkun olmadi.'
+        title: t('PDF download failed'),
+        message: nextError?.message || t('The order document could not be downloaded.')
       });
     } finally {
       setDownloadingOrderId('');
     }
   };
+
+  const orderRows = useMemo(
+    () =>
+      items.map((item) => {
+        const counterpart = item.role === 'participant' ? item.freelancer : item.client;
+        const isExpanded = String(expandedOrderId) === String(item.id);
+        const progressValue = Math.min(100, Math.max(0, Number(item.progress) || 0));
+        const isParticipantOrder = String(item.role || '').toLowerCase() === 'participant';
+        const normalizedDocumentStatus = String(item.documentStatus || '').toLowerCase();
+        const timelineSteps = buildTimelineSteps(item, t);
+
+        return {
+          ...item,
+          counterpart,
+          isExpanded,
+          progressValue,
+          isParticipantOrder,
+          normalizedDocumentStatus,
+          timelineSteps
+        };
+      }),
+    [expandedOrderId, items, t]
+  );
 
   return (
     <div className="profileShell">
@@ -154,14 +372,14 @@ export default function OrdersPage({ navigate }) {
               paymentMethod={orderConfirmation.paymentMethod}
               dateTime={orderConfirmation.dateTime}
               totalAmount={orderConfirmation.totalAmount}
-              title="Sifaris ugurla yaradildi"
-              buttonText="Sifarislerime kecdim"
+              title={t('Order created successfully')}
+              buttonText={t('Continue to my orders')}
               onGoToAccount={() => setOrderConfirmation(null)}
             />
           </div>
         ) : null}
 
-        <section className="workspaceHero cardLift">
+        <section className="workspaceHero workspaceOrdersHero cardLift">
           <div>
             <span className="profileEyebrow">{t('Delivery Hub')}</span>
             <h1>{t('My Orders & Jobs')}</h1>
@@ -174,7 +392,7 @@ export default function OrdersPage({ navigate }) {
           </div>
         </section>
 
-        <section className="workspacePanel cardLift">
+        <section className="workspacePanel workspaceOrdersPanel cardLift">
           <div className="workspaceToolbar">
             <label className="talentSearchInput">
               <Search size={16} />
@@ -184,9 +402,27 @@ export default function OrdersPage({ navigate }) {
                 placeholder={t('Search jobs, updates, categories')}
               />
             </label>
-            <SelectOne className="workspaceToolbarSelect" triggerClassName="interactive" value={filters.status} onChange={(nextValue) => setFilterValue('status', nextValue)} options={statusOptions} />
-            <SelectOne className="workspaceToolbarSelect" triggerClassName="interactive" value={filters.role} onChange={(nextValue) => setFilterValue('role', nextValue)} options={roleOptions} />
-            <SelectOne className="workspaceToolbarSelect" triggerClassName="interactive" value={filters.sort} onChange={(nextValue) => setFilterValue('sort', nextValue)} options={sortOptions} />
+            <SelectOne
+              className="workspaceToolbarSelect"
+              triggerClassName="interactive"
+              value={filters.status}
+              onChange={(nextValue) => setFilterValue('status', nextValue)}
+              options={statusOptions}
+            />
+            <SelectOne
+              className="workspaceToolbarSelect"
+              triggerClassName="interactive"
+              value={filters.role}
+              onChange={(nextValue) => setFilterValue('role', nextValue)}
+              options={roleOptions}
+            />
+            <SelectOne
+              className="workspaceToolbarSelect"
+              triggerClassName="interactive"
+              value={filters.sort}
+              onChange={(nextValue) => setFilterValue('sort', nextValue)}
+              options={sortOptions}
+            />
           </div>
 
           {isLoading ? (
@@ -195,63 +431,158 @@ export default function OrdersPage({ navigate }) {
             </div>
           ) : error ? (
             <div className="workspaceEmptyState">{t(error)}</div>
-          ) : items.length ? (
-            <div className="workspaceCardGrid">
-              {items.map((item) => (
-                <article key={item.id} className="workspaceEntityCard cardLift fadeUp">
-                  <div className="workspaceEntityTop">
-                    <div>
-                      <strong>{item.title}</strong>
-                      <p>{item.role === 'participant' ? item.freelancer : item.client} - {item.category}</p>
+          ) : orderRows.length ? (
+            <div className="workspaceOrdersStack">
+              {orderRows.map((item) => (
+                <article
+                  key={item.id}
+                  className={item.isExpanded ? 'workspaceOrderCard expanded fadeUp' : 'workspaceOrderCard fadeUp'}
+                >
+                  <button
+                    type="button"
+                    className="workspaceOrderSummary interactive"
+                    onClick={() => setExpandedOrderId((currentId) => (String(currentId) === String(item.id) ? '' : String(item.id)))}
+                    aria-expanded={item.isExpanded}
+                  >
+                    <div className="workspaceOrderSummaryMain">
+                      <div className={`workspaceOrderThumb ${item.status}`}>
+                        <span>{getOrderMonogram(item.title)}</span>
+                        {item.orderNumber ? <small>#{String(item.orderNumber).slice(-4)}</small> : null}
+                      </div>
+
+                      <div className="workspaceOrderSummaryCopy">
+                        <div className="workspaceOrderSummaryTop">
+                          <strong>{item.orderNumber ? `#${item.orderNumber}` : item.title}</strong>
+                          <span className={`workspaceBadge ${item.status}`}>{getOrderStatusLabel(item.status, t)}</span>
+                        </div>
+                        <h3>{item.title}</h3>
+                        <div className="workspaceOrderSummaryMeta">
+                          <span className="workspaceOrderCounterparty">
+                            <span className={`workspaceOrderStatusDot ${item.status}`} />
+                            {item.counterpart}
+                          </span>
+                          <span>{item.category}</span>
+                          {item.termsVersion ? <span>{t('Terms')} {item.termsVersion}</span> : null}
+                        </div>
+                      </div>
                     </div>
-                    <span className={`workspaceBadge ${item.status}`}>{t(item.status)}</span>
-                  </div>
-                  <div className="workspaceOrderMetaRow">
-                    {item.orderNumber ? <span className="workspaceBadge order">#{item.orderNumber}</span> : null}
-                    {item.termsVersion ? <span className="workspaceBadge security">Terms {item.termsVersion}</span> : null}
-                    {item.documentStatus ? (
-                      <span className={`workspaceBadge ${item.documentStatus}`}>
-                        {item.documentStatus === 'ready' ? t('PDF Ready') : t(item.documentStatus)}
+
+                    <div className="workspaceOrderSummarySide">
+                      <div className="workspaceOrderValueBlock">
+                        <small>{item.dueDate ? t('Due date') : t('Progress')}</small>
+                        <span>{item.dueDate || `${item.progressValue}%`}</span>
+                        <strong>{item.budget}</strong>
+                      </div>
+                      <span className="workspaceOrderExpandIcon">
+                        {item.isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                       </span>
-                    ) : null}
-                  </div>
-                  <div className="workspaceProgressTrack">
-                    <span style={{ width: `${Math.min(100, Math.max(0, item.progress || 0))}%` }} />
-                  </div>
-                  <div className="workspaceEntityMeta">
-                    <span>{t(`${item.progress}% complete`)}</span>
-                    <span>{item.budget}</span>
-                    <span>{t(`Due ${item.dueDate}`)}</span>
-                  </div>
-                  <p className="workspaceMutedText">{item.lastUpdate}</p>
-                  <div className="workspaceInlineActions">
-                    <button type="button" className="profileActionButton interactive" onClick={() => openOrderChat(item)}>
-                      {t('Open chat')}
-                    </button>
-                    <button
-                      type="button"
-                      className="profileActionButton interactive"
-                      onClick={() => handleDownloadDocument(item)}
-                      disabled={downloadingOrderId === String(item.id)}
-                    >
-                      {downloadingOrderId === String(item.id) ? (
-                        t('Downloading...')
-                      ) : item.hasDocument ? (
-                        <>
-                          <Download size={15} /> {t('Download PDF')}
-                        </>
-                      ) : ['queued', 'processing'].includes(String(item.documentStatus || '').toLowerCase()) ? (
-                        t('PDF generating...')
-                      ) : (
-                        <>
-                          <Download size={15} /> {t('Download PDF')}
-                        </>
-                      )}
-                    </button>
-                    <button type="button" className="profileActionButton interactive" onClick={() => openOrderDetail(item)}>
-                      {t('Open detail')}
-                    </button>
-                  </div>
+                    </div>
+                  </button>
+
+                  {item.isExpanded ? (
+                    <div className="workspaceOrderExpanded">
+                      <div className="workspaceOrderActions">
+                        <span className="workspaceOrderSectionLabel">{t('Quick actions')}</span>
+                        <div className="workspaceOrderActionButtons">
+                          <button type="button" className="profileActionButton interactive" onClick={() => openOrderChat(item)}>
+                            <MessageSquareText size={15} /> {t('Open chat')}
+                          </button>
+
+                          {item.isParticipantOrder ? (
+                            <button
+                              type="button"
+                              className="profileActionButton interactive"
+                              onClick={() => handleDownloadDocument(item)}
+                              disabled={downloadingOrderId === String(item.id)}
+                            >
+                              {downloadingOrderId === String(item.id) ? (
+                                t('Downloading...')
+                              ) : (
+                                <>
+                                  <Download size={15} />
+                                  {item.hasDocument ? t('Download PDF') : item.normalizedDocumentStatus === 'queued' || item.normalizedDocumentStatus === 'processing'
+                                    ? t('PDF generating...')
+                                    : t('Download PDF')}
+                                </>
+                              )}
+                            </button>
+                          ) : null}
+
+                          <button type="button" className="profileActionButton interactive" onClick={() => openOrderDetail(item)}>
+                            <ArrowUpRight size={15} /> {t('Open detail')}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="workspaceOrderExpandedGrid">
+                        <aside className="workspaceOrderAside">
+                          <div className="workspaceOrderShowcase">
+                            <div className={`workspaceOrderPoster ${item.status}`}>
+                              <span>{getOrderMonogram(item.title)}</span>
+                              <small>{item.category}</small>
+                            </div>
+
+                            <div className="workspaceOrderShowcaseCopy">
+                              <span className="workspaceOrderSectionLabel">{t('Order workspace')}</span>
+                              <strong>{item.title}</strong>
+                              <p>{item.counterpart}</p>
+                            </div>
+
+                            <div className="workspaceOrderShowcasePrice">
+                              <small>{t('Total Value')}</small>
+                              <strong>{item.budget}</strong>
+                            </div>
+                          </div>
+
+                          <div className="workspaceOrderFacts">
+                            <div className="workspaceOrderFact">
+                              <span>{t('Counterparty')}</span>
+                              <strong>{item.counterpart}</strong>
+                            </div>
+                            <div className="workspaceOrderFact">
+                              <span>{t('Category')}</span>
+                              <strong>{item.category}</strong>
+                            </div>
+                            <div className="workspaceOrderFact">
+                              <span>{t('Progress')}</span>
+                              <strong>{item.progressValue}%</strong>
+                            </div>
+                            <div className="workspaceOrderFact">
+                              <span>{t('Due date')}</span>
+                              <strong>{item.dueDate || t('No deadline set')}</strong>
+                            </div>
+                            <div className="workspaceOrderFact fullWidth">
+                              <span>{t('Document status')}</span>
+                              <strong>{getDocumentStatusLabel(item, t)}</strong>
+                            </div>
+                          </div>
+                        </aside>
+
+                        <div className="workspaceOrderMain">
+                          <section className="workspaceOrderTimelineCard">
+                            <span className="workspaceOrderSectionLabel">{t('Latest updates')}</span>
+                            <div className="workspaceOrderTimeline">
+                              {item.timelineSteps.map((step) => (
+                                <OrderTimelineStep
+                                  key={step.key}
+                                  icon={step.icon}
+                                  eyebrow={step.eyebrow}
+                                  title={step.title}
+                                  description={step.description}
+                                  tone={step.tone}
+                                />
+                              ))}
+                            </div>
+                          </section>
+
+                          <section className="workspaceOrderNoteCard">
+                            <span className="workspaceOrderSectionLabel">{t('Workspace notes')}</span>
+                            <p>{item.lastUpdate || t('This workspace is syncing the latest delivery update.')}</p>
+                          </section>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
                 </article>
               ))}
             </div>

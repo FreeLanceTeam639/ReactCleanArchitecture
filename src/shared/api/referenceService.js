@@ -2,6 +2,7 @@ import { API_ENDPOINTS } from './endpoints.js';
 import { httpClient } from './httpClient.js';
 import { extractCollection } from '../lib/response/extractCollection.js';
 import { extractEntity } from '../lib/response/extractEntity.js';
+import { decodeMojibake } from '../lib/text/decodeMojibake.js';
 
 const fallbackCountries = [
   { iso2: 'AZ', name: 'Azerbaijan', dialCode: '+994' },
@@ -22,6 +23,14 @@ let countriesCache = null;
 let countriesPromise = null;
 let languagesCache = null;
 let languagesPromise = null;
+
+function mapFallbackLanguage(item) {
+  return {
+    ...item,
+    nativeLabel: decodeMojibake(item.nativeLabel || item.label || ''),
+    locale: item.locale || `${item.value}-${String(item.value || '').toUpperCase()}`
+  };
+}
 
 function normalizeCountry(item = {}) {
   const iso2 = String(item.iso2 || item.code || '').trim().toUpperCase();
@@ -62,7 +71,7 @@ export function getFallbackCountries() {
 }
 
 export function getFallbackLanguages() {
-  return fallbackLanguages;
+  return fallbackLanguages.map(mapFallbackLanguage);
 }
 
 export async function fetchCountryCatalog() {
@@ -114,11 +123,11 @@ export async function fetchLanguageCatalog() {
         .map(normalizeLanguage)
         .filter(Boolean);
 
-      languagesCache = items.length ? items : fallbackLanguages;
+      languagesCache = items.length ? items : getFallbackLanguages();
       return languagesCache;
     })
     .catch(() => {
-      languagesCache = fallbackLanguages;
+      languagesCache = getFallbackLanguages();
       return languagesCache;
     })
     .finally(() => {

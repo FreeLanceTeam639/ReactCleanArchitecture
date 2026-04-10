@@ -207,14 +207,7 @@ export default function MarketplaceHeader({
       return;
     }
 
-    if (window.location.pathname !== ROUTES.home) {
-      navigate(ROUTES.home);
-      window.setTimeout(() => {
-        window.location.hash = 'talents';
-      }, 0);
-    } else {
-      window.location.hash = 'talents';
-    }
+    navigate(ROUTES.exploreMembers);
 
     setIsSearchOpen(false);
   };

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
+import { normalizeAppPathname } from '../constants/routes.js';
 
 function getCurrentPathname() {
-  return window.location.pathname || '/';
+  return normalizeAppPathname(window.location.pathname || '/');
 }
 
 function notifyPathnameChange() {
@@ -23,18 +24,19 @@ export function usePathname() {
 
   const navigate = useCallback((nextPathname, options = {}) => {
     const currentPathname = getCurrentPathname();
+    const normalizedNextPathname = normalizeAppPathname(nextPathname);
 
-    if (nextPathname === currentPathname) {
+    if (normalizedNextPathname === currentPathname) {
       return;
     }
 
     if (options.replace) {
-      window.history.replaceState({}, '', nextPathname);
+      window.history.replaceState({}, '', normalizedNextPathname);
     } else {
-      window.history.pushState({}, '', nextPathname);
+      window.history.pushState({}, '', normalizedNextPathname);
     }
 
-    setPathname(nextPathname);
+    setPathname(normalizedNextPathname);
     notifyPathnameChange();
   }, []);
 
