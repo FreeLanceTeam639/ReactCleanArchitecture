@@ -49,6 +49,10 @@ function parseMoneyValue(value) {
   return Number.isFinite(numericValue) ? numericValue : 0;
 }
 
+function normalizeIdentityValue(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
 function renderStars(score) {
   const safeScore = Math.round(Number(score || 0));
 
@@ -159,8 +163,9 @@ export default function TaskDetailPage({ navigate, pathname }) {
     detail.ownerTasks[0] ||
     null;
   const authenticatedUser = getAuthenticatedUser()?.user || null;
-  const authenticatedUserId = authenticatedUser?.id || authenticatedUser?.userId || '';
-  const isOwnTask = Boolean(authenticatedUserId && detail.ownerUserId && authenticatedUserId === detail.ownerUserId);
+  const authenticatedUserId = normalizeIdentityValue(authenticatedUser?.id || authenticatedUser?.userId);
+  const ownerUserId = normalizeIdentityValue(detail.ownerUserId);
+  const isOwnTask = Boolean(authenticatedUserId && ownerUserId && authenticatedUserId === ownerUserId);
   const isJobBrief = detail.detailType === 'job-brief';
   const faqEyebrow = isJobBrief ? t('Project questions') : t('Frequently asked questions');
   const faqHeading = isJobBrief
@@ -542,7 +547,7 @@ export default function TaskDetailPage({ navigate, pathname }) {
                         checked={termsAccepted}
                         onChange={(event) => setTermsAccepted(event.target.checked)}
                       />
-                      <span>{t('I accept the current terms and confirm that the order PDF can be generated automatically after hire.')}</span>
+                      <span>{t('I accept the current terms and confirm the order details before hire.')}</span>
                     </label>
                   </div>
 

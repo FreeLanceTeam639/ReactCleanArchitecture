@@ -195,10 +195,6 @@ export function buildWorkspaceSessionEndpoint(sessionId) {
   return `${API_ENDPOINTS.workspace.sessions}/${sessionId}`;
 }
 
-export function buildWorkspaceOrderDocumentEndpoint(proposalId) {
-  return `${API_ENDPOINTS.workspace.orders}/${proposalId}/document`;
-}
-
 export function buildAdminVerificationTicketEndpoint(ticketId) {
   return `${API_ENDPOINTS.admin.verificationTickets}/${ticketId}`;
 }

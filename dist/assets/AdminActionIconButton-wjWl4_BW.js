@@ -1,0 +1,1 @@
+import{j as a}from"./index-dGCdyo4q.js";function r({icon:s,label:n,onClick:e,tone:t="default",active:o=!1,disabled:u=!1,type:c="button"}){const i=["adminIconButton","interactive"];return t&&t!=="default"&&i.push(t),o&&i.push("active"),a.jsx("button",{type:c,className:i.join(" "),onClick:e,"aria-label":n,title:n,disabled:u,children:s?a.jsx(s,{size:16}):null})}export{r as A};

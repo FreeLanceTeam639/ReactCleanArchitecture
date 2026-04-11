@@ -3,24 +3,19 @@ import {
   ArrowUpRight,
   BriefcaseBusiness,
   CalendarClock,
-  CheckCircle2,
   ChevronDown,
   ChevronUp,
   CircleDollarSign,
   Clock3,
-  Download,
-  FileText,
   LoaderCircle,
   MessageSquareText,
   Search,
   Sparkles,
-  TriangleAlert
+  Users
 } from 'lucide-react';
 import { useOrdersPage } from '../../features/workspace/hooks/useOrdersPage.js';
-import { downloadOrderDocument } from '../../features/workspace/services/workspaceService.js';
 import { AUTHENTICATED_NAVIGATION_LINKS } from '../../shared/constants/navigationLinks.js';
 import { buildTaskDetailRoute, ROUTES } from '../../shared/constants/routes.js';
-import { useToast } from '../../shared/hooks/useToast.js';
 import { useI18n } from '../../shared/i18n/I18nProvider.jsx';
 import { consumePendingOrderConfirmation } from '../../shared/lib/storage/orderConfirmationState.js';
 import { setPendingConversationFocusId } from '../../shared/lib/storage/workspaceConversationState.js';
@@ -68,6 +63,30 @@ function getOrderMonogram(title = '') {
   return words.map((word) => word.charAt(0).toUpperCase()).join('');
 }
 
+function OrderVisual({ item, variant = 'thumb' }) {
+  const hasImage = Boolean(item?.imageUrl);
+
+  if (variant === 'poster') {
+    return (
+      <div className={hasImage ? `workspaceOrderPoster ${item.status} hasImage` : `workspaceOrderPoster ${item.status}`}>
+        {hasImage ? <img src={item.imageUrl} alt={item.title} className="workspaceOrderPosterImage" /> : null}
+        <div className="workspaceOrderPosterOverlay" />
+        <span>{getOrderMonogram(item.title)}</span>
+        <small>{item.category}</small>
+      </div>
+    );
+  }
+
+  return (
+    <div className={hasImage ? `workspaceOrderThumb ${item.status} hasImage` : `workspaceOrderThumb ${item.status}`}>
+      {hasImage ? <img src={item.imageUrl} alt={item.title} className="workspaceOrderThumbImage" /> : null}
+      <div className="workspaceOrderThumbOverlay" />
+      <span>{getOrderMonogram(item.title)}</span>
+      {item.orderNumber ? <small>#{String(item.orderNumber).slice(-4)}</small> : null}
+    </div>
+  );
+}
+
 function getOrderStatusLabel(status, t) {
   const normalizedStatus = String(status || '').toLowerCase();
 
@@ -86,94 +105,7 @@ function getOrderStatusLabel(status, t) {
   return t(normalizedStatus || 'Active');
 }
 
-function getDocumentStatusLabel(item, t) {
-  const normalizedStatus = String(item?.documentStatus || '').toLowerCase();
-
-  if (String(item?.role || '').toLowerCase() !== 'participant') {
-    return t('PDF unavailable');
-  }
-
-  if (normalizedStatus === 'ready') {
-    return t('PDF Ready');
-  }
-
-  if (normalizedStatus === 'queued' || normalizedStatus === 'processing') {
-    return t('Generating PDF');
-  }
-
-  if (normalizedStatus === 'failed') {
-    return t('PDF failed');
-  }
-
-  return t('PDF is not ready');
-}
-
-function getDocumentStatusDescription(item, t) {
-  const normalizedStatus = String(item?.documentStatus || '').toLowerCase();
-
-  if (String(item?.role || '').toLowerCase() !== 'participant') {
-    return t('PDF files are created only for hired order records.');
-  }
-
-  if (normalizedStatus === 'ready') {
-    return t('The order document is ready to download.');
-  }
-
-  if (normalizedStatus === 'queued' || normalizedStatus === 'processing') {
-    return t('The document is being generated. Please check again in a few seconds.');
-  }
-
-  if (normalizedStatus === 'failed') {
-    return t('The order PDF could not be generated. Please try again later.');
-  }
-
-  return t('The PDF for this order has not been generated yet.');
-}
-
-function getDocumentTone(item) {
-  const normalizedStatus = String(item?.documentStatus || '').toLowerCase();
-
-  if (String(item?.role || '').toLowerCase() !== 'participant') {
-    return 'neutral';
-  }
-
-  if (normalizedStatus === 'ready') {
-    return 'success';
-  }
-
-  if (normalizedStatus === 'queued' || normalizedStatus === 'processing') {
-    return 'pending';
-  }
-
-  if (normalizedStatus === 'failed') {
-    return 'danger';
-  }
-
-  return 'neutral';
-}
-
-function getDocumentIcon(item) {
-  const normalizedStatus = String(item?.documentStatus || '').toLowerCase();
-
-  if (normalizedStatus === 'ready') {
-    return CheckCircle2;
-  }
-
-  if (normalizedStatus === 'queued' || normalizedStatus === 'processing') {
-    return Clock3;
-  }
-
-  if (normalizedStatus === 'failed') {
-    return TriangleAlert;
-  }
-
-  return FileText;
-}
-
 function buildTimelineSteps(item, t) {
-  const documentTone = getDocumentTone(item);
-  const DocumentIcon = getDocumentIcon(item);
-
   return [
     {
       key: 'stage',
@@ -192,20 +124,21 @@ function buildTimelineSteps(item, t) {
       description: item?.dueDate ? `${t('Due date')}: ${item.dueDate}` : t('No deadline set')
     },
     {
-      key: 'document',
-      icon: DocumentIcon,
-      tone: documentTone,
-      eyebrow: t('Document status'),
-      title: getDocumentStatusLabel(item, t),
-      description: getDocumentStatusDescription(item, t)
+      key: 'workspace',
+      icon: Users,
+      tone: 'neutral',
+      eyebrow: t('Workspace type'),
+      title: String(item?.role || '').toLowerCase() === 'participant' ? t('Collaboration order') : t('Published job record'),
+      description:
+        String(item?.role || '').toLowerCase() === 'participant'
+          ? t('This record comes from a direct hire and chat workflow.')
+          : t('This record represents one of your own published job posts.')
     }
   ];
 }
 
 export default function OrdersPage({ navigate }) {
   const { t } = useI18n();
-  const toast = useToast();
-  const [downloadingOrderId, setDownloadingOrderId] = useState('');
   const [orderConfirmation, setOrderConfirmation] = useState(null);
   const [expandedOrderId, setExpandedOrderId] = useState('');
   const { items, summary, filters, setFilterValue, isLoading, error } = useOrdersPage(navigate);
@@ -242,24 +175,28 @@ export default function OrdersPage({ navigate }) {
     }
 
     setExpandedOrderId((currentId) => {
+      const pendingConfirmationOrderId = String(orderConfirmation?.orderId || '').trim();
+
+      if (pendingConfirmationOrderId) {
+        const matchingConfirmedOrder = items.find((item) => {
+          const normalizedItemId = String(item?.id || '').trim();
+          const normalizedOrderNumber = String(item?.orderNumber || '').trim();
+
+          return normalizedItemId === pendingConfirmationOrderId || normalizedOrderNumber === pendingConfirmationOrderId;
+        });
+
+        if (matchingConfirmedOrder?.id) {
+          return String(matchingConfirmedOrder.id);
+        }
+      }
+
       if (currentId && items.some((item) => String(item.id) === String(currentId))) {
         return currentId;
       }
 
       return String(items[0].id);
     });
-  }, [items]);
-
-  const saveDownloadedFile = (blob, fileName) => {
-    const objectUrl = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = objectUrl;
-    link.download = fileName || 'order-document.pdf';
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1500);
-  };
+  }, [items, orderConfirmation]);
 
   const openOrderChat = (item) => {
     if (item?.conversationId) {
@@ -278,61 +215,6 @@ export default function OrdersPage({ navigate }) {
     navigate(ROUTES.profile);
   };
 
-  const handleDownloadDocument = async (item) => {
-    const normalizedStatus = String(item?.documentStatus || '').toLowerCase();
-
-    if (!item?.id) {
-      return;
-    }
-
-    if (String(item?.role || '').toLowerCase() !== 'participant') {
-      toast.info({
-        title: t('PDF unavailable'),
-        message: t('PDF files are created only for hired order records.')
-      });
-      return;
-    }
-
-    if (!item?.hasDocument) {
-      if (normalizedStatus === 'queued' || normalizedStatus === 'processing') {
-        toast.info({
-          title: t('PDF is being prepared'),
-          message: t('The document is being generated. Please check again in a few seconds.')
-        });
-      } else if (normalizedStatus === 'failed') {
-        toast.error({
-          title: t('PDF could not be prepared'),
-          message: t('The order PDF could not be generated. Please try again later.')
-        });
-      } else {
-        toast.info({
-          title: t('PDF is not ready'),
-          message: t('The PDF for this order has not been generated yet.')
-        });
-      }
-
-      return;
-    }
-
-    setDownloadingOrderId(String(item.id));
-
-    try {
-      const response = await downloadOrderDocument(item.id);
-      saveDownloadedFile(response.blob, response.fileName || `${item.orderNumber || 'order'}-summary.pdf`);
-      toast.success({
-        title: t('PDF downloaded'),
-        message: t('The order document was downloaded successfully.')
-      });
-    } catch (nextError) {
-      toast.error({
-        title: t('PDF download failed'),
-        message: nextError?.message || t('The order document could not be downloaded.')
-      });
-    } finally {
-      setDownloadingOrderId('');
-    }
-  };
-
   const orderRows = useMemo(
     () =>
       items.map((item) => {
@@ -340,7 +222,6 @@ export default function OrdersPage({ navigate }) {
         const isExpanded = String(expandedOrderId) === String(item.id);
         const progressValue = Math.min(100, Math.max(0, Number(item.progress) || 0));
         const isParticipantOrder = String(item.role || '').toLowerCase() === 'participant';
-        const normalizedDocumentStatus = String(item.documentStatus || '').toLowerCase();
         const timelineSteps = buildTimelineSteps(item, t);
 
         return {
@@ -349,7 +230,6 @@ export default function OrdersPage({ navigate }) {
           isExpanded,
           progressValue,
           isParticipantOrder,
-          normalizedDocumentStatus,
           timelineSteps
         };
       }),
@@ -445,10 +325,7 @@ export default function OrdersPage({ navigate }) {
                     aria-expanded={item.isExpanded}
                   >
                     <div className="workspaceOrderSummaryMain">
-                      <div className={`workspaceOrderThumb ${item.status}`}>
-                        <span>{getOrderMonogram(item.title)}</span>
-                        {item.orderNumber ? <small>#{String(item.orderNumber).slice(-4)}</small> : null}
-                      </div>
+                      <OrderVisual item={item} />
 
                       <div className="workspaceOrderSummaryCopy">
                         <div className="workspaceOrderSummaryTop">
@@ -488,26 +365,6 @@ export default function OrdersPage({ navigate }) {
                             <MessageSquareText size={15} /> {t('Open chat')}
                           </button>
 
-                          {item.isParticipantOrder ? (
-                            <button
-                              type="button"
-                              className="profileActionButton interactive"
-                              onClick={() => handleDownloadDocument(item)}
-                              disabled={downloadingOrderId === String(item.id)}
-                            >
-                              {downloadingOrderId === String(item.id) ? (
-                                t('Downloading...')
-                              ) : (
-                                <>
-                                  <Download size={15} />
-                                  {item.hasDocument ? t('Download PDF') : item.normalizedDocumentStatus === 'queued' || item.normalizedDocumentStatus === 'processing'
-                                    ? t('PDF generating...')
-                                    : t('Download PDF')}
-                                </>
-                              )}
-                            </button>
-                          ) : null}
-
                           <button type="button" className="profileActionButton interactive" onClick={() => openOrderDetail(item)}>
                             <ArrowUpRight size={15} /> {t('Open detail')}
                           </button>
@@ -517,10 +374,7 @@ export default function OrdersPage({ navigate }) {
                       <div className="workspaceOrderExpandedGrid">
                         <aside className="workspaceOrderAside">
                           <div className="workspaceOrderShowcase">
-                            <div className={`workspaceOrderPoster ${item.status}`}>
-                              <span>{getOrderMonogram(item.title)}</span>
-                              <small>{item.category}</small>
-                            </div>
+                            <OrderVisual item={item} variant="poster" />
 
                             <div className="workspaceOrderShowcaseCopy">
                               <span className="workspaceOrderSectionLabel">{t('Order workspace')}</span>
@@ -552,8 +406,8 @@ export default function OrdersPage({ navigate }) {
                               <strong>{item.dueDate || t('No deadline set')}</strong>
                             </div>
                             <div className="workspaceOrderFact fullWidth">
-                              <span>{t('Document status')}</span>
-                              <strong>{getDocumentStatusLabel(item, t)}</strong>
+                              <span>{t('Workspace type')}</span>
+                              <strong>{item.isParticipantOrder ? t('Collaboration order') : t('Published job record')}</strong>
                             </div>
                           </div>
                         </aside>

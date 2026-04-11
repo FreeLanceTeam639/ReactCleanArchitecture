@@ -3,7 +3,6 @@ import {
   buildWorkspaceConversationEndpoint,
   buildWorkspaceConversationReadEndpoint,
   buildWorkspaceNotificationEndpoint,
-  buildWorkspaceOrderDocumentEndpoint,
   buildWorkspaceReviewFeatureEndpoint,
   buildWorkspaceSessionEndpoint
 } from '../../../shared/api/endpoints.js';
@@ -77,11 +76,9 @@ function normalizeOrder(item = {}) {
     priority: toLower(pickFirst(item.priority, 'medium')),
     category: pickFirst(item.category, item.type, 'General'),
     lastUpdate: pickFirst(item.lastUpdate, item.summary, ''),
+    imageUrl: resolveApiAssetUrl(pickFirst(item.imageUrl, item.coverImageUrl, item.previewImageUrl, '')),
     orderNumber: pickFirst(item.orderNumber, ''),
-    termsVersion: pickFirst(item.termsVersion, ''),
-    hasDocument: Boolean(pickFirst(item.hasDocument, false)),
-    documentStatus: toLower(pickFirst(item.documentStatus, '')),
-    documentDownloadUrl: pickFirst(item.documentDownloadUrl, '')
+    termsVersion: pickFirst(item.termsVersion, '')
   };
 }
 
@@ -359,10 +356,6 @@ export async function createWalletTopUp(request) {
   });
 
   return normalizeTopUpSession(extractEntity(payload, ['session', 'data']) || payload);
-}
-
-export async function downloadOrderDocument(proposalId) {
-  return httpClient.download(buildWorkspaceOrderDocumentEndpoint(proposalId));
 }
 
 export async function fetchWorkspaceReviews(query = {}) {

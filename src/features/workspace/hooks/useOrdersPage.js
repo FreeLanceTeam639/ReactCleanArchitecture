@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { hasAuthenticatedSession } from '../../../shared/lib/storage/authStorage.js';
 import { ROUTES } from '../../../shared/constants/routes.js';
 import { fetchOrders } from '../services/workspaceService.js';
@@ -6,6 +6,11 @@ import { fetchOrders } from '../services/workspaceService.js';
 export function useOrdersPage(navigate) {
   const [filters, setFilters] = useState({ search: '', status: 'all', role: 'all', sort: 'updated' });
   const [state, setState] = useState({ items: [], summary: null, isLoading: true, error: '' });
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const reloadOrders = useCallback(() => {
+    setReloadKey((current) => current + 1);
+  }, []);
 
   useEffect(() => {
     if (!hasAuthenticatedSession()) {
@@ -35,12 +40,6 @@ export function useOrdersPage(navigate) {
           isLoading: false,
           error: ''
         });
-
-        if (items.some((item) => ['queued', 'processing'].includes(String(item.documentStatus || '').toLowerCase()))) {
-          refreshTimer = window.setTimeout(() => {
-            loadOrders(true);
-          }, 2500);
-        }
       } catch (error) {
         if (!cancelled) {
           setState((current) => ({
@@ -61,11 +60,11 @@ export function useOrdersPage(navigate) {
         window.clearTimeout(refreshTimer);
       }
     };
-  }, [filters, navigate]);
+  }, [filters, navigate, reloadKey]);
 
   const setFilterValue = (key, value) => {
     setFilters((current) => ({ ...current, [key]: value }));
   };
 
-  return { ...state, filters, setFilterValue };
+  return { ...state, filters, setFilterValue, reloadOrders };
 }

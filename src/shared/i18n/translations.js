@@ -1388,6 +1388,27 @@ Object.assign(EXACT_TRANSLATIONS.en, TASK_DETAIL_TRANSLATION_OVERRIDES.en);
 Object.assign(EXACT_TRANSLATIONS.az, WORKSPACE_TRANSLATION_OVERRIDES.az);
 Object.assign(EXACT_TRANSLATIONS.ru, WORKSPACE_TRANSLATION_OVERRIDES.ru);
 Object.assign(EXACT_TRANSLATIONS.en, WORKSPACE_TRANSLATION_OVERRIDES.en);
+Object.assign(EXACT_TRANSLATIONS.az, {
+  'Generate PDF': 'PDF yarat',
+  'Retry PDF': 'PDF-ni yenidən yarat',
+  'Starting PDF...': 'PDF başladılır...',
+  'PDF generation started': 'PDF generasiyası başladı',
+  'The order PDF is being prepared in the background.': 'Sifariş PDF-i arxa fonda hazırlanır.'
+});
+Object.assign(EXACT_TRANSLATIONS.ru, {
+  'Generate PDF': 'Создать PDF',
+  'Retry PDF': 'Повторить PDF',
+  'Starting PDF...': 'Запуск PDF...',
+  'PDF generation started': 'Генерация PDF запущена',
+  'The order PDF is being prepared in the background.': 'PDF заказа готовится в фоновом режиме.'
+});
+Object.assign(EXACT_TRANSLATIONS.en, {
+  'Generate PDF': 'Generate PDF',
+  'Retry PDF': 'Retry PDF',
+  'Starting PDF...': 'Starting PDF...',
+  'PDF generation started': 'PDF generation started',
+  'The order PDF is being prepared in the background.': 'The order PDF is being prepared in the background.'
+});
 
 function normalizeTranslationKey(value) {
   return String(value || '')
