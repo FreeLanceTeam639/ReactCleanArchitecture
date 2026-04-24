@@ -3,6 +3,7 @@ import {
   buildWorkspaceConversationEndpoint,
   buildWorkspaceConversationReadEndpoint,
   buildWorkspaceNotificationEndpoint,
+  buildWorkspaceOrderActionEndpoint,
   buildWorkspaceReviewFeatureEndpoint,
   buildWorkspaceSessionEndpoint
 } from '../../../shared/api/endpoints.js';
@@ -271,6 +272,17 @@ export async function fetchOrders(query = {}) {
     }
   });
   return normalizeOrdersPayload(payload);
+}
+
+export async function updateWorkspaceOrder(orderId, action, note = '') {
+  const payload = await httpClient.post(buildWorkspaceOrderActionEndpoint(orderId, action), { note });
+  const entity = extractEntity(payload, ['data', 'result', 'payload']) || payload || {};
+  const order = extractEntity(entity, ['order']) || entity.order || entity;
+
+  return {
+    order: normalizeOrder(order),
+    message: entity.message || payload?.message || 'Order updated successfully.'
+  };
 }
 
 export async function fetchConversationIndex(query = {}) {

@@ -51,6 +51,8 @@ export default function LoginPage({ navigate }) {
     form,
     showPassword,
     rememberMe,
+    requiresTwoFactor,
+    maskedTwoFactorEmail,
     isSubmitting,
     feedback,
     setFieldValue,
@@ -193,8 +195,23 @@ export default function LoginPage({ navigate }) {
           </button>
         </div>
 
+        {requiresTwoFactor ? (
+          <AuthField label={t('Verification code')} icon={LockKeyhole}>
+            <input
+              type="text"
+              inputMode="numeric"
+              className="animatedAuthTextInput"
+              value={form.twoFactorCode}
+              onChange={(event) => setFieldValue('twoFactorCode', event.target.value.replace(/\D/g, '').slice(0, 4))}
+              placeholder={maskedTwoFactorEmail ? `${t('Code sent to')} ${maskedTwoFactorEmail}` : t('Enter 4-digit code')}
+              autoComplete="one-time-code"
+              required
+            />
+          </AuthField>
+        ) : null}
+
         <button type="submit" className="animatedAuthSubmit interactive" disabled={isSubmitting}>
-          <span>{isSubmitting ? t('Signing In...') : t('Sign In')}</span>
+          <span>{isSubmitting ? t('Signing In...') : requiresTwoFactor ? t('Verify and sign in') : t('Sign In')}</span>
           <ArrowRight size={18} aria-hidden="true" />
         </button>
       </form>

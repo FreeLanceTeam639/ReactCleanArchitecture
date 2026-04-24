@@ -34,7 +34,9 @@ function normalizeAuthSession(payload, rememberMe) {
     authType:
       sessionSource.authType || root.authType || (sessionSource.accessToken || sessionSource.token ? 'token' : 'cookie'),
     rememberMe: Boolean(rememberMe),
-    user: extractEntity(root, ['user', 'profile']) || null
+    user: extractEntity(root, ['user', 'profile']) || null,
+    requiresTwoFactor: Boolean(root.requiresTwoFactor || sessionSource.requiresTwoFactor),
+    maskedEmail: root.maskedEmail || sessionSource.maskedEmail || ''
   };
 }
 

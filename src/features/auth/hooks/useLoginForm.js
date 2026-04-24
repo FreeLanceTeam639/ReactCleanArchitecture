@@ -8,7 +8,8 @@ import { loginUser } from '../services/authService.js';
 
 const initialFormState = {
   emailOrUserName: '',
-  password: ''
+  password: '',
+  twoFactorCode: ''
 };
 
 export function useLoginForm(navigate) {
@@ -17,6 +18,8 @@ export function useLoginForm(navigate) {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [requiresTwoFactor, setRequiresTwoFactor] = useState(false);
+  const [maskedTwoFactorEmail, setMaskedTwoFactorEmail] = useState('');
   const [form, setForm] = useState(initialFormState);
   const [feedback, setFeedback] = useState({ message: '', type: '' });
 
@@ -57,8 +60,25 @@ export function useLoginForm(navigate) {
       const session = await loginUser({
         emailOrUserName: form.emailOrUserName,
         password: form.password,
-        rememberMe
+        rememberMe,
+        twoFactorCode: requiresTwoFactor ? form.twoFactorCode : undefined
       });
+
+      if (session?.requiresTwoFactor) {
+        setRequiresTwoFactor(true);
+        setMaskedTwoFactorEmail(session.maskedEmail || '');
+        setFeedback({
+          message: t('Enter the verification code sent to your email.'),
+          type: 'success'
+        });
+        toast.success({
+          title: t('Verification required'),
+          message: session.maskedEmail
+            ? `${t('Code sent to')} ${session.maskedEmail}`
+            : t('Enter the verification code sent to your email.')
+        });
+        return;
+      }
 
       attachBillingCheckoutToUser(session?.user);
       saveAuthenticatedUser(session, rememberMe);
@@ -100,6 +120,8 @@ export function useLoginForm(navigate) {
     form,
     showPassword,
     rememberMe,
+    requiresTwoFactor,
+    maskedTwoFactorEmail,
     isSubmitting,
     feedback,
     setFieldValue,

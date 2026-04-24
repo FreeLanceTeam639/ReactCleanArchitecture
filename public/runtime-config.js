@@ -1,2 +1,6 @@
 window.__APP_CONFIG__ = window.__APP_CONFIG__ || {};
-window.__APP_CONFIG__.API_BASE_URL = window.__APP_CONFIG__.API_BASE_URL || "http://localhost:5270/api";
+window.__APP_CONFIG__.APP_API_BASE_URL = window.__APP_CONFIG__.APP_API_BASE_URL || "https://api.example.com";
+window.__APP_CONFIG__.API_BASE_URL = window.__APP_CONFIG__.API_BASE_URL || window.__APP_CONFIG__.APP_API_BASE_URL;
+window.__APP_CONFIG__.WORKSPACE_NOTIFICATIONS_HUB_URL =
+  window.__APP_CONFIG__.WORKSPACE_NOTIFICATIONS_HUB_URL || "";
+window.__APP_CONFIG__.WORKSPACE_SOCKET_URL = window.__APP_CONFIG__.WORKSPACE_SOCKET_URL || "";

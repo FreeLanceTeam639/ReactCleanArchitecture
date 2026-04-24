@@ -6,11 +6,15 @@ import {
   ChevronDown,
   ChevronUp,
   CircleDollarSign,
+  CheckCircle2,
   Clock3,
+  Flag,
   LoaderCircle,
   MessageSquareText,
   Search,
   Sparkles,
+  Truck,
+  XCircle,
   Users
 } from 'lucide-react';
 import { useOrdersPage } from '../../features/workspace/hooks/useOrdersPage.js';
@@ -141,7 +145,17 @@ export default function OrdersPage({ navigate }) {
   const { t } = useI18n();
   const [orderConfirmation, setOrderConfirmation] = useState(null);
   const [expandedOrderId, setExpandedOrderId] = useState('');
-  const { items, summary, filters, setFilterValue, isLoading, error } = useOrdersPage(navigate);
+  const {
+    items,
+    summary,
+    filters,
+    busyAction,
+    actionFeedback,
+    setFilterValue,
+    isLoading,
+    error,
+    runOrderAction
+  } = useOrdersPage(navigate);
 
   const statusOptions = [
     { value: 'all', label: 'All statuses' },
@@ -213,6 +227,10 @@ export default function OrdersPage({ navigate }) {
     }
 
     navigate(ROUTES.profile);
+  };
+
+  const handleOrderAction = async (item, action, note = '') => {
+    await runOrderAction(item.id, action, note);
   };
 
   const orderRows = useMemo(
@@ -313,6 +331,7 @@ export default function OrdersPage({ navigate }) {
             <div className="workspaceEmptyState">{t(error)}</div>
           ) : orderRows.length ? (
             <div className="workspaceOrdersStack">
+              {actionFeedback ? <div className="profileFeedbackBanner">{t(actionFeedback)}</div> : null}
               {orderRows.map((item) => (
                 <article
                   key={item.id}
@@ -368,6 +387,61 @@ export default function OrdersPage({ navigate }) {
                           <button type="button" className="profileActionButton interactive" onClick={() => openOrderDetail(item)}>
                             <ArrowUpRight size={15} /> {t('Open detail')}
                           </button>
+
+                          {item.isParticipantOrder && item.status === 'review' ? (
+                            <button
+                              type="button"
+                              className="profileActionButton interactive"
+                              disabled={busyAction === `${item.id}:start`}
+                              onClick={() => handleOrderAction(item, 'start')}
+                            >
+                              <Clock3 size={15} /> {busyAction === `${item.id}:start` ? t('Saving...') : t('Start order')}
+                            </button>
+                          ) : null}
+
+                          {item.isParticipantOrder && item.status === 'active' ? (
+                            <button
+                              type="button"
+                              className="profileActionButton interactive"
+                              disabled={busyAction === `${item.id}:deliver`}
+                              onClick={() => handleOrderAction(item, 'deliver')}
+                            >
+                              <Truck size={15} /> {busyAction === `${item.id}:deliver` ? t('Saving...') : t('Submit delivery')}
+                            </button>
+                          ) : null}
+
+                          {item.isParticipantOrder && item.status === 'review' ? (
+                            <button
+                              type="button"
+                              className="profileActionButton interactive"
+                              disabled={busyAction === `${item.id}:complete`}
+                              onClick={() => handleOrderAction(item, 'complete')}
+                            >
+                              <CheckCircle2 size={15} /> {busyAction === `${item.id}:complete` ? t('Saving...') : t('Complete order')}
+                            </button>
+                          ) : null}
+
+                          {item.isParticipantOrder && item.status !== 'completed' ? (
+                            <button
+                              type="button"
+                              className="profileActionButton interactive"
+                              disabled={busyAction === `${item.id}:issue`}
+                              onClick={() => handleOrderAction(item, 'issue', 'There is a problem with this order. Please review the chat evidence.')}
+                            >
+                              <Flag size={15} /> {busyAction === `${item.id}:issue` ? t('Saving...') : t('Report issue')}
+                            </button>
+                          ) : null}
+
+                          {item.isParticipantOrder && item.status !== 'completed' ? (
+                            <button
+                              type="button"
+                              className="profileActionButton interactive"
+                              disabled={busyAction === `${item.id}:cancel`}
+                              onClick={() => handleOrderAction(item, 'cancel', 'Order cancelled from workspace actions.')}
+                            >
+                              <XCircle size={15} /> {busyAction === `${item.id}:cancel` ? t('Saving...') : t('Cancel order')}
+                            </button>
+                          ) : null}
                         </div>
                       </div>
 

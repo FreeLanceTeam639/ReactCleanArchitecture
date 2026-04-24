@@ -4,7 +4,7 @@ function normalizeApiBaseUrl(value) {
   const trimmedValue = String(value || '').trim();
 
   if (!trimmedValue) {
-    return 'http://localhost:5270/api';
+    return 'https://api.example.com/api';
   }
 
   const withoutTrailingSlash = trimmedValue.replace(/\/+$/, '');
@@ -16,7 +16,12 @@ function normalizeApiBaseUrl(value) {
   return `${withoutTrailingSlash}/api`;
 }
 
-export const API_BASE_URL = normalizeApiBaseUrl(getRuntimeConfigValue('API_BASE_URL') || import.meta.env.VITE_API_BASE_URL);
+export const API_BASE_URL = normalizeApiBaseUrl(
+  getRuntimeConfigValue('APP_API_BASE_URL') ||
+    getRuntimeConfigValue('API_BASE_URL') ||
+    import.meta.env.VITE_API_BASE_URL ||
+    import.meta.env.APP_API_BASE_URL
+);
 
 function normalizeEndpointPath(value) {
   const trimmedValue = String(value || '').trim();
@@ -185,6 +190,10 @@ export function buildWorkspaceConversationReadEndpoint(conversationId) {
 
 export function buildWorkspaceNotificationEndpoint(notificationId) {
   return `${API_ENDPOINTS.workspace.notifications}/${notificationId}/read`;
+}
+
+export function buildWorkspaceOrderActionEndpoint(orderId, action) {
+  return `${API_ENDPOINTS.workspace.orders}/${orderId}/${action}`;
 }
 
 export function buildWorkspaceReviewFeatureEndpoint(reviewId) {

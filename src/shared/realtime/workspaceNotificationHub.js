@@ -1,9 +1,12 @@
 import { HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr';
 import { API_BASE_URL } from '../api/endpoints.js';
+import { getRuntimeConfigValue } from '../api/runtimeConfig.js';
 import { getAccessToken } from '../lib/storage/authStorage.js';
 
 function buildWorkspaceNotificationHubUrl() {
-  const configuredUrl = import.meta.env.VITE_WORKSPACE_NOTIFICATIONS_HUB_URL;
+  const configuredUrl =
+    getRuntimeConfigValue('WORKSPACE_NOTIFICATIONS_HUB_URL') ||
+    import.meta.env.VITE_WORKSPACE_NOTIFICATIONS_HUB_URL;
 
   if (configuredUrl) {
     return configuredUrl;

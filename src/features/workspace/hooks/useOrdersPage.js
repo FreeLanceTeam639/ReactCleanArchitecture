@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { hasAuthenticatedSession } from '../../../shared/lib/storage/authStorage.js';
 import { ROUTES } from '../../../shared/constants/routes.js';
-import { fetchOrders } from '../services/workspaceService.js';
+import { fetchOrders, updateWorkspaceOrder } from '../services/workspaceService.js';
 
 export function useOrdersPage(navigate) {
   const [filters, setFilters] = useState({ search: '', status: 'all', role: 'all', sort: 'updated' });
   const [state, setState] = useState({ items: [], summary: null, isLoading: true, error: '' });
+  const [busyAction, setBusyAction] = useState('');
+  const [actionFeedback, setActionFeedback] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
 
   const reloadOrders = useCallback(() => {
@@ -66,5 +68,28 @@ export function useOrdersPage(navigate) {
     setFilters((current) => ({ ...current, [key]: value }));
   };
 
-  return { ...state, filters, setFilterValue, reloadOrders };
+  const runOrderAction = async (orderId, action, note = '') => {
+    const busyKey = `${orderId}:${action}`;
+    setBusyAction(busyKey);
+    setActionFeedback('');
+
+    try {
+      const result = await updateWorkspaceOrder(orderId, action, note);
+      setState((current) => ({
+        ...current,
+        items: current.items.map((item) => (String(item.id) === String(orderId) ? { ...item, ...result.order } : item))
+      }));
+      setActionFeedback(result.message || 'Order updated successfully.');
+      reloadOrders();
+      return result;
+    } catch (error) {
+      const message = error?.message || 'Order action could not be completed.';
+      setActionFeedback(message);
+      throw error;
+    } finally {
+      setBusyAction('');
+    }
+  };
+
+  return { ...state, filters, busyAction, actionFeedback, setFilterValue, reloadOrders, runOrderAction };
 }

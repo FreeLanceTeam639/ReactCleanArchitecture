@@ -1,1 +1,0 @@
-const e="workspace_pending_conversation_id";function o(n){typeof window>"u"||!n||window.sessionStorage.setItem(e,String(n))}function i(){if(typeof window>"u")return"";const n=window.sessionStorage.getItem(e)||"";return n&&window.sessionStorage.removeItem(e),n}export{i as c,o as s};

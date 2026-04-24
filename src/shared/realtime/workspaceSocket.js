@@ -1,8 +1,9 @@
 import { API_BASE_URL } from '../api/endpoints.js';
+import { getRuntimeConfigValue } from '../api/runtimeConfig.js';
 import { getAccessToken } from '../lib/storage/authStorage.js';
 
 function buildWorkspaceSocketUrl() {
-  const configuredUrl = import.meta.env.VITE_WORKSPACE_SOCKET_URL;
+  const configuredUrl = getRuntimeConfigValue('WORKSPACE_SOCKET_URL') || import.meta.env.VITE_WORKSPACE_SOCKET_URL;
 
   if (configuredUrl) {
     return configuredUrl;
@@ -11,7 +12,7 @@ function buildWorkspaceSocketUrl() {
   const apiUrl = new URL(API_BASE_URL);
   const protocol = apiUrl.protocol === 'https:' ? 'wss:' : 'ws:';
 
-  return `${protocol}//${apiUrl.host}/ws/chat`;
+  return `${protocol}//${apiUrl.host}/ws/workspace`;
 }
 
 export function createWorkspaceSocketSubscription(onEvent, options = {}) {
